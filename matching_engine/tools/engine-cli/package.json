@@ -1,0 +1,22 @@
+{
+  "name": "engine-cli",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Developer CLI for the Darkhold engine",
+  "bin": { "engine-cli": "dist/index.js" },
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}

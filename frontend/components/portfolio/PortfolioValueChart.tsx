@@ -31,27 +31,33 @@ export function PortfolioValueChart({
   const isPositive = netDiff >= 0;
 
   return (
-    <GlassCard glowEdge={isPositive ? "teal" : "sell"} className={cn("p-6 space-y-4 font-mono", className)}>
-      <div className="flex items-center justify-between border-b border-glass-border pb-3">
+    <GlassCard
+      glowEdge={isPositive ? "teal" : "sell"}
+      className={cn("flex flex-col gap-4 p-5 sm:p-6", className)}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-glass-border pb-3">
         <SectionHeader
           icon={TrendingUp}
           iconVariant="teal"
-          title="Portfolio Valuation Over Time"
+          title="Portfolio valuation"
           subtitle="Cryptographically verified ledger balance evolution."
         />
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-text-dim">Net:</span>
-          <span className={cn("font-bold tabular-nums", isPositive ? "text-buy-text" : "text-sell")}>
+        <span
+          className={cn(
+            "flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[10px]",
+            isPositive
+              ? "border-buy/30 bg-buy/[0.08] text-buy-text"
+              : "border-sell/30 bg-sell/[0.08] text-sell-text"
+          )}
+        >
+          <span className="text-text-dim">Net</span>
+          <span className="font-bold tabular-nums">
             {formatCurrency(netDiff, { showSign: true })}
           </span>
-        </div>
+        </span>
       </div>
 
-      <AreaGlowChart
-        data={chartData}
-        color={isPositive ? "teal" : "sell"}
-        height={170}
-      />
+      <AreaGlowChart data={chartData} color={isPositive ? "teal" : "sell"} height={170} />
     </GlassCard>
   );
 }

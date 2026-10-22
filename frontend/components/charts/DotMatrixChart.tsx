@@ -30,8 +30,8 @@ export function DotMatrixChart({
   const maxValue = Math.max(...columns.map((c) => c.value), 1);
 
   return (
-    <div className={cn("w-full space-y-2 font-mono text-xs select-none", className)}>
-      <div className="flex items-end justify-between gap-1 overflow-x-auto py-2">
+    <div className={cn("w-full select-none font-mono", className)}>
+      <div className="no-scrollbar flex items-end justify-between gap-1 overflow-x-auto py-2">
         {columns.map((col, colIdx) => {
           const isLatest = highlightLatest && colIdx === columns.length - 1;
           const activeRows = Math.min(
@@ -42,45 +42,42 @@ export function DotMatrixChart({
           return (
             <div
               key={col.id || colIdx}
-              className="flex-1 flex flex-col items-center gap-1 group relative min-w-[28px]"
+              className="group relative flex min-w-[26px] flex-1 flex-col items-center gap-1.5"
             >
-              {/* Dot Column (stacked from bottom to top) */}
               <div
-                className="flex flex-col-reverse justify-start items-center"
+                className="flex flex-col-reverse items-center justify-start"
                 style={{ gap: `${dotPitch - dotSize}px`, height: `${maxRows * dotPitch}px` }}
               >
                 {Array.from({ length: maxRows }).map((_, rIdx) => {
                   const isActive = rIdx < activeRows;
 
-                  let dotColor = "bg-white/[0.08]";
-                  if (isActive) {
-                    dotColor = isLatest
-                      ? "bg-lime shadow-[0_0_6px_rgba(214,242,74,0.8)]"
-                      : "bg-white/[0.85]";
-                  }
-
                   return (
                     <span
                       key={rIdx}
-                      className={cn("rounded-full transition-colors duration-200", dotColor)}
+                      className={cn(
+                        "rounded-full transition-all duration-300",
+                        isActive
+                          ? isLatest
+                            ? "bg-lime shadow-[0_0_6px_rgba(214,242,74,0.7)]"
+                            : "bg-brand-400/80 shadow-[0_0_5px_rgba(25,203,176,0.35)]"
+                          : "bg-white/[0.06]"
+                      )}
                       style={{ width: `${dotSize}px`, height: `${dotSize}px` }}
                     />
                   );
                 })}
               </div>
 
-              {/* Bottom Label */}
               <span
                 className={cn(
-                  "text-[10px] truncate max-w-full text-center transition-colors",
-                  isLatest ? "text-lime font-bold" : "text-text-dim group-hover:text-text"
+                  "max-w-full truncate text-center text-[9px] transition-colors",
+                  isLatest ? "font-bold text-lime" : "text-text-dim group-hover:text-text"
                 )}
               >
                 {col.label}
               </span>
 
-              {/* Tooltip on hover */}
-              <div className="pointer-events-none absolute -top-8 px-2 py-0.5 rounded-md bg-canvas-elevated border border-glass-border shadow-glass text-[10px] text-text opacity-0 group-hover:opacity-100 transition-opacity z-20 whitespace-nowrap">
+              <div className="pointer-events-none absolute -top-7 z-20 whitespace-nowrap rounded-[6px] border border-glass-border bg-canvas-elevated px-2 py-0.5 text-[9px] text-text opacity-0 shadow-glass transition-opacity group-hover:opacity-100">
                 {col.subLabel || `${col.value}`}
               </div>
             </div>

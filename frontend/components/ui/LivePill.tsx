@@ -11,48 +11,44 @@ interface LivePillProps {
 }
 
 export function LivePill({ state, className }: LivePillProps) {
-  let color = "bg-buy text-buy-text border-buy/30";
-  let dotColor = "bg-buy";
+  let tone = "border-buy/30 bg-buy/10 text-buy-text";
+  let dot = "bg-buy";
   let label = "Live";
   let pulse = true;
 
   if (state === "DISCONNECTED") {
-    color = "bg-sell-bg text-sell border-sell/40";
-    dotColor = "bg-sell";
+    tone = "border-sell/40 bg-sell/10 text-sell-text";
+    dot = "bg-sell";
     label = "Offline";
     pulse = false;
   } else if (state === "RECONNECTING" || state === "SYNCING" || state === "CONNECTING") {
-    color = "bg-warning/15 text-warning border-warning/40";
-    dotColor = "bg-warning";
+    tone = "border-warning/35 bg-warning/10 text-warning";
+    dot = "bg-warning";
     label = state === "RECONNECTING" ? "Reconnecting" : "Syncing";
-    pulse = true;
+  } else if (state === "AUTHENTICATING") {
+    tone = "border-warning/35 bg-warning/10 text-warning";
+    dot = "bg-warning";
+    label = "Auth";
   }
 
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-2 px-3 py-1 rounded-pill border bg-white/[0.035] backdrop-blur-md",
-        "font-mono text-xs select-none transition-colors",
+        "inline-flex select-none items-center gap-2 rounded-full border px-2.5 py-1 backdrop-blur-md transition-colors",
+        tone,
         className
       )}
       title={`Connection state: ${state}`}
     >
-      <span className="relative flex h-2 w-2">
+      <span className="relative flex h-1.5 w-1.5">
         {pulse && (
-          <span
-            className={cn(
-              "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
-              dotColor
-            )}
-          />
+          <span className={cn("absolute inline-flex h-full w-full rounded-full opacity-70 animate-ping", dot)} />
         )}
-        <span className={cn("relative inline-flex rounded-full h-2 w-2", dotColor)} />
+        <span className={cn("relative inline-flex h-1.5 w-1.5 rounded-full", dot)} />
       </span>
 
-      <Radio className="w-3 h-3 text-text-muted" />
-      <span className="font-semibold uppercase tracking-wider text-[11px] text-text">
-        {label}
-      </span>
+      <span className="font-mono text-[9px] font-semibold uppercase tracking-[0.16em]">{label}</span>
+      <Radio className="h-3 w-3 opacity-55" />
     </div>
   );
 }

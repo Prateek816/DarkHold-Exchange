@@ -27,30 +27,28 @@ export function SectionHeader({
   className,
 }: SectionHeaderProps) {
   return (
-    <div className={cn("flex items-center justify-between gap-4 pb-2", className)}>
-      <div className="flex items-center gap-3 min-w-0">
-        {icon && <IconTile icon={icon} variant={iconVariant} />}
+    <div className={cn("flex items-center justify-between gap-4", className)}>
+      <div className="flex min-w-0 items-center gap-3">
+        {icon && <IconTile icon={icon} variant={iconVariant} size="sm" />}
         <div className="min-w-0">
-          <h3 className="text-base sm:text-lg font-semibold text-text tracking-tight truncate">
+          <h3 className="truncate text-[15px] font-semibold tracking-tight text-text">
             {title}
           </h3>
           {subtitle && (
-            <p className="text-xs text-text-muted truncate font-normal">
-              {subtitle}
-            </p>
+            <p className="mt-0.5 truncate text-[12px] font-normal text-text-muted">{subtitle}</p>
           )}
         </div>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex shrink-0 items-center gap-2">
         {actions}
         {showMenuButton && (
           <button
             onClick={onMenuClick}
-            className="w-9 h-9 rounded-tile border border-glass-border bg-white/[0.035] hover:bg-white/[0.07] text-text-muted hover:text-text flex items-center justify-center transition-colors focus-visible:ring-1 focus-visible:ring-brand-500"
+            className="flex h-8 w-8 items-center justify-center rounded-[10px] border border-glass-border bg-white/[0.035] text-text-muted transition-colors hover:bg-white/[0.07] hover:text-text focus-visible:ring-1 focus-visible:ring-brand-500"
             aria-label="More options"
           >
-            <MoreHorizontal className="w-4 h-4" />
+            <MoreHorizontal className="h-4 w-4" />
           </button>
         )}
       </div>

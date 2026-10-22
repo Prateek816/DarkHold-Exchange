@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Check, Clock, AlertTriangle, XCircle, ShieldCheck } from "lucide-react";
+import { Check, Clock, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type StatusPillType =
@@ -22,52 +22,52 @@ interface StatusPillProps {
   className?: string;
 }
 
-export function StatusPill({
-  status,
-  label,
-  size = "md",
-  className,
-}: StatusPillProps) {
+export function StatusPill({ status, label, size = "md", className }: StatusPillProps) {
   const norm = status.toUpperCase();
 
   let text = label || status;
-  let style = "bg-white/5 text-text-muted border-glass-border";
-  let icon = null;
+  let style = "bg-white/[0.04] text-text-muted border-glass-border";
+  let icon: React.ReactNode = null;
+  let dot: string | null = null;
 
   if (norm === "SETTLED" || norm === "SUCCESS" || norm === "COMPLETED" || norm === "FILLED") {
     text = label || (norm === "FILLED" ? "Filled" : "Settled");
-    style = "bg-buy text-canvas font-bold border-buy/80 shadow-[0_0_10px_rgba(34,197,94,0.3)]";
-    icon = <Check className="w-3 h-3 stroke-[3]" />;
+    style = "border-buy/35 bg-buy/10 text-buy-text";
+    icon = <Check className="h-3 w-3 stroke-[3]" />;
   } else if (norm === "MATCHED_SETTLING" || norm === "MATCHED" || norm === "SETTLING") {
     text = label || "Matched, settling";
-    style = "border-warning text-warning bg-warning/10 animate-pulse";
-    icon = <Clock className="w-3 h-3" />;
+    style = "border-warning/40 bg-warning/10 text-warning";
+    icon = <Clock className="h-3 w-3" />;
   } else if (norm === "OPEN" || norm === "PARTIALLY_FILLED") {
     text = label || (norm === "OPEN" ? "Open" : "Partially Filled");
-    style = "bg-brand-500/15 text-brand-400 border-brand-500/30";
+    style = "border-brand-500/30 bg-brand-500/10 text-brand-300";
+    dot = "bg-brand-400";
   } else if (norm === "CANCELED" || norm === "PENDING" || norm === "PENDING_SUBMIT") {
     text = label || (norm === "CANCELED" ? "Canceled" : "Pending");
-    style = "bg-white/[0.04] text-text-muted border-glass-border";
+    style = "border-glass-border bg-white/[0.03] text-text-dim";
+    dot = "bg-text-dim";
   } else if (norm === "REJECTED" || norm === "FAILED") {
     text = label || "Rejected";
-    style = "bg-sell/15 text-sell border-sell/40";
-    icon = <XCircle className="w-3 h-3" />;
+    style = "border-sell/40 bg-sell/10 text-sell-text";
+    icon = <XCircle className="h-3 w-3" />;
   } else if (norm === "SIM") {
     text = label || "SIM";
-    style = "bg-sim-bg text-sim border-sim-border font-bold shadow-[0_0_8px_rgba(124,92,255,0.25)]";
+    style = "border-sim-border bg-sim-bg text-violet-300";
+    dot = "bg-violet-400";
   }
 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-pill font-mono border select-none transition-colors",
-        size === "sm" ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-xs",
+        "inline-flex select-none items-center gap-1.5 rounded-full border font-mono transition-colors",
+        size === "sm" ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-[11px]",
         style,
         className
       )}
     >
       {icon}
-      <span>{text}</span>
+      {dot && <span className={cn("h-1.5 w-1.5 rounded-full", dot)} />}
+      <span className="font-medium tracking-wide">{text}</span>
     </span>
   );
 }

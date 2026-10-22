@@ -7,87 +7,145 @@ import { useWalletStore } from "@/lib/stores/walletStore";
 import { useUiStore } from "@/lib/stores/uiStore";
 import { LivePill } from "@/components/ui/LivePill";
 import { formatCurrency } from "@/lib/format";
-import { Bell, User, Lock, Unlock } from "lucide-react";
+import { Bell, User, Lock, Unlock, ChevronRight, Command } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const PAGE_TITLES: Record<string, string> = {
+  "/market": "Marketplace",
+  "/trade": "Terminal",
+  "/auctions": "Dutch Auctions",
+  "/portfolio": "Portfolio",
+  "/demo": "Operator Console",
+  "/login": "Account Access",
+  "/": "Overview",
+};
 
 export function TopHeader() {
   const pathname = usePathname();
   const { availableCredits, reservedCredits, totalCredits } = useWalletStore();
   const { connectionState } = useUiStore();
 
-  // Compute breadcrumb title based on pathname
-  let pageTitle = "Marketplace";
-  if (pathname?.startsWith("/trade")) pageTitle = "Terminal";
-  else if (pathname?.startsWith("/auctions")) pageTitle = "Dutch Auctions";
-  else if (pathname?.startsWith("/portfolio")) pageTitle = "Portfolio";
-  else if (pathname?.startsWith("/demo")) pageTitle = "Demo Console";
-  else if (pathname === "/login") pageTitle = "Account Access";
-  else if (pathname === "/") pageTitle = "Overview";
+  const resolveTitle = () => {
+    if (!pathname) return "Marketplace";
+    if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
+    const match = Object.keys(PAGE_TITLES)
+      .filter((key) => key !== "/" && pathname.startsWith(key))
+      .sort((a, b) => b.length - a.length)[0];
+    return match ? PAGE_TITLES[match] : "Overview";
+  };
 
+  const pageTitle = resolveTitle();
   const totalSafe = totalCredits > 0 ? totalCredits : availableCredits + reservedCredits || 1;
-  const availPct = Math.min(100, (availableCredits / totalSafe) * 100);
+  const availPct = Math.min(100, Math.max(0, (availableCredits / totalSafe) * 100));
 
   return (
-    <header className="w-full flex items-center justify-between gap-4 py-2 px-1 select-none">
-      {/* Breadcrumb Header */}
-      <div className="flex items-center gap-2 text-xs font-mono">
-        <span className="text-text-dim">Overview</span>
-        <span className="text-glass-border-strong">/</span>
-        <span className="text-text font-semibold tracking-wide">{pageTitle}</span>
-      </div>
+    <header className="sticky top-2 z-40 w-full select-none animate-fade-in">
+      <div className="flex items-center justify-between gap-3 rounded-[18px] border border-glass-border bg-canvas/75 px-3 py-2 sm:px-4 backdrop-blur-[22px] shadow-glass-sm">
+        {/* Brand (mobile) + breadcrumb */}
+        <div className="flex min-w-0 items-center gap-3">
+          <Link
+            href="/"
+            aria-label="Darkhold Exchange home"
+            className="md:hidden flex h-8 w-8 shrink-0 items-center justify-center rounded-[11px] border border-brand-500/35 bg-brand-500/10 shadow-glow-teal"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="stroke-brand-400 stroke-[2]">
+              <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5" />
+              <circle cx="12" cy="12" r="3" fill="#19CBB0" />
+            </svg>
+          </Link>
 
-      {/* Right Controls: Compact Vault Bar Pill, Live Pill, Bell, Avatar */}
-      <div className="flex items-center gap-3">
-        {/* Compact Vault Bar as a Glass Pill */}
-        <div
-          className="hidden sm:flex items-center gap-2.5 px-3.5 py-1.5 rounded-pill border border-glass-border bg-white/[0.035] backdrop-blur-md shadow-glass-sm font-mono text-xs"
-          title={`Vault: ${formatCurrency(availableCredits)} available, ${formatCurrency(reservedCredits)} reserved in orders`}
-        >
-          <div className="flex items-center gap-1.5">
-            <Unlock className="w-3 h-3 text-brand-400" />
-            <span className="font-bold text-text tabular-nums">{formatCurrency(availableCredits)}</span>
-            <span className="text-[10px] text-text-dim">avail</span>
-          </div>
+          <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-2 text-[11px]">
+            <Link
+              href="/"
+              className="font-mono uppercase tracking-[0.16em] text-text-dim transition-colors hover:text-text-muted"
+            >
+              Darkhold
+            </Link>
+            <ChevronRight className="w-3 h-3 text-text-dim/60" />
+            <span className="font-display text-[13px] font-semibold tracking-tight text-text">
+              {pageTitle}
+            </span>
+          </nav>
 
-          {reservedCredits > 0 && (
-            <>
-              <span className="text-glass-border-strong">|</span>
-              <div className="flex items-center gap-1.5 text-warning">
-                <Lock className="w-3 h-3" />
-                <span className="font-semibold tabular-nums">{formatCurrency(reservedCredits)}</span>
-                <span className="text-[10px] text-text-dim">res</span>
-              </div>
-            </>
-          )}
-
-          {/* Mini gauge fill */}
-          <div className="w-12 h-1.5 bg-white/10 rounded-pill overflow-hidden flex ml-1">
-            <div className="h-full bg-brand-400" style={{ width: `${availPct}%` }} />
-            <div className="h-full bg-warning" style={{ width: `${100 - availPct}%` }} />
-          </div>
+          <span className="sm:hidden truncate font-display text-sm font-semibold tracking-tight text-text">
+            {pageTitle}
+          </span>
         </div>
 
-        {/* Live Status Pill */}
-        <LivePill state={connectionState} />
+        {/* Controls */}
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Vault capsule */}
+          <div
+            className="hidden sm:flex items-center gap-3 rounded-full border border-glass-border bg-white/[0.035] px-3.5 py-1.5 backdrop-blur-md"
+            title={`Vault: ${formatCurrency(availableCredits)} available, ${formatCurrency(
+              reservedCredits
+            )} reserved in orders`}
+          >
+            <span className="flex items-center gap-1.5 text-[11px]">
+              <Unlock className="w-3 h-3 text-brand-400" />
+              <span className="font-mono font-semibold tabular-nums text-text">
+                {formatCurrency(availableCredits)}
+              </span>
+              <span className="text-[9px] uppercase tracking-[0.14em] text-text-dim">avail</span>
+            </span>
 
-        {/* Notification Bell (Round Glass) */}
-        <button
-          className="w-9 h-9 rounded-full border border-glass-border bg-white/[0.035] hover:bg-white/[0.08] text-text-muted hover:text-text flex items-center justify-center transition-colors relative"
-          aria-label="Notifications"
-        >
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-brand-400 shadow-[0_0_6px_rgba(25,203,176,0.8)]" />
-        </button>
+            {reservedCredits > 0 && (
+              <>
+                <span className="h-3 w-px bg-white/10" />
+                <span className="flex items-center gap-1.5 text-[11px] text-warning">
+                  <Lock className="w-3 h-3" />
+                  <span className="font-mono font-semibold tabular-nums">
+                    {formatCurrency(reservedCredits)}
+                  </span>
+                  <span className="text-[9px] uppercase tracking-[0.14em] text-text-dim">res</span>
+                </span>
+              </>
+            )}
 
-        {/* User Avatar (Round Glass) */}
-        <Link
-          href="/login"
-          className="w-9 h-9 rounded-full border border-glass-border bg-white/[0.035] hover:bg-white/[0.08] text-text-muted hover:text-text flex items-center justify-center transition-colors"
-          title="Account profile"
-          aria-label="User Account"
-        >
-          <User className="w-4 h-4" />
-        </Link>
+            <div className="ml-0.5 flex h-1.5 w-14 overflow-hidden rounded-full bg-white/[0.08] p-px">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400 transition-all duration-500"
+                style={{ width: `${availPct}%` }}
+              />
+              <div
+                className="h-full rounded-full bg-warning transition-all duration-500"
+                style={{ width: `${100 - availPct}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Mobile balance chip */}
+          <div className="sm:hidden flex items-center gap-1.5 rounded-full border border-glass-border bg-white/[0.035] px-2.5 py-1.5">
+            <Unlock className="w-3 h-3 text-brand-400" />
+            <span className="font-mono text-[11px] font-semibold tabular-nums text-text">
+              {formatCurrency(availableCredits, { showCents: false })}
+            </span>
+          </div>
+
+          <LivePill state={connectionState} className="hidden sm:inline-flex" />
+
+          <button
+            className="relative flex h-8 w-8 items-center justify-center rounded-full border border-glass-border bg-white/[0.035] text-text-muted transition-all duration-200 hover:border-glass-border-strong hover:bg-white/[0.08] hover:text-text"
+            aria-label="Notifications"
+          >
+            <Bell className="w-3.5 h-3.5" />
+            <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-brand-400 shadow-[0_0_8px_rgba(25,203,176,0.9)]" />
+          </button>
+
+          <Link
+            href="/login"
+            className="group flex h-8 items-center gap-2 rounded-full border border-glass-border bg-white/[0.035] pl-1 pr-2.5 text-text-muted transition-all duration-200 hover:border-violet-500/35 hover:bg-violet-500/10 hover:text-text"
+            title="Account profile"
+            aria-label="User Account"
+          >
+            <span className="flex h-6 w-6 items-center justify-center rounded-full border border-violet-500/35 bg-violet-500/15 text-violet-300 transition-transform duration-200 group-hover:scale-105">
+              <User className="w-3 h-3" />
+            </span>
+            <span className="hidden lg:inline font-mono text-[10px] uppercase tracking-[0.12em]">
+              trader_01
+            </span>
+          </Link>
+        </div>
       </div>
     </header>
   );

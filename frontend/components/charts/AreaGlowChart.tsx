@@ -28,9 +28,18 @@ export function AreaGlowChart({
   className,
 }: AreaGlowChartProps) {
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const rawId = React.useId();
+  const uid = rawId.replace(/[^a-zA-Z0-9_-]/g, "");
 
   if (!data || data.length < 2) {
-    return <div className="h-44 w-full rounded-panel bg-white/[0.02] animate-pulse" />;
+    return (
+      <div
+        className="flex w-full items-center justify-center rounded-panel border border-glass-border bg-white/[0.015]"
+        style={{ height }}
+      >
+        <span className="font-mono text-[10.5px] text-text-dim">Awaiting series…</span>
+      </div>
+    );
   }
 
   const values = data.map((d) => d.value);
@@ -59,99 +68,119 @@ export function AreaGlowChart({
   const activePoint = hoverIndex !== null ? svgPoints[hoverIndex] : null;
 
   return (
-    <div className={cn("relative w-full font-mono text-xs select-none", className)}>
-      <div className="relative w-full overflow-hidden" style={{ height }}>
+    <div className={cn("relative w-full select-none", className)}>
+      <div className="relative w-full" style={{ height }}>
         <svg
           viewBox="0 0 100 100"
           preserveAspectRatio="none"
-          className="w-full h-full overflow-visible"
+          className="h-full w-full"
           onPointerLeave={() => setHoverIndex(null)}
           onPointerMove={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
             const relX = (e.clientX - rect.left) / rect.width;
-            const idx = Math.min(data.length - 1, Math.max(0, Math.round(relX * (data.length - 1))));
+            const idx = Math.min(
+              data.length - 1,
+              Math.max(0, Math.round(relX * (data.length - 1)))
+            );
             setHoverIndex(idx);
           }}
         >
           <defs>
-            {/* SVG Glow Filter */}
-            <filter id={`glow-${color}`} x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="1.8" result="coloredBlur" />
+            <filter id={`${uid}-glow`} x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="1.4" result="coloredBlur" />
               <feMerge>
                 <feMergeNode in="coloredBlur" />
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
 
-            {/* Gradient fill under curve */}
-            <linearGradient id={`grad-${color}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={hexColor} stopOpacity="0.35" />
-              <stop offset="90%" stopColor={hexColor} stopOpacity="0.0" />
+            <linearGradient id={`${uid}-grad`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={hexColor} stopOpacity="0.3" />
+              <stop offset="92%" stopColor={hexColor} stopOpacity="0" />
             </linearGradient>
           </defs>
 
-          {/* Faint Horizontal Grid lines */}
           {showGrid && (
             <>
-              <line x1="0" y1="25" x2="100" y2="25" stroke="rgba(255,255,255,0.04)" strokeDasharray="2 2" />
-              <line x1="0" y1="55" x2="100" y2="55" stroke="rgba(255,255,255,0.04)" strokeDasharray="2 2" />
-              <line x1="0" y1="85" x2="100" y2="85" stroke="rgba(255,255,255,0.04)" strokeDasharray="2 2" />
+              <line
+                x1="0"
+                y1="25"
+                x2="100"
+                y2="25"
+                stroke="rgba(255,255,255,0.04)"
+                strokeDasharray="2 2"
+              />
+              <line
+                x1="0"
+                y1="55"
+                x2="100"
+                y2="55"
+                stroke="rgba(255,255,255,0.04)"
+                strokeDasharray="2 2"
+              />
+              <line
+                x1="0"
+                y1="85"
+                x2="100"
+                y2="85"
+                stroke="rgba(255,255,255,0.04)"
+                strokeDasharray="2 2"
+              />
             </>
           )}
 
-          {/* Gradient Area Fill */}
-          <polygon points={polygonStr} fill={`url(#grad-${color})`} />
+          <polygon points={polygonStr} fill={`url(#${uid}-grad)`} />
 
-          {/* Glowing Monotone Line */}
           <polyline
             fill="none"
             stroke={hexColor}
-            strokeWidth="2"
+            strokeWidth="1.8"
             strokeLinecap="round"
             strokeLinejoin="round"
-            filter={`url(#glow-${color})`}
+            vectorEffect="non-scaling-stroke"
+            filter={`url(#${uid}-glow)`}
             points={polylineStr}
           />
 
-          {/* Hover Crosshair & Dot */}
           {activePoint && (
             <>
               <line
                 x1={activePoint.x}
-                y1="5"
+                y1="4"
                 x2={activePoint.x}
                 y2="95"
-                stroke="rgba(255,255,255,0.3)"
+                stroke="rgba(255,255,255,0.25)"
                 strokeDasharray="2 2"
                 strokeWidth="0.8"
+                vectorEffect="non-scaling-stroke"
               />
               <circle
                 cx={activePoint.x}
                 cy={activePoint.y}
-                r="3"
-                fill="#FFFFFF"
+                r="2.2"
+                fill={hexColor}
                 stroke="#04060A"
-                strokeWidth="1.5"
-                filter={`url(#glow-${color})`}
+                strokeWidth="1.2"
+                filter={`url(#${uid}-glow)`}
               />
             </>
           )}
         </svg>
 
-        {/* Floating Glass Tooltip Pill */}
         {activePoint && (
           <div
-            className="pointer-events-none absolute -top-2 px-3 py-1.5 rounded-pill border border-glass-border bg-canvas-elevated/95 backdrop-blur-md shadow-glass text-xs font-semibold text-text transition-all duration-150 -translate-x-1/2 flex items-center gap-2"
-            style={{ left: `${activePoint.x}%` }}
+            className="pointer-events-none absolute top-1 z-10 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full border border-glass-border bg-canvas-elevated/95 px-3 py-1.5 font-mono text-[10.5px] shadow-glass backdrop-blur-md"
+            style={{ left: `clamp(70px, ${activePoint.x}%, calc(100% - 70px))` }}
           >
-            <span className="text-text-muted text-[11px]">{activePoint.label}:</span>
-            <span style={{ color: hexColor }}>{formatValue(activePoint.value)}</span>
+            <span className="text-text-dim">{activePoint.label}</span>
+            <span className="font-semibold tabular-nums" style={{ color: hexColor }}>
+              {formatValue(activePoint.value)}
+            </span>
           </div>
         )}
       </div>
 
-      {/* Axis Labels */}
-      <div className="flex justify-between text-[11px] text-text-dim pt-2 border-t border-glass-border">
+      <div className="flex justify-between border-t border-glass-border pt-2 font-mono text-[9.5px] text-text-dim">
         <span>{data[0]?.label}</span>
         <span>{data[Math.floor(data.length / 2)]?.label}</span>
         <span>{data[data.length - 1]?.label}</span>

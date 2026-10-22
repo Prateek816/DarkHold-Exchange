@@ -48,7 +48,9 @@ export function OrderForm({
   useEffect(() => {
     if (prefilledPrice) {
       setPriceInput((prefilledPrice / 100).toFixed(2));
-      setIdempotencyKey("IDEMP-" + Math.random().toString(36).substring(2, 9));
+      setIdempotencyKey("");
+      setErrorMessage(null);
+      setFormStep("EDITING");
     }
   }, [prefilledPrice]);
 
@@ -57,26 +59,37 @@ export function OrderForm({
 
   const parsedPriceMinor = Math.round(parseFloat(priceInput || "0") * 100);
   const parsedQty = parseInt(qtyInput || "0", 10);
+  const isLocked = formStep === "SUBMITTING" || formStep === "ACCEPTED";
 
-  const isAboveCeiling =
-    side === "BUY" && type === "LIMIT" && parsedPriceMinor > asset.ceiling_price;
+  // The Ward caps every resale price, on either side of the book.
+  const isAboveCeiling = type === "LIMIT" && parsedPriceMinor > asset.ceiling_price;
+
+  const marketReference =
+    side === "BUY"
+      ? asset.best_ask ?? asset.ceiling_price
+      : asset.best_bid ?? asset.last_price;
 
   const estimatedCost =
-    type === "LIMIT"
-      ? parsedPriceMinor * parsedQty
-      : (asset.best_ask ?? asset.ceiling_price) * parsedQty;
+    type === "LIMIT" ? parsedPriceMinor * parsedQty : marketReference * parsedQty;
+
+  /** Any edit starts a new order attempt, so a previous idempotency key must not be reused. */
+  const markTicketEdited = () => {
+    setErrorMessage(null);
+    setFormStep("EDITING");
+    setIdempotencyKey("");
+  };
 
   const handleMaxClick = () => {
+    if (isLocked) return;
     if (side === "BUY") {
       const unitPrice =
-        type === "LIMIT" && parsedPriceMinor > 0
-          ? parsedPriceMinor
-          : asset.best_ask || asset.ceiling_price;
-      const maxUnits = Math.floor(availableCredits / unitPrice);
+        type === "LIMIT" && parsedPriceMinor > 0 ? parsedPriceMinor : marketReference;
+      const maxUnits = Math.floor(availableCredits / Math.max(unitPrice, 1));
       setQtyInput(Math.max(1, maxUnits).toString());
     } else {
       setQtyInput(Math.max(1, availableUnits).toString());
     }
+    markTicketEdited();
   };
 
   const handleInitialSubmit = () => {
@@ -176,9 +189,21 @@ export function OrderForm({
   };
 
   return (
-    <GlassCard glowEdge={side === "BUY" ? "teal" : "sell"} className={cn("p-5 flex flex-col gap-4 font-mono text-xs", className)}>
-      {/* Side Switcher (Buy / Sell) Segmented Pill with Green/Red Glow */}
-      <div className="w-full">
+    <GlassCard glowEdge={side === "BUY" ? "teal" : "sell"} className={cn("flex flex-col gap-4 p-5", className)}>
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <span className="eyebrow">Trade ticket</span>
+          <h3 className="pt-0.5 font-display text-[15px] font-semibold tracking-tight text-text">
+            Place order
+          </h3>
+        </div>
+        <span className="rounded-full border border-glass-border bg-white/[0.03] px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.12em] text-text-dim">
+          {asset.symbol}
+        </span>
+      </div>
+
+      {/* Side Switcher (Buy / Sell) */}
+      <div className={cn("w-full", isLocked && "pointer-events-none opacity-60")}>
         <SegmentedTabs
           tabs={[
             { id: "BUY", label: `Buy ${asset.symbol}` },
@@ -186,8 +211,9 @@ export function OrderForm({
           ]}
           activeId={side}
           onChange={(s) => {
+            if (isLocked) return;
             setSide(s as OrderSide);
-            setErrorMessage(null);
+            markTicketEdited();
           }}
           variant="buy-sell"
           className="w-full justify-stretch"
@@ -197,24 +223,34 @@ export function OrderForm({
 
       {/* Order Type Toggle (Limit / Market) & Available Balance */}
       <div className="flex items-center justify-between border-b border-glass-border pb-3">
-        <div className="flex items-center gap-1.5 p-0.5 rounded-pill bg-white/[0.03] border border-glass-border">
+        <div className="flex items-center gap-1.5 rounded-full border border-glass-border bg-white/[0.03] p-0.5">
           <button
-            onClick={() => setType("LIMIT")}
+            onClick={() => {
+              if (isLocked) return;
+              setType("LIMIT");
+              markTicketEdited();
+            }}
+            disabled={isLocked}
             className={cn(
-              "px-3 py-1 rounded-pill text-[11px] font-medium transition-all",
+              "rounded-full px-3 py-1 font-mono text-[10px] font-medium transition-all disabled:opacity-50",
               type === "LIMIT"
-                ? "bg-white/[0.08] text-text border border-brand-500/40 font-bold"
+                ? "border border-brand-500/40 bg-white/[0.08] font-bold text-text"
                 : "text-text-muted hover:text-text"
             )}
           >
             Limit
           </button>
           <button
-            onClick={() => setType("MARKET")}
+            onClick={() => {
+              if (isLocked) return;
+              setType("MARKET");
+              markTicketEdited();
+            }}
+            disabled={isLocked}
             className={cn(
-              "px-3 py-1 rounded-pill text-[11px] font-medium transition-all",
+              "rounded-full px-3 py-1 font-mono text-[10px] font-medium transition-all disabled:opacity-50",
               type === "MARKET"
-                ? "bg-white/[0.08] text-text border border-brand-500/40 font-bold"
+                ? "border border-brand-500/40 bg-white/[0.08] font-bold text-text"
                 : "text-text-muted hover:text-text"
             )}
           >
@@ -223,14 +259,15 @@ export function OrderForm({
         </div>
 
         {/* Balance & Max Chip */}
-        <div className="flex items-center gap-1.5 text-xs text-text-muted">
-          <span>{side === "BUY" ? "Avail:" : "Units:"}</span>
-          <span className="text-text font-bold">
+        <div className="flex items-center gap-1.5 font-mono text-[10px] text-text-muted">
+          <span>{side === "BUY" ? "Avail" : "Units"}</span>
+          <span className="font-bold tabular-nums text-text">
             {side === "BUY" ? formatCurrency(availableCredits) : formatQuantity(availableUnits)}
           </span>
           <button
             onClick={handleMaxClick}
-            className="text-[10px] uppercase text-brand-400 font-bold px-1.5 py-0.5 rounded-pill bg-brand-500/10 border border-brand-500/30 hover:bg-brand-500/20 ml-1 transition-colors"
+            disabled={isLocked}
+            className="ml-1 rounded-full border border-brand-500/30 bg-brand-500/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-brand-400 transition-colors hover:bg-brand-500/20 disabled:opacity-50"
           >
             Max
           </button>
@@ -251,12 +288,13 @@ export function OrderForm({
                 type="number"
                 step="0.50"
                 value={priceInput}
+                disabled={isLocked}
                 onChange={(e) => {
                   setPriceInput(e.target.value);
-                  setErrorMessage(null);
+                  markTicketEdited();
                 }}
                 className={cn(
-                  "w-full h-11 bg-white/[0.03] border rounded-[14px] pl-8 pr-3 text-text text-sm font-mono transition-all",
+                  "w-full h-11 bg-white/[0.03] border rounded-[14px] pl-8 pr-3 text-text text-sm font-mono transition-all disabled:opacity-60",
                   "focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:border-transparent",
                   isAboveCeiling
                     ? "border-ward bg-ward/10 animate-ward-shake"
@@ -300,11 +338,12 @@ export function OrderForm({
             min="1"
             step="1"
             value={qtyInput}
+            disabled={isLocked}
             onChange={(e) => {
               setQtyInput(e.target.value);
-              setErrorMessage(null);
+              markTicketEdited();
             }}
-            className="w-full h-11 bg-white/[0.03] border border-glass-border rounded-[14px] px-3.5 text-text text-sm font-mono focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:border-transparent"
+            className="h-11 w-full rounded-[12px] border border-glass-border bg-white/[0.03] px-3.5 font-mono text-sm text-text transition-all focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-60"
             placeholder="1"
           />
         </div>
@@ -314,7 +353,7 @@ export function OrderForm({
       <div className="p-3 rounded-[14px] bg-white/[0.02] border border-glass-border space-y-1 text-[11px]">
         <div className="flex justify-between text-text-muted">
           <span>{side === "BUY" ? "Estimated Total:" : "Estimated Proceeds:"}</span>
-          <span className="text-text font-bold text-xs">{formatCurrency(estimatedCost)}</span>
+          <span className="font-mono text-xs font-bold tabular-nums text-text">{formatCurrency(estimatedCost)}</span>
         </div>
         <div className="flex items-center gap-1.5 text-[10px] text-text-dim pt-0.5">
           <Lock className="w-2.5 h-2.5 text-warning shrink-0" />
@@ -367,14 +406,19 @@ export function OrderForm({
       {formStep !== "CONFIRMING_MARKET" && (
         <button
           onClick={handleInitialSubmit}
-          disabled={formStep === "SUBMITTING" || asset.is_halted || isAboveCeiling}
+          disabled={
+            formStep === "SUBMITTING" ||
+            formStep === "ACCEPTED" ||
+            asset.is_halted ||
+            isAboveCeiling
+          }
           className={cn(
-            "w-full h-11 rounded-pill font-bold text-xs uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 select-none",
+            "flex h-11 w-full select-none items-center justify-center gap-2 rounded-[12px] text-[11.5px] font-bold uppercase tracking-[0.08em] transition-all duration-200",
             asset.is_halted
-              ? "bg-white/[0.05] text-text-dim cursor-not-allowed border border-glass-border"
+              ? "cursor-not-allowed border border-glass-border bg-white/[0.05] text-text-dim"
               : side === "BUY"
-              ? "bg-gradient-to-r from-[#5DF2D6] to-[#0FB5A0] text-[#04201B] shadow-glow-teal hover:opacity-95 disabled:opacity-50"
-              : "bg-gradient-to-r from-[#FF7A93] to-[#E0405E] text-white shadow-[0_0_20px_rgba(240,80,110,0.35)] hover:opacity-95 disabled:opacity-50"
+              ? "bg-gradient-to-r from-brand-400 to-brand-500 text-canvas shadow-glow-teal hover:-translate-y-px disabled:opacity-50"
+              : "bg-gradient-to-r from-sell-text to-sell text-white shadow-[0_0_20px_rgba(240,80,110,0.35)] hover:-translate-y-px disabled:opacity-50"
           )}
         >
           {formStep === "SUBMITTING" ? (

@@ -10,13 +10,13 @@ interface ConnectionStatusProps {
 }
 
 export function ConnectionStatus({ state, className }: ConnectionStatusProps) {
-  let dotColor = "bg-trade-buy";
+  let dotColor = "bg-buy";
   let pulse = false;
   let label = "Live";
 
   switch (state) {
     case "LIVE":
-      dotColor = "bg-trade-buy";
+      dotColor = "bg-buy";
       label = "Live";
       break;
     case "CONNECTING":
@@ -40,7 +40,7 @@ export function ConnectionStatus({ state, className }: ConnectionStatusProps) {
       label = "Reconnecting";
       break;
     case "DISCONNECTED":
-      dotColor = "bg-trade-sell";
+      dotColor = "bg-sell";
       label = "Offline";
       break;
   }
@@ -48,7 +48,7 @@ export function ConnectionStatus({ state, className }: ConnectionStatusProps) {
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-1.5 px-2 py-1 rounded bg-surface/90 border border-border text-[11px] font-mono text-parchment-muted select-none",
+        "inline-flex select-none items-center gap-1.5 rounded-full border border-glass-border bg-white/[0.035] px-2.5 py-1 font-mono text-[10px] text-text-muted backdrop-blur-md",
         className
       )}
       title={`WebSocket connection status: ${state}`}
@@ -57,14 +57,14 @@ export function ConnectionStatus({ state, className }: ConnectionStatusProps) {
         {pulse && (
           <span
             className={cn(
-              "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
+              "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
               dotColor
             )}
           />
         )}
-        <span className={cn("relative inline-flex rounded-full h-2 w-2", dotColor)} />
+        <span className={cn("relative inline-flex h-2 w-2 rounded-full", dotColor)} />
       </span>
-      <span className="tracking-wide uppercase text-[10px]">{label}</span>
+      <span className="uppercase tracking-[0.12em]">{label}</span>
     </div>
   );
 }

@@ -1,24 +1,26 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
-import { Asset } from "@/lib/types";
 import { AssetCard } from "@/components/market/AssetCard";
 import { VolumeHeatmap } from "@/components/market/VolumeHeatmap";
 import { LineArtEmptyState } from "@/components/ui/LineArtEmptyState";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Reveal } from "@/components/ui/Reveal";
+import { SegmentedTabs } from "@/components/ui/SegmentedTabs";
 import { useUiStore } from "@/lib/stores/uiStore";
+import { formatCurrency, formatPercent } from "@/lib/format";
 import {
   Layers,
   ArrowUpDown,
-  Filter,
   RefreshCw,
   AlertOctagon,
   WifiOff,
   Flame,
   ChevronDown,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +32,6 @@ export default function MarketplacePage() {
   const [sortBy, setSortBy] = useState<"CHANGE" | "VOLUME" | "PRICE" | "NAME">("CHANGE");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  // Query assets with 10s poll fallback when disconnected
   const {
     data: assets = [],
     isLoading,
@@ -43,171 +44,202 @@ export default function MarketplacePage() {
     refetchInterval: isDisconnected ? 10000 : 30000,
   });
 
-  // Filter assets
   const filteredAssets = assets.filter((asset) => {
     if (selectedCategory === "ALL") return true;
     return asset.category === selectedCategory;
   });
 
-  // Sort assets
   const sortedAssets = [...filteredAssets].sort((a, b) => {
     let comparison = 0;
-    if (sortBy === "CHANGE") {
-      comparison = a.price_change_24h_pct - b.price_change_24h_pct;
-    } else if (sortBy === "VOLUME") {
-      comparison = a.volume_24h - b.volume_24h;
-    } else if (sortBy === "PRICE") {
-      comparison = a.last_price - b.last_price;
-    } else if (sortBy === "NAME") {
-      comparison = a.name.localeCompare(b.name);
-    }
+    if (sortBy === "CHANGE") comparison = a.price_change_24h_pct - b.price_change_24h_pct;
+    else if (sortBy === "VOLUME") comparison = a.volume_24h - b.volume_24h;
+    else if (sortBy === "PRICE") comparison = a.last_price - b.last_price;
+    else if (sortBy === "NAME") comparison = a.name.localeCompare(b.name);
     return sortOrder === "desc" ? -comparison : comparison;
   });
 
+  const stats = useMemo(() => {
+    const totalVolume = assets.reduce((sum, a) => sum + a.volume_24h, 0);
+    const topMover = [...assets].sort(
+      (a, b) => b.price_change_24h_pct - a.price_change_24h_pct
+    )[0];
+    return { totalVolume, topMover };
+  }, [assets]);
+
   const categories = [
-    { id: "ALL", label: "All Relics" },
-    { id: "FESTIVAL_PASS", label: "Festival Passes" },
-    { id: "LIMITED_MERCH", label: "Limited Merch" },
+    { id: "ALL", label: "All relics" },
+    { id: "FESTIVAL_PASS", label: "Festival passes" },
+    { id: "LIMITED_MERCH", label: "Limited merch" },
   ];
 
   return (
-    <div className="flex-1 w-full space-y-6">
-      {/* Page Title & Controls Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl sm:text-3xl font-bold text-text tracking-tight font-sans">
-              Marketplace
-            </h1>
-            {isDisconnected && (
-              <span className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-warning px-2.5 py-1 rounded-pill bg-warning/10 border border-warning/30">
-                <WifiOff className="w-3 h-3" />
-                <span>REST Poll (10s)</span>
-              </span>
-            )}
-          </div>
-          <p className="text-xs sm:text-sm text-text-muted font-normal pt-1 font-sans">
-            Fair-price simulated order books enforced by The Ward price ceiling.
-          </p>
-        </div>
-
-        {/* Global Controls & Refetch */}
-        <div className="flex items-center gap-3">
+    <div className="page-shell">
+      <PageHeader
+        eyebrow="Exchange · Marketplace"
+        title="Marketplace"
+        description="Fair-price simulated order books, enforced by The Ward price ceiling."
+        badge={
+          isDisconnected ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-warning">
+              <WifiOff className="h-3 w-3" />
+              REST poll · 10s
+            </span>
+          ) : undefined
+        }
+        actions={
           <button
             onClick={() => refetch()}
             disabled={isFetching}
-            className="flex items-center gap-2 px-4 py-2 rounded-pill bg-white/[0.04] border border-glass-border text-xs font-mono text-text-muted hover:text-text hover:bg-white/[0.08] transition-all disabled:opacity-50 shadow-glass-sm"
+            className="flex items-center gap-2 rounded-full border border-glass-border bg-white/[0.035] px-4 py-2 font-mono text-[11px] text-text-muted shadow-glass-sm transition-all hover:border-glass-border-strong hover:bg-white/[0.07] hover:text-text disabled:opacity-50"
             title="Refresh assets"
           >
-            <RefreshCw className={cn("w-3.5 h-3.5 text-brand-400", isFetching && "animate-spin")} />
-            <span>{isFetching ? "Syncing..." : "Sync"}</span>
+            <RefreshCw className={cn("h-3.5 w-3.5 text-brand-400", isFetching && "animate-spin")} />
+            <span>{isFetching ? "Syncing…" : "Sync"}</span>
           </button>
-        </div>
-      </div>
+        }
+      />
 
-      {/* Volume Heatmap Highlights Glass Card */}
-      {!isLoading && assets.length > 0 && (
-        <VolumeHeatmap assets={assets} />
-      )}
-
-      {/* Filter & Sort Bar (Glass Pills) */}
-      <div className="flex flex-wrap items-center justify-between gap-3 text-xs font-mono pt-2">
-        {/* Category Glass Pills */}
-        <div className="flex items-center gap-1.5 flex-wrap p-1 rounded-pill bg-white/[0.025] border border-glass-border">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={cn(
-                "px-3.5 py-1.5 rounded-pill transition-all",
-                selectedCategory === cat.id
-                  ? "bg-white/[0.08] text-text border border-brand-500/40 font-semibold shadow-glow-teal"
-                  : "text-text-muted hover:text-text"
-              )}
-            >
-              {cat.label}
-            </button>
+      {/* Market summary strip */}
+      <Reveal>
+        <div className="grid grid-cols-2 divide-y divide-white/[0.07] overflow-hidden rounded-[16px] border border-glass-border bg-white/[0.02] backdrop-blur-md sm:grid-cols-4 sm:divide-y-0 sm:divide-x">
+          {[
+            {
+              icon: Layers,
+              label: "Listed relics",
+              value: String(assets.length || "—"),
+              tone: "text-brand-400",
+            },
+            {
+              icon: Flame,
+              label: "24h volume",
+              value: stats.totalVolume ? formatCurrency(stats.totalVolume, { showCents: false }) : "—",
+              tone: "text-warning",
+            },
+            {
+              icon: ArrowUpDown,
+              label: "Top mover",
+              value: stats.topMover
+                ? `${stats.topMover.symbol} ${formatPercent(stats.topMover.price_change_24h_pct)}`
+                : "—",
+              tone: "text-buy-text",
+            },
+            {
+              icon: ShieldCheck,
+              label: "Ward status",
+              value: "Enforced",
+              tone: "text-violet-300",
+            },
+          ].map((item) => (
+            <div key={item.label} className="flex items-center gap-3 px-4 py-3.5">
+              <item.icon className={cn("h-4 w-4 shrink-0", item.tone)} strokeWidth={1.8} />
+              <div className="min-w-0">
+                <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-text-dim">
+                  {item.label}
+                </p>
+                <p className="truncate pt-0.5 font-display text-[13px] font-semibold tracking-tight text-text tabular-nums">
+                  {item.value}
+                </p>
+              </div>
+            </div>
           ))}
         </div>
+      </Reveal>
 
-        {/* Sort Controls as Glass Pills */}
+      {!isLoading && assets.length > 0 && <VolumeHeatmap assets={assets} />}
+
+      {/* Filter / sort */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <SegmentedTabs
+          tabs={categories}
+          activeId={selectedCategory}
+          onChange={setSelectedCategory}
+          size="sm"
+          className="no-scrollbar max-w-full overflow-x-auto"
+          layoutId="market-category-pill"
+        />
+
         <div className="flex items-center gap-2">
-          <span className="text-xs text-text-dim uppercase">Sort by:</span>
+          <span className="hidden font-mono text-[9px] uppercase tracking-[0.12em] text-text-dim sm:block">
+            Sort
+          </span>
           <div className="relative">
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="appearance-none bg-white/[0.035] border border-glass-border rounded-pill pl-4 pr-8 py-1.5 text-text text-xs font-mono focus-visible:ring-2 focus-visible:ring-brand-500 cursor-pointer"
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              aria-label="Sort assets"
+              className="cursor-pointer appearance-none rounded-full border border-glass-border bg-white/[0.035] py-1.5 pl-3.5 pr-8 font-mono text-[11px] text-text transition-colors hover:bg-white/[0.06] focus-visible:ring-2 focus-visible:ring-brand-500"
             >
-              <option value="CHANGE" className="bg-canvas-elevated text-text">24h Change %</option>
+              <option value="CHANGE" className="bg-canvas-elevated text-text">24h Change</option>
               <option value="VOLUME" className="bg-canvas-elevated text-text">24h Volume</option>
               <option value="PRICE" className="bg-canvas-elevated text-text">Last Price</option>
               <option value="NAME" className="bg-canvas-elevated text-text">Asset Name</option>
             </select>
-            <ChevronDown className="w-3.5 h-3.5 text-text-muted absolute right-3 top-2.5 pointer-events-none" />
+            <ChevronDown className="pointer-events-none absolute right-2.5 top-2.5 h-3.5 w-3.5 text-text-muted" />
           </div>
 
           <button
             onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
-            className="w-8 h-8 rounded-pill bg-white/[0.035] border border-glass-border text-text-muted hover:text-text flex items-center justify-center transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-glass-border bg-white/[0.035] text-text-muted transition-colors hover:bg-white/[0.07] hover:text-text"
             title={`Toggle sort order (${sortOrder.toUpperCase()})`}
           >
-            <ArrowUpDown className="w-3.5 h-3.5" />
+            <ArrowUpDown className={cn("h-3.5 w-3.5", sortOrder === "asc" && "rotate-180")} />
           </button>
         </div>
       </div>
 
-      {/* Loading Skeletons matching exact card layout */}
+      {/* Loading */}
       {isLoading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {[1, 2, 3, 4].map((n) => (
-            <Skeleton key={n} className="h-64 w-full rounded-card" />
+            <Skeleton key={n} className="h-[318px] w-full rounded-card" />
           ))}
         </div>
       )}
 
-      {/* Error State with Request ID + Retry */}
+      {/* Error */}
       {isError && (
         <div
           role="alert"
-          className="p-8 rounded-card border border-sell/40 bg-sell/5 text-center space-y-4 font-mono"
+          className="space-y-4 rounded-card border border-sell/40 bg-sell/[0.05] p-8 text-center"
         >
-          <AlertOctagon className="w-8 h-8 text-sell mx-auto" />
-          <h3 className="text-sm font-semibold text-text">Failed to Load Marketplace Assets</h3>
-          <p className="text-xs text-text-muted">
+          <AlertOctagon className="mx-auto h-8 w-8 text-sell" />
+          <h3 className="text-sm font-semibold text-text">Failed to load marketplace assets</h3>
+          <p className="font-mono text-xs text-text-muted">
             The exchange registry is temporarily unreachable. Reference: REQ-ERR-4912
           </p>
           <button
             onClick={() => refetch()}
-            className="px-5 py-2 rounded-pill bg-sell hover:bg-sell/90 text-white text-xs font-semibold transition-all shadow-[0_0_15px_rgba(240,80,110,0.3)]"
+            className="rounded-full bg-sell px-5 py-2 text-xs font-semibold text-white shadow-[0_0_15px_rgba(240,80,110,0.3)] transition-all hover:bg-sell/90"
           >
-            Retry Connection
+            Retry connection
           </button>
         </div>
       )}
 
-      {/* Empty State */}
+      {/* Empty */}
       {!isLoading && !isError && sortedAssets.length === 0 && (
         <LineArtEmptyState
           type="NO_ASSETS"
-          title="No assets are listed yet"
+          title="No assets listed yet"
           description="There are currently no trading instruments matching the selected filter criteria."
           action={
             <button
               onClick={() => setSelectedCategory("ALL")}
-              className="px-4 py-1.5 rounded-pill bg-white/[0.04] border border-glass-border text-xs text-text hover:bg-white/[0.08]"
+              className="rounded-full border border-glass-border bg-white/[0.04] px-4 py-1.5 text-xs text-text transition-colors hover:bg-white/[0.08]"
             >
-              Reset Filters
+              Reset filters
             </button>
           }
         />
       )}
 
-      {/* Asset Cards Grid (Top Assets styling) */}
+      {/* Asset grid */}
       {!isLoading && !isError && sortedAssets.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {sortedAssets.map((asset) => (
-            <AssetCard key={asset.id} asset={asset} />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {sortedAssets.map((asset, i) => (
+            <Reveal key={asset.id} delay={Math.min(i * 0.045, 0.27)} y={14}>
+              <AssetCard asset={asset} />
+            </Reveal>
           ))}
         </div>
       )}

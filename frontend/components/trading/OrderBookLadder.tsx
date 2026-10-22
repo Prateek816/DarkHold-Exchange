@@ -35,62 +35,72 @@ export function OrderBookLadder({
 
   return (
     <GlassCard
-      className={cn("flex flex-col font-mono text-xs select-none p-0 overflow-hidden", className)}
+      className={cn("flex select-none flex-col overflow-hidden p-0", className)}
       role="region"
-      aria-label="Order Book Ladder"
+      aria-label="Order book ladder"
     >
-      {/* DataTable Rounded Header Strip */}
-      <div className="grid grid-cols-3 px-4 py-2.5 text-[11px] uppercase tracking-wider text-text-dim border-b border-glass-border bg-white/[0.02]">
-        <span>Price (USD)</span>
-        <span className="text-right">Size</span>
-        <span className="text-right">Total Depth</span>
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-glass-border px-4 py-2.5">
+        <span className="font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-text">
+          Order book
+        </span>
+        <span className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.1em] text-text-dim">
+          <span className="h-1 w-1 rounded-full bg-buy shadow-[0_0_5px_#22C55E]" />
+          depth · 10/s
+        </span>
       </div>
 
-      {/* Asks (Sellers) Ladder */}
-      <div className="flex-1 flex flex-col justify-end overflow-hidden min-h-[190px]">
+      {/* Columns */}
+      <div className="grid grid-cols-3 border-b border-glass-border bg-white/[0.015] px-4 py-1.5 font-mono text-[9px] uppercase tracking-[0.1em] text-text-dim">
+        <span>Price</span>
+        <span className="text-right">Size</span>
+        <span className="text-right">Total</span>
+      </div>
+
+      {/* Asks */}
+      <div className="no-scrollbar max-h-[168px] flex-1 overflow-y-auto">
         {topAsks.length === 0 ? (
           <LineArtEmptyState
             type="NO_SELLERS"
-            title="No Sellers"
+            title="No sellers"
             description="Ask side empty."
-            className="py-4"
+            className="py-3"
           />
         ) : (
-          topAsks.map((level) => {
+          topAsks.map((level, idx) => {
             const depthPct = Math.min(100, (level.total_qty / maxTotal) * 100);
             const isAtCeiling = level.price >= ceilingPrice;
 
             return (
               <button
-                key={`ask-${level.price}`}
+                key={`ask-${level.price}-${idx}`}
                 onClick={() => onPriceClick?.(level.price)}
-                className="relative grid grid-cols-3 px-4 py-1 text-left items-center group hover:bg-white/[0.04] transition-colors border-b border-white/[0.02]"
+                className="group relative grid w-full grid-cols-3 items-center border-b border-white/[0.025] px-4 py-[5px] text-left font-mono text-[10.5px] transition-colors last:border-0 hover:bg-white/[0.04]"
                 title={`Prefill price: ${formatCurrency(level.price)}`}
               >
-                {/* Depth bar fill from right edge at ~18% alpha */}
                 <div
-                  className="absolute right-0 top-0 bottom-0 bg-sell/[0.18] border-l border-sell/40 pointer-events-none transition-all duration-200"
+                  className="pointer-events-none absolute inset-y-0 right-0 border-l border-sell/30 bg-sell/[0.12] transition-all duration-200"
                   style={{ width: `${depthPct}%` }}
                 />
 
                 <span
                   className={cn(
-                    "relative font-medium flex items-center gap-2",
-                    isAtCeiling ? "text-ward font-bold" : "text-sell"
+                    "relative flex items-center gap-1.5 font-medium",
+                    isAtCeiling ? "font-bold text-warning" : "text-sell-text"
                   )}
                 >
                   {level.has_user_order && (
                     <span
-                      className="w-1.5 h-1.5 rounded-full bg-ward inline-block shrink-0 shadow-glow-ward"
+                      className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-warning shadow-glow-ward"
                       title="Your resting order"
                     />
                   )}
-                  <span>{formatCurrency(level.price)}</span>
+                  <span className="tabular-nums">{formatCurrency(level.price)}</span>
                 </span>
-                <span className="relative text-right text-text-muted">
+                <span className="relative text-right tabular-nums text-text-muted">
                   {formatQuantity(level.qty)}
                 </span>
-                <span className="relative text-right text-text-dim">
+                <span className="relative text-right tabular-nums text-text-dim">
                   {formatQuantity(level.total_qty)}
                 </span>
               </button>
@@ -99,58 +109,57 @@ export function OrderBookLadder({
         )}
       </div>
 
-      {/* Mid-Spread Row as a Glass Pill */}
-      <div className="mx-3 my-1.5 p-2 rounded-pill border border-glass-border bg-white/[0.035] backdrop-blur-md flex items-center justify-between text-xs px-4 shadow-glass-sm">
+      {/* Mid spread */}
+      <div className="mx-3 my-1.5 flex items-center justify-between rounded-full border border-glass-border bg-white/[0.035] px-3 py-1.5 shadow-glass-sm backdrop-blur-md">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] uppercase text-text-dim">Mid</span>
-          <span className="font-bold text-text text-sm">
+          <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-text-dim">Last</span>
+          <span className="font-mono text-[12px] font-bold tabular-nums text-text">
             {formatCurrency(lastPrice)}
           </span>
         </div>
-        <span className="text-[11px] text-ward font-medium">
-          Cap: {formatCurrency(ceilingPrice, { showCents: false })}
+        <span className="font-mono text-[9.5px] font-medium text-warning">
+          Cap {formatCurrency(ceilingPrice, { showCents: false })}
         </span>
       </div>
 
-      {/* Bids (Buyers) Ladder */}
-      <div className="flex-1 overflow-hidden min-h-[190px]">
+      {/* Bids */}
+      <div className="no-scrollbar max-h-[168px] flex-1 overflow-y-auto">
         {topBids.length === 0 ? (
           <LineArtEmptyState
             type="NO_BUYERS"
-            title="No Buyers"
+            title="No buyers"
             description="Bid side empty."
-            className="py-4"
+            className="py-3"
           />
         ) : (
-          topBids.map((level) => {
+          topBids.map((level, idx) => {
             const depthPct = Math.min(100, (level.total_qty / maxTotal) * 100);
 
             return (
               <button
-                key={`bid-${level.price}`}
+                key={`bid-${level.price}-${idx}`}
                 onClick={() => onPriceClick?.(level.price)}
-                className="relative grid grid-cols-3 px-4 py-1 text-left items-center group hover:bg-white/[0.04] transition-colors border-b border-white/[0.02]"
+                className="group relative grid w-full grid-cols-3 items-center border-b border-white/[0.025] px-4 py-[5px] text-left font-mono text-[10.5px] transition-colors last:border-0 hover:bg-white/[0.04]"
                 title={`Prefill price: ${formatCurrency(level.price)}`}
               >
-                {/* Depth bar fill from right edge at ~18% alpha */}
                 <div
-                  className="absolute right-0 top-0 bottom-0 bg-buy/[0.18] border-l border-buy/40 pointer-events-none transition-all duration-200"
+                  className="pointer-events-none absolute inset-y-0 right-0 border-l border-buy/30 bg-buy/[0.12] transition-all duration-200"
                   style={{ width: `${depthPct}%` }}
                 />
 
-                <span className="relative font-medium text-buy-text flex items-center gap-2">
+                <span className="relative flex items-center gap-1.5 font-medium text-buy-text">
                   {level.has_user_order && (
                     <span
-                      className="w-1.5 h-1.5 rounded-full bg-ward inline-block shrink-0 shadow-glow-ward"
+                      className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-warning shadow-glow-ward"
                       title="Your resting order"
                     />
                   )}
-                  <span>{formatCurrency(level.price)}</span>
+                  <span className="tabular-nums">{formatCurrency(level.price)}</span>
                 </span>
-                <span className="relative text-right text-text-muted">
+                <span className="relative text-right tabular-nums text-text-muted">
                   {formatQuantity(level.qty)}
                 </span>
-                <span className="relative text-right text-text-dim">
+                <span className="relative text-right tabular-nums text-text-dim">
                   {formatQuantity(level.total_qty)}
                 </span>
               </button>

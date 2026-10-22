@@ -32,40 +32,45 @@ export function GaugeBar({
   return (
     <div className={cn("w-full space-y-1.5 font-mono text-xs", className)}>
       {(leftLabel || rightLabel || leftValue || rightValue) && (
-        <div className="flex items-center justify-between text-[11px] text-text-muted">
+        <div className="flex items-center justify-between gap-3 text-[10px]">
           <div className="flex items-center gap-1.5">
-            {leftLabel && <span className="uppercase text-text-dim">{leftLabel}</span>}
-            {leftValue && <span className="font-semibold text-text">{leftValue}</span>}
+            {leftLabel && (
+              <span className="uppercase tracking-[0.12em] text-text-dim">{leftLabel}</span>
+            )}
+            {leftValue && <span className="font-semibold tabular-nums text-text">{leftValue}</span>}
           </div>
           <div className="flex items-center gap-1.5">
-            {rightValue && <span className="font-semibold text-text">{rightValue}</span>}
-            {rightLabel && <span className="uppercase text-text-dim">{rightLabel}</span>}
+            {rightValue && (
+              <span className="font-semibold tabular-nums text-text">{rightValue}</span>
+            )}
+            {rightLabel && (
+              <span className="uppercase tracking-[0.12em] text-text-dim">{rightLabel}</span>
+            )}
           </div>
         </div>
       )}
 
-      {/* Two-tone Track */}
       <div
-        className="relative w-full rounded-pill bg-white/[0.05] border border-glass-border overflow-hidden p-[1px] flex gap-[2px]"
+        className="relative flex w-full gap-[2px] overflow-hidden rounded-full border border-glass-border bg-white/[0.05] p-[1px]"
         style={{ height }}
       >
-        {/* Primary Segment */}
         <div
           className={cn(
-            "h-full rounded-pill transition-all duration-300",
-            variant === "brand-violet" && "bg-gradient-to-r from-brand-500 to-brand-400 shadow-glow-teal",
-            variant === "green-red" && "bg-gradient-to-r from-buy to-[#3DDC84]",
+            "h-full rounded-full transition-all duration-300",
+            variant === "brand-violet" &&
+              "bg-gradient-to-r from-brand-500 to-brand-400 shadow-glow-teal",
+            variant === "green-red" && "bg-gradient-to-r from-buy to-buy-text",
             variant === "ward" && "bg-gradient-to-r from-brand-500 via-ward to-sell"
           )}
           style={{ width: `${safeValue}%` }}
         />
 
-        {/* Optional Secondary Segment */}
         {safeSecondary > 0 && (
           <div
             className={cn(
-              "h-full rounded-pill transition-all duration-300",
-              variant === "brand-violet" && "bg-gradient-to-r from-violet-500 to-violet-400 shadow-glow-violet",
+              "h-full rounded-full transition-all duration-300",
+              variant === "brand-violet" &&
+                "bg-gradient-to-r from-violet-500 to-violet-400 shadow-glow-violet",
               variant === "green-red" && "bg-sell",
               variant === "ward" && "bg-ward"
             )}

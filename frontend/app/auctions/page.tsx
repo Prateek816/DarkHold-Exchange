@@ -8,9 +8,12 @@ import { useWalletStore } from "@/lib/stores/walletStore";
 import { CreateAuctionModal } from "@/components/auctions/CreateAuctionModal";
 import { SimBadge } from "@/components/ui/SimBadge";
 import { LineArtEmptyState } from "@/components/ui/LineArtEmptyState";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SegmentedTabs } from "@/components/ui/SegmentedTabs";
+import { Reveal } from "@/components/ui/Reveal";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { formatCurrency, formatQuantity } from "@/lib/format";
-import { DutchAuction } from "@/lib/types";
-import { Gavel, Clock, ArrowDownRight, Plus, RefreshCw, Hourglass } from "lucide-react";
+import { Gavel, ArrowDownRight, Plus, RefreshCw, Hourglass, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function AuctionsPage() {
@@ -29,167 +32,172 @@ export default function AuctionsPage() {
   });
 
   const statuses = [
-    { id: "ALL", label: "All Auctions" },
-    { id: "ACTIVE", label: "Active Drops" },
-    { id: "SOLD", label: "Sold Out" },
+    { id: "ALL", label: "All auctions" },
+    { id: "ACTIVE", label: "Active drops" },
+    { id: "SOLD", label: "Sold out" },
     { id: "EXPIRED", label: "Concluded" },
   ];
 
   return (
-    <div className="flex-1 px-4 sm:px-6 py-6 max-w-7xl mx-auto w-full space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/8 pb-5">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Dutch Auctions
-            </h1>
-            <span className="text-[11px] uppercase tracking-wider text-brand-400 px-2.5 py-0.5 rounded-full bg-brand-500/10 border border-brand-500/20 flex items-center gap-1 font-medium">
-              <Hourglass className="w-3 h-3" />
-              <span>Decaying Price Protocol</span>
-            </span>
-          </div>
-          <p className="text-xs text-text-muted pt-1">
-            Prices start at peak ceiling and tick downwards continuously until accepted or floor reached.
-          </p>
-        </div>
+    <div className="page-shell">
+      <PageHeader
+        eyebrow="Exchange · Dutch auctions"
+        title="Dutch Auctions"
+        description="Prices start at the peak ceiling and tick downward continuously until accepted or the floor is reached."
+        badge={
+          <span className="inline-flex items-center gap-1 rounded-full border border-brand-500/25 bg-brand-500/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-brand-400">
+            <Hourglass className="h-3 w-3" />
+            Decaying price protocol
+          </span>
+        }
+        actions={
+          <>
+            <button
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="flex items-center gap-1.5 rounded-full border border-glass-border bg-white/[0.04] px-3.5 py-2 font-mono text-[11px] text-text-muted transition-colors hover:bg-white/[0.07] hover:text-text disabled:opacity-50"
+            >
+              <RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} />
+              <span>Sync</span>
+            </button>
 
-        <div className="flex items-center gap-2.5">
-          <button
-            onClick={() => refetch()}
-            disabled={isFetching}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-12 bg-white/[0.04] border border-white/10 text-xs font-medium text-text-muted hover:text-white hover:bg-white/[0.07] transition-colors"
-          >
-            <RefreshCw className={cn("w-3.5 h-3.5", isFetching && "animate-spin")} />
-            <span>Sync</span>
-          </button>
+            <button
+              onClick={() => setIsCreateOpen(true)}
+              className="flex items-center gap-1.5 rounded-[12px] bg-gradient-to-r from-brand-400 to-brand-500 px-4 py-2 text-[11.5px] font-bold text-canvas shadow-[0_8px_24px_-8px_rgba(25,203,176,0.6)] transition-all hover:-translate-y-px"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Launch auction</span>
+            </button>
+          </>
+        }
+      />
 
-          <button
-            onClick={() => setIsCreateOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-12 bg-brand-500 hover:bg-brand-400 text-bg font-semibold text-xs transition-all shadow-[0_0_18px_rgba(25,203,176,0.35)]"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Launch Auction</span>
-          </button>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <SegmentedTabs
+          tabs={statuses}
+          activeId={selectedStatus}
+          onChange={setSelectedStatus}
+          size="sm"
+          layoutId="auction-status-pill"
+        />
+
+        <span className="hidden items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-text-dim sm:flex">
+          <Gavel className="h-3 w-3" />
+          {filteredAuctions.length} lots
+        </span>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-2 text-xs flex-wrap">
-        {statuses.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => setSelectedStatus(s.id)}
-            className={cn(
-              "px-3.5 py-1.5 rounded-full text-xs font-medium transition-all",
-              selectedStatus === s.id
-                ? "bg-brand-500/15 text-brand-400 border border-brand-500/35 shadow-[0_0_12px_rgba(25,203,176,0.2)]"
-                : "bg-white/[0.03] text-text-muted border border-white/8 hover:text-white hover:bg-white/[0.06]"
-            )}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Auctions Grid */}
-      {filteredAuctions.length === 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((n) => (
+            <Skeleton key={n} className="h-[268px] rounded-card" />
+          ))}
+        </div>
+      ) : filteredAuctions.length === 0 ? (
         <LineArtEmptyState
           type="NO_AUCTIONS"
-          title="No Active Auctions Found"
+          title="No auctions found"
           description="There are currently no Dutch auction drops matching the filter criteria."
           action={
             <button
               onClick={() => setIsCreateOpen(true)}
-              className="px-4 py-2 rounded-12 bg-white/[0.05] border border-white/10 text-xs text-white hover:bg-white/10 transition-colors"
+              className="rounded-[12px] border border-white/10 bg-white/[0.05] px-4 py-2 text-xs text-text transition-colors hover:bg-white/[0.09]"
             >
-              Launch New Drop
+              Launch new drop
             </button>
           }
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredAuctions.map((auction) => {
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {filteredAuctions.map((auction, i) => {
             const isActive = auction.status === "ACTIVE";
 
             return (
-              <Link
-                key={auction.auction_id}
-                href={`/auctions/${auction.auction_id}`}
-                className={cn(
-                  "relative rounded-24 border border-white/8 bg-gradient-to-br from-white/[0.055] via-white/[0.02] to-white/[0.01] backdrop-blur-[18px] p-6 hover:border-brand-500/40 hover:from-white/[0.07] transition-all duration-300 flex flex-col justify-between space-y-5 group shadow-[0_16px_36px_-15px_rgba(0,0,0,0.7)]",
-                  !isActive && "opacity-75"
-                )}
-              >
-                {/* Top hairline highlight */}
-                <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
+              <Reveal key={auction.auction_id} delay={Math.min(i * 0.06, 0.3)} y={16}>
+                <Link
+                  href={`/auctions/${auction.auction_id}`}
+                  className={cn(
+                    "group relative flex h-full flex-col justify-between gap-5 overflow-hidden rounded-card border border-glass-border p-6",
+                    "bg-gradient-to-br from-white/[0.055] via-white/[0.02] to-white/[0.01] shadow-glass backdrop-blur-[18px]",
+                    "transition-all duration-300 hover:-translate-y-1 hover:border-brand-500/40 hover:shadow-glass-lg",
+                    !isActive && "opacity-80"
+                  )}
+                >
+                  <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                  <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-brand-500/[0.06] blur-2xl transition-opacity duration-500 group-hover:opacity-100" />
 
-                <div className="space-y-4">
-                  {/* Status & Sim Badge Header */}
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={cn(
-                        "text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border",
-                        isActive
-                          ? "bg-warning/10 text-warning border-warning/35 animate-pulse"
-                          : auction.status === "SOLD"
-                          ? "bg-buy-tint text-buy border-buy/35"
-                          : "bg-white/[0.04] text-text-dim border-white/8"
-                      )}
-                    >
-                      {auction.status}
-                    </span>
-
-                    {auction.is_sim_seller && <SimBadge label="SIM" size="sm" />}
-                  </div>
-
-                  {/* Title & Asset */}
-                  <div>
-                    <h3 className="text-base font-semibold text-white group-hover:text-brand-300 transition-colors truncate">
-                      {auction.asset_name}
-                    </h3>
-                    <p className="text-[11px] text-text-muted pt-0.5">
-                      Lot Size: {formatQuantity(auction.qty)} unit(s)
-                    </p>
-                  </div>
-
-                  {/* Live Price Odometer preview */}
-                  <div className="p-4 rounded-16 bg-white/[0.03] border border-white/8 flex items-center justify-between group-hover:border-white/12 transition-colors">
-                    <div>
-                      <span className="text-[10px] uppercase tracking-wider text-text-dim block">
-                        Current Price
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.12em]",
+                          isActive
+                            ? "border-warning/35 bg-warning/10 text-warning"
+                            : auction.status === "SOLD"
+                            ? "border-buy/35 bg-buy/10 text-buy-text"
+                            : "border-glass-border bg-white/[0.04] text-text-dim"
+                        )}
+                      >
+                        {isActive && (
+                          <span className="relative flex h-1.5 w-1.5">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning opacity-70" />
+                            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-warning" />
+                          </span>
+                        )}
+                        {auction.status}
                       </span>
-                      <span className="text-2xl font-bold font-sans text-white group-hover:text-brand-400 tabular-nums transition-colors">
-                        {formatCurrency(auction.current_price)}
+
+                      {auction.is_sim_seller && <SimBadge label="SIM" size="sm" />}
+                    </div>
+
+                    <div>
+                      <h3 className="truncate text-[15px] font-semibold tracking-tight text-text transition-colors group-hover:text-brand-300">
+                        {auction.asset_name}
+                      </h3>
+                      <p className="pt-0.5 font-mono text-[10.5px] text-text-muted">
+                        Lot size · {formatQuantity(auction.qty)} unit(s)
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-panel border border-glass-border bg-white/[0.025] p-4 transition-colors group-hover:border-glass-border-strong">
+                      <div>
+                        <span className="data-label block">Current price</span>
+                        <span className="font-display text-[26px] font-semibold leading-none tracking-tight text-text tabular-nums transition-colors group-hover:text-brand-400">
+                          {formatCurrency(auction.current_price)}
+                        </span>
+                      </div>
+                      {isActive && (
+                        <div className="flex items-center gap-1 font-mono text-[11px] text-warning">
+                          <ArrowDownRight className="h-3.5 w-3.5" />
+                          <span className="tabular-nums">
+                            −{formatCurrency(auction.price_decrement)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between border-t border-glass-border pt-3 font-mono text-[10px] text-text-muted">
+                    <div className="flex items-center gap-2">
+                      <span className="tabular-nums">
+                        Start {formatCurrency(auction.start_price, { showCents: false })}
+                      </span>
+                      <span className="h-0.5 w-0.5 rounded-full bg-text-dim" />
+                      <span className="tabular-nums">
+                        Floor {formatCurrency(auction.floor_price, { showCents: false })}
                       </span>
                     </div>
-                    {isActive && (
-                      <div className="text-right text-[11px] text-warning flex items-center gap-1 font-mono">
-                        <ArrowDownRight className="w-3.5 h-3.5" />
-                        <span className="tabular-nums">-{formatCurrency(auction.price_decrement)}</span>
-                      </div>
-                    )}
+                    <span className="flex items-center gap-1 text-[11px] font-medium text-brand-400 transition-transform group-hover:translate-x-0.5">
+                      Inspect <ArrowUpRight className="h-3 w-3" />
+                    </span>
                   </div>
-                </div>
-
-                {/* Footer Bounds & Link */}
-                <div className="pt-3 border-t border-white/6 flex items-center justify-between text-[11px] text-text-muted font-mono">
-                  <div>
-                    <span className="tabular-nums">Start: {formatCurrency(auction.start_price, { showCents: false })}</span>
-                    <span className="mx-2 text-white/20">•</span>
-                    <span className="tabular-nums">Floor: {formatCurrency(auction.floor_price, { showCents: false })}</span>
-                  </div>
-                  <span className="text-brand-400 font-sans font-medium text-xs group-hover:translate-x-0.5 transition-transform">
-                    Inspect &rarr;
-                  </span>
-                </div>
-              </Link>
+                </Link>
+              </Reveal>
             );
           })}
         </div>
       )}
 
-      {/* Create Auction Modal */}
       <CreateAuctionModal
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}

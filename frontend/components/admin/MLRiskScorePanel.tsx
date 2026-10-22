@@ -3,6 +3,7 @@
 import React from "react";
 import { MLRiskAccount } from "@/lib/types";
 import { SimBadge } from "@/components/ui/SimBadge";
+import { GlassCard } from "@/components/ui/GlassCard";
 import { formatPercent } from "@/lib/format";
 import { ShieldAlert, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -13,7 +14,6 @@ interface MLRiskScorePanelProps {
 }
 
 export function MLRiskScorePanel({ accounts, className }: MLRiskScorePanelProps) {
-  // Score histogram distribution buckets (0-20, 21-40, 41-60, 61-80, 81-100)
   const scoreBuckets = [
     { range: "0-20", count: accounts.filter((a) => a.risk_score <= 20).length },
     { range: "21-40", count: accounts.filter((a) => a.risk_score > 20 && a.risk_score <= 40).length },
@@ -23,148 +23,158 @@ export function MLRiskScorePanel({ accounts, className }: MLRiskScorePanelProps)
   ];
 
   return (
-    <div
-      className={cn(
-        "relative rounded-24 border border-white/8 bg-gradient-to-br from-white/[0.055] via-white/[0.02] to-white/[0.01] backdrop-blur-[18px] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.8)] p-6 space-y-6 overflow-hidden",
-        className
-      )}
-    >
-      <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
-
-      {/* Header and Advisory Warning Banner */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-10 bg-warning/10 border border-warning/25 flex items-center justify-center">
-              <ShieldAlert className="w-4 h-4 text-warning" />
+    <GlassCard className={cn("overflow-hidden p-0", className)}>
+      {/* Header */}
+      <div className="space-y-3.5 border-b border-glass-border p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-[11px] border border-warning/30 bg-warning/10 text-warning">
+              <ShieldAlert className="h-4 w-4" />
+            </span>
+            <div>
+              <h3 className="font-display text-[15px] font-semibold tracking-tight text-text">
+                Advisory ML risk score
+              </h3>
+              <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-text-dim">
+                Suspicious account surveillance
+              </p>
             </div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
-              Advisory ML Suspicious Account Risk Score
-            </h3>
           </div>
-          <span className="text-[11px] text-text-dim font-mono">Model: tree_ensemble_v3.pkl</span>
+          <span className="rounded-full border border-glass-border bg-white/[0.03] px-2.5 py-1 font-mono text-[9px] text-text-dim">
+            tree_ensemble_v3.pkl
+          </span>
         </div>
 
-        {/* Mandatory Advisory Notice */}
         <div
           role="note"
-          className="p-4 rounded-16 bg-warning/10 border border-warning/30 text-xs text-text-muted flex items-start gap-3"
+          className="flex items-start gap-2.5 rounded-panel border border-warning/30 bg-warning/[0.08] p-3 text-[11px] leading-relaxed text-text-muted"
         >
-          <Info className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
           <span>
-            <strong className="text-warning">Advisory only.</strong> Trained on simulated data. Does not block trades or
-            move money. Designed for surveillance forensics and operator inspection.
+            <strong className="font-semibold text-warning">Advisory only.</strong> Trained on
+            simulated data. Does not block trades or move money. Intended for surveillance
+            forensics and operator inspection.
           </span>
         </div>
       </div>
 
-      {/* Distribution Histogram & Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-5 rounded-20 bg-white/[0.025] border border-white/6">
-        <div className="md:col-span-1 space-y-1">
-          <span className="text-[10px] uppercase font-medium tracking-wider text-text-dim block">Distribution</span>
-          <p className="text-base font-semibold text-white">Risk Histogram</p>
-          <span className="text-[11px] text-text-muted">Evaluated across all active bots</span>
+      {/* Histogram */}
+      <div className="grid grid-cols-1 gap-4 border-b border-glass-border p-5 md:grid-cols-4">
+        <div className="space-y-1">
+          <span className="data-label block">Distribution</span>
+          <p className="font-display text-[13px] font-semibold tracking-tight text-text">
+            Risk histogram
+          </p>
+          <span className="block text-[10.5px] leading-relaxed text-text-muted">
+            Evaluated across all active bots
+          </span>
         </div>
 
-        <div className="md:col-span-3 flex items-end justify-between gap-3 h-20 pt-2 font-mono">
+        <div className="flex h-20 items-end justify-between gap-3 font-mono md:col-span-3">
           {scoreBuckets.map((b) => (
-            <div key={b.range} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
-              <span className="text-[10px] text-text-dim tabular-nums">{b.count}</span>
+            <div
+              key={b.range}
+              className="flex h-full flex-1 flex-col items-center justify-end gap-1.5"
+            >
+              <span className="text-[9px] tabular-nums text-text-dim">{b.count}</span>
               <div
                 className={cn(
-                  "w-full rounded-t transition-all",
+                  "w-full rounded-t-[3px] transition-all duration-500",
                   b.range === "81-100"
-                    ? "bg-sell shadow-[0_0_8px_rgba(240,80,110,0.5)]"
+                    ? "bg-sell shadow-[0_0_8px_rgba(240,80,110,0.45)]"
                     : b.range === "61-80"
-                    ? "bg-warning shadow-[0_0_8px_rgba(245,181,68,0.4)]"
-                    : "bg-buy shadow-[0_0_8px_rgba(34,197,94,0.3)]"
+                    ? "bg-warning shadow-[0_0_8px_rgba(245,181,68,0.35)]"
+                    : "bg-buy/80 shadow-[0_0_8px_rgba(34,197,94,0.25)]"
                 )}
-                style={{ height: `${Math.max(15, (b.count / (accounts.length || 1)) * 100)}%` }}
+                style={{
+                  height:
+                    b.count === 0
+                      ? 0
+                      : `${Math.max(12, (b.count / (accounts.length || 1)) * 100)}%`,
+                }}
               />
-              <span className="text-[10px] text-text-muted">{b.range}</span>
+              <span className="text-[8.5px] text-text-muted">{b.range}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Ranked Anomaly Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse text-xs">
+      {/* Table */}
+      <div className="no-scrollbar overflow-x-auto">
+        <table className="data-table w-full min-w-[860px] border-collapse text-left">
           <thead>
-            <tr className="border-b border-white/8 text-[11px] uppercase tracking-wider text-text-dim">
-              <th className="px-3 py-3">Score</th>
-              <th className="px-3 py-3">Account ID</th>
-              <th className="px-3 py-3">Cancel Ratio</th>
-              <th className="px-3 py-3">Orders / Min</th>
-              <th className="px-3 py-3">Supply Share</th>
-              <th className="px-3 py-3">Ceiling Probes</th>
-              <th className="px-3 py-3">Forensic Observation</th>
+            <tr className="border-b border-glass-border bg-white/[0.015]">
+              <th className="px-4 py-2.5">Score</th>
+              <th className="px-4 py-2.5">Account</th>
+              <th className="px-4 py-2.5">Cancel ratio</th>
+              <th className="px-4 py-2.5">Orders / min</th>
+              <th className="px-4 py-2.5">Supply share</th>
+              <th className="px-4 py-2.5">Ceiling probes</th>
+              <th className="px-4 py-2.5">Forensic observation</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/6 font-mono">
+          <tbody className="divide-y divide-white/[0.03]">
             {accounts.map((acc) => (
-              <tr key={acc.account_id} className="hover:bg-white/[0.03] transition-colors">
-                {/* Score */}
-                <td className="px-3 py-3">
+              <tr key={acc.account_id} className="transition-colors hover:bg-white/[0.03]">
+                <td className="px-4 py-3">
                   <span
                     className={cn(
-                      "px-2.5 py-0.5 rounded-full text-xs font-semibold tabular-nums",
+                      "rounded-full border px-2.5 py-0.5 font-mono text-[10px] font-semibold tabular-nums",
                       acc.risk_score >= 80
-                        ? "bg-sell-tint text-sell border border-sell/40"
+                        ? "border-sell/40 bg-sell-tint text-sell-text"
                         : acc.risk_score >= 50
-                        ? "bg-warning/15 text-warning border border-warning/40"
-                        : "bg-buy-tint text-buy border border-buy/40"
+                        ? "border-warning/40 bg-warning/15 text-warning"
+                        : "border-buy/40 bg-buy-tint text-buy-text"
                     )}
                   >
                     {acc.risk_score} / 100
                   </span>
                 </td>
 
-                {/* Account ID + SIM badge */}
-                <td className="px-3 py-3 font-sans">
+                <td className="px-4 py-3">
                   <div className="flex items-center gap-1.5 font-mono">
-                    <span className="text-white font-medium">{acc.account_id}</span>
+                    <span className="text-[11px] font-medium text-text">{acc.account_id}</span>
                     {acc.is_sim && <SimBadge label="SIM" size="sm" />}
                   </div>
                 </td>
 
-                {/* Cancel ratio feature bar */}
-                <td className="px-3 py-3 min-w-[110px]">
+                <td className="min-w-[110px] px-4 py-3">
                   <div className="space-y-1">
-                    <span className="text-[11px] text-text-muted tabular-nums">
+                    <span className="font-mono text-[10px] tabular-nums text-text-muted">
                       {formatPercent(acc.cancel_ratio * 100, false)}
                     </span>
-                    <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-1 w-full overflow-hidden rounded-full border border-glass-border bg-white/[0.05]">
                       <div
-                        className="h-full bg-warning"
-                        style={{ width: `${acc.cancel_ratio * 100}%` }}
+                        className="h-full rounded-full bg-warning"
+                        style={{ width: `${Math.min(100, acc.cancel_ratio * 100)}%` }}
                       />
                     </div>
                   </div>
                 </td>
 
-                {/* Orders / min */}
-                <td className="px-3 py-3 text-white tabular-nums">{acc.orders_per_min} /m</td>
+                <td className="px-4 py-3 font-mono text-[11px] tabular-nums text-text">
+                  {acc.orders_per_min} /m
+                </td>
 
-                {/* Supply share */}
-                <td className="px-3 py-3 text-text-muted tabular-nums">
+                <td className="px-4 py-3 font-mono text-[10.5px] tabular-nums text-text-muted">
                   {formatPercent(acc.supply_share_pct, false)}
                 </td>
 
-                {/* Above ceiling attempts */}
-                <td className="px-3 py-3">
+                <td className="px-4 py-3">
                   <span
                     className={cn(
-                      "font-semibold tabular-nums",
-                      acc.above_ceiling_attempts > 0 ? "text-sell" : "text-text-dim"
+                      "font-mono text-[10.5px] font-semibold tabular-nums",
+                      acc.above_ceiling_attempts > 0 ? "text-sell-text" : "text-text-dim"
                     )}
                   >
                     {acc.above_ceiling_attempts} probes
                   </span>
                 </td>
 
-                {/* Notes */}
-                <td className="px-3 py-3 text-[11px] text-text-muted max-w-xs truncate font-sans" title={acc.notes}>
+                <td
+                  className="max-w-xs truncate px-4 py-3 text-[11px] text-text-muted"
+                  title={acc.notes}
+                >
                   {acc.notes}
                 </td>
               </tr>
@@ -172,6 +182,6 @@ export function MLRiskScorePanel({ accounts, className }: MLRiskScorePanelProps)
           </tbody>
         </table>
       </div>
-    </div>
+    </GlassCard>
   );
 }

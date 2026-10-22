@@ -2,156 +2,183 @@
 
 import React from "react";
 import { Activity, Zap, Server, Cpu } from "lucide-react";
+import { GlassCard } from "@/components/ui/GlassCard";
 import { cn } from "@/lib/utils";
 
-export function MetricsCharts({ className }: { className?: string }) {
-  // Synthetic benchmark histogram bins for settlement latency (ms)
-  const bins = [
-    { range: "<50ms", count: 480 },
-    { range: "50-100", count: 820 },
-    { range: "100-200", count: 1450 }, // p50 around here
-    { range: "200-400", count: 320 },
-    { range: "400-800", count: 70 },
-    { range: ">800ms", count: 12 }, // p99 around here
-  ];
+const bins = [
+  { range: "<50ms", count: 480 },
+  { range: "50-100", count: 820 },
+  { range: "100-200", count: 1450 },
+  { range: "200-400", count: 320 },
+  { range: "400-800", count: 70 },
+  { range: ">800ms", count: 12 },
+];
 
+export function MetricsCharts({ className }: { className?: string }) {
   const maxCount = Math.max(...bins.map((b) => b.count));
 
   return (
-    <div className={cn("grid grid-cols-1 lg:grid-cols-3 gap-5 font-sans text-xs", className)}>
-      {/* Chart 1: Settlement Lag Histogram */}
-      <div className="relative rounded-24 border border-white/8 bg-gradient-to-br from-white/[0.055] via-white/[0.02] to-white/[0.01] backdrop-blur-[18px] p-6 space-y-4 shadow-[0_16px_36px_-15px_rgba(0,0,0,0.7)]">
-        <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
-
-        <div className="flex items-center justify-between border-b border-white/8 pb-3">
-          <div className="flex items-center gap-2 text-white">
-            <Activity className="w-4 h-4 text-buy" />
-            <h4 className="font-semibold uppercase tracking-wider text-[11px]">
-              Settlement Latency (SLA)
-            </h4>
+    <div className={cn("grid grid-cols-1 gap-4 lg:grid-cols-3", className)}>
+      {/* Chart 1: Settlement lag histogram */}
+      <GlassCard className="flex flex-col gap-4 p-5">
+        <div className="flex items-start justify-between gap-3 border-b border-glass-border pb-3">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-8 w-8 items-center justify-center rounded-[10px] border border-buy/30 bg-buy/10 text-buy">
+              <Activity className="h-4 w-4" />
+            </span>
+            <div>
+              <h4 className="font-display text-[11.5px] font-semibold uppercase tracking-[0.08em] text-text">
+                Settlement latency
+              </h4>
+              <p className="font-mono text-[8.5px] uppercase tracking-[0.12em] text-text-dim">
+                SLA distribution
+              </p>
+            </div>
           </div>
-          <span className="text-[10px] text-buy font-bold font-mono px-2 py-0.5 rounded-full bg-buy-tint border border-buy/30">
-            p50: 142ms • p99: 780ms
+          <span className="rounded-full border border-buy/30 bg-buy-tint px-2 py-0.5 font-mono text-[9px] font-bold text-buy-text">
+            p50 142ms
           </span>
         </div>
 
-        {/* Histogram Bars */}
-        <div className="h-32 flex items-end justify-between gap-2 pt-2">
+        <div className="flex h-32 items-end gap-2">
           {bins.map((bin, i) => {
             const heightPct = (bin.count / maxCount) * 100;
             const isP50 = i === 2;
             const isP99 = i === 5;
 
             return (
-              <div key={bin.range} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end font-mono">
-                <span className="text-[9px] text-text-dim tabular-nums">{bin.count}</span>
+              <div
+                key={bin.range}
+                className="flex h-full flex-1 flex-col items-center justify-end gap-1.5 font-mono"
+              >
+                <span className="text-[9px] tabular-nums text-text-dim">{bin.count}</span>
                 <div
                   className={cn(
-                    "w-full rounded-t transition-all duration-300",
-                    isP99 ? "bg-sell shadow-[0_0_8px_rgba(240,80,110,0.5)]" : isP50 ? "bg-buy shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-white/20 hover:bg-white/30"
+                    "w-full rounded-t-[4px] transition-all duration-300",
+                    isP99
+                      ? "bg-sell shadow-[0_0_8px_rgba(240,80,110,0.45)]"
+                      : isP50
+                      ? "bg-gradient-to-t from-buy/70 to-buy shadow-[0_0_10px_rgba(34,197,94,0.35)]"
+                      : "bg-white/[0.14] hover:bg-white/[0.22]"
                   )}
                   style={{ height: `${heightPct}%` }}
                   title={`${bin.range}: ${bin.count} settlements`}
                 />
-                <span className="text-[9px] text-text-muted truncate w-full text-center">
+                <span className="w-full truncate text-center text-[8.5px] text-text-muted">
                   {bin.range}
                 </span>
               </div>
             );
           })}
         </div>
-      </div>
 
-      {/* Chart 2: Pipeline Throughput (Orders per Second) */}
-      <div className="relative rounded-24 border border-white/8 bg-gradient-to-br from-white/[0.055] via-white/[0.02] to-white/[0.01] backdrop-blur-[18px] p-6 space-y-4 shadow-[0_16px_36px_-15px_rgba(0,0,0,0.7)]">
-        <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
+        <div className="flex items-center justify-between border-t border-glass-border pt-2.5 font-mono text-[9px] text-text-dim">
+          <span>p99 780ms</span>
+          <span>2,450 settlements</span>
+        </div>
+      </GlassCard>
 
-        <div className="flex items-center justify-between border-b border-white/8 pb-3">
-          <div className="flex items-center gap-2 text-white">
-            <Zap className="w-4 h-4 text-warning" />
-            <h4 className="font-semibold uppercase tracking-wider text-[11px]">
-              Engine Rate (Ops / Sec)
-            </h4>
+      {/* Chart 2: Pipeline throughput */}
+      <GlassCard className="flex flex-col gap-4 p-5">
+        <div className="flex items-start justify-between gap-3 border-b border-glass-border pb-3">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-8 w-8 items-center justify-center rounded-[10px] border border-warning/30 bg-warning/10 text-warning">
+              <Zap className="h-4 w-4" />
+            </span>
+            <div>
+              <h4 className="font-display text-[11.5px] font-semibold uppercase tracking-[0.08em] text-text">
+                Engine rate
+              </h4>
+              <p className="font-mono text-[8.5px] uppercase tracking-[0.12em] text-text-dim">
+                Orders per second
+              </p>
+            </div>
           </div>
-          <span className="text-[10px] text-warning font-bold font-mono px-2 py-0.5 rounded-full bg-warning/10 border border-warning/30">
-            2,450 ops/sec
+          <span className="rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 font-mono text-[9px] font-bold text-warning">
+            2,450 ops/s
           </span>
         </div>
 
-        <div className="space-y-3 pt-1">
-          <div className="space-y-1">
-            <div className="flex justify-between text-[11px] text-text-muted">
-              <span>Offered Orders</span>
-              <span className="text-white font-semibold font-mono">2,450 / s</span>
+        <div className="space-y-3.5">
+          {[
+            { label: "Offered orders", value: "2,450 / s", pct: 92, className: "bg-white/40" },
+            {
+              label: "Matched trades",
+              value: "1,820 / s",
+              pct: 78,
+              className: "bg-brand-500 shadow-[0_0_8px_rgba(25,203,176,0.45)]",
+            },
+            {
+              label: "Settled on ledger",
+              value: "1,820 / s",
+              pct: 78,
+              className: "bg-buy shadow-[0_0_8px_rgba(34,197,94,0.35)]",
+            },
+          ].map((row) => (
+            <div key={row.label} className="space-y-1.5">
+              <div className="flex justify-between text-[11px] text-text-muted">
+                <span>{row.label}</span>
+                <span className="font-mono font-semibold tabular-nums text-text">{row.value}</span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full border border-glass-border bg-white/[0.04]">
+                <div
+                  className={cn("h-full rounded-full", row.className)}
+                  style={{ width: `${row.pct}%` }}
+                />
+              </div>
             </div>
-            <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-              <div className="h-full bg-white/40 w-[92%]" />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex justify-between text-[11px] text-text-muted">
-              <span>Matched Trades</span>
-              <span className="text-brand-400 font-semibold font-mono">1,820 / s</span>
-            </div>
-            <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-              <div className="h-full bg-brand-500 w-[78%] shadow-[0_0_8px_rgba(25,203,176,0.5)]" />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex justify-between text-[11px] text-text-muted">
-              <span>Settled on Ledger</span>
-              <span className="text-buy font-semibold font-mono">1,820 / s</span>
-            </div>
-            <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-              <div className="h-full bg-buy w-[78%] shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
-            </div>
-          </div>
+          ))}
         </div>
 
-        <div className="flex justify-between text-[10px] text-text-dim border-t border-white/6 pt-2 font-mono">
-          <span>100% Pipeline Balance</span>
-          <span>Zero Unsettled Drift</span>
+        <div className="mt-auto flex justify-between border-t border-glass-border pt-2.5 font-mono text-[9px] text-text-dim">
+          <span>100% pipeline balance</span>
+          <span>zero unsettled drift</span>
         </div>
-      </div>
+      </GlassCard>
 
-      {/* Chart 3: Engine Sequence vs Consumer Offset */}
-      <div className="relative rounded-24 border border-white/8 bg-gradient-to-br from-white/[0.055] via-white/[0.02] to-white/[0.01] backdrop-blur-[18px] p-6 space-y-4 shadow-[0_16px_36px_-15px_rgba(0,0,0,0.7)]">
-        <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
-
-        <div className="flex items-center justify-between border-b border-white/8 pb-3">
-          <div className="flex items-center gap-2 text-white">
-            <Server className="w-4 h-4 text-brand-400" />
-            <h4 className="font-semibold uppercase tracking-wider text-[11px]">
-              Seq vs Consumer Offset
-            </h4>
+      {/* Chart 3: Sequence vs offset */}
+      <GlassCard className="flex flex-col gap-4 p-5">
+        <div className="flex items-start justify-between gap-3 border-b border-glass-border pb-3">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-8 w-8 items-center justify-center rounded-[10px] border border-brand-500/30 bg-brand-500/10 text-brand-400">
+              <Server className="h-4 w-4" />
+            </span>
+            <div>
+              <h4 className="font-display text-[11.5px] font-semibold uppercase tracking-[0.08em] text-text">
+                Sequence vs offset
+              </h4>
+              <p className="font-mono text-[8.5px] uppercase tracking-[0.12em] text-text-dim">
+                Consumer lag
+              </p>
+            </div>
           </div>
-          <span className="text-[10px] text-buy font-bold font-mono px-2 py-0.5 rounded-full bg-buy-tint border border-buy/30">
-            Lag: 0 msgs
+          <span className="rounded-full border border-buy/30 bg-buy-tint px-2 py-0.5 font-mono text-[9px] font-bold text-buy-text">
+            Lag 0 msgs
           </span>
         </div>
 
-        <div className="p-3.5 rounded-16 bg-white/[0.025] border border-white/6 space-y-2.5 font-mono">
+        <div className="space-y-2.5 rounded-panel border border-glass-border bg-white/[0.02] p-3.5 font-mono">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] text-text-muted">Engine Seq:</span>
-            <span className="font-bold text-white tabular-nums">#1,894,204</span>
+            <span className="text-[10.5px] text-text-muted">Engine sequence</span>
+            <span className="text-[11.5px] font-bold tabular-nums text-text">#1,894,204</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-[11px] text-text-muted">Consumer Offset:</span>
-            <span className="font-bold text-buy tabular-nums">#1,894,204</span>
+            <span className="text-[10.5px] text-text-muted">Consumer offset</span>
+            <span className="text-[11.5px] font-bold tabular-nums text-buy-text">
+              #1,894,204
+            </span>
           </div>
-          <div className="flex items-center justify-between text-[10px] text-text-dim pt-2 border-t border-white/6">
-            <span>Event-Loop Lag:</span>
-            <span className="text-buy font-semibold">1.2ms</span>
+          <div className="flex items-center justify-between border-t border-glass-border pt-2.5 text-[10px] text-text-dim">
+            <span>Event-loop lag</span>
+            <span className="font-semibold text-buy-text">1.2 ms</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-[11px] text-text-muted">
-          <Cpu className="w-3.5 h-3.5 text-buy shrink-0" />
-          <span>In-memory ring buffer synchronized with persistent WAL.</span>
+        <div className="mt-auto flex items-start gap-2 border-t border-glass-border pt-2.5 text-[10.5px] leading-relaxed text-text-muted">
+          <Cpu className="mt-0.5 h-3.5 w-3.5 shrink-0 text-buy" />
+          <span>In-memory ring buffer synchronized with the persistent write-ahead log.</span>
         </div>
-      </div>
+      </GlassCard>
     </div>
   );
 }

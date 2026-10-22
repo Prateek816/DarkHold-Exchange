@@ -6,26 +6,31 @@ import { SimBadge } from "@/components/ui/SimBadge";
 
 export function FooterStrip() {
   return (
-    <footer className="w-full border-t border-white/8 bg-white/[0.015] backdrop-blur-[16px] px-4 py-2.5 text-xs font-sans text-text-dim flex flex-wrap items-center justify-between gap-3 z-40 select-none">
+    <footer className="mt-2 hidden w-full items-center justify-between gap-4 rounded-[14px] border border-glass-border bg-white/[0.015] px-4 py-2.5 text-[11px] text-text-dim backdrop-blur-[16px] select-none md:flex">
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1.5 text-text-muted">
-          <ShieldCheck className="w-3.5 h-3.5 text-brand-400" />
-          <span className="font-semibold text-white/90">THE GRIMOIRE LEDGER</span>
-          <span className="text-[10px] text-text-dim font-mono">v2.4-engine</span>
-        </div>
-        <span className="text-white/10">|</span>
-        <div className="flex items-center gap-2 text-[11px]">
+        <span className="flex items-center gap-1.5">
+          <ShieldCheck className="h-3.5 w-3.5 text-brand-400" />
+          <span className="font-display text-[11px] font-semibold tracking-wide text-text-muted">
+            THE GRIMOIRE LEDGER
+          </span>
+          <span className="font-mono text-[9px] tracking-[0.12em] text-text-dim">v3.0-engine</span>
+        </span>
+        <span className="h-3 w-px bg-white/10" />
+        <span className="flex items-center gap-2">
           <SimBadge label="SIM" size="sm" />
-          <span>Simulated market. Funds are simulated credits. Activity includes simulated traders.</span>
-        </div>
+          <span>Simulated market · simulated credits · simulated counterparties</span>
+        </span>
       </div>
 
-      <div className="flex items-center gap-4 text-[11px]">
-        <span className="flex items-center gap-1 hover:text-white transition-colors cursor-help" title="Reserve -> Match -> Settle pipeline enforces 100% solvency without unbacked fractional trading.">
-          <Info className="w-3 h-3 text-text-dim" />
-          <span>Reserve-Match-Settle Protocol</span>
+      <div className="flex items-center gap-4 font-mono text-[10px] uppercase tracking-[0.1em]">
+        <span
+          className="flex cursor-help items-center gap-1.5 transition-colors hover:text-text-muted"
+          title="Reserve → Match → Settle pipeline enforces 100% solvency without unbacked fractional trading."
+        >
+          <Info className="h-3 w-3" />
+          <span>Reserve · Match · Settle</span>
         </span>
-        <span className="text-white/10">|</span>
+        <span className="h-3 w-px bg-white/10" />
         <span className="text-warning/80">Anti-Scalping Ward Active</span>
       </div>
     </footer>

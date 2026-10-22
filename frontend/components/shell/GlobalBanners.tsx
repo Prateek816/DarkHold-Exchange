@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
-import { AlertTriangle, WifiOff, ShieldX } from "lucide-react";
+import { AlertTriangle, WifiOff, ShieldX, RotateCw } from "lucide-react";
 import { ConnectionState } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface GlobalBannersProps {
   connectionState: ConnectionState;
@@ -21,61 +22,91 @@ export function GlobalBanners({
 }: GlobalBannersProps) {
   const isDisconnected = connectionState === "DISCONNECTED" || connectionState === "RECONNECTING";
 
+  if (!isAssetHalted && !isEngineUnavailable && !isDisconnected) return null;
+
   return (
-    <div className="w-full flex flex-col gap-2 z-40">
-      {/* Asset Halted Banner */}
+    <div className="z-40 flex w-full flex-col gap-2">
+      {/* Asset halted */}
       {isAssetHalted && (
         <div
           role="alert"
-          className="w-full rounded-panel border border-sell/40 bg-gradient-to-r from-sell/15 via-white/[0.02] to-transparent backdrop-blur-md py-2.5 px-4 flex items-center justify-between text-xs text-text font-mono border-l-4 border-l-sell shadow-glass-sm animate-pulse"
+          className="relative flex flex-wrap items-center justify-between gap-3 overflow-hidden rounded-[14px] border border-sell/35 bg-gradient-to-r from-sell/[0.12] via-sell/[0.04] to-transparent px-4 py-3 shadow-glass-sm backdrop-blur-md animate-fade-up"
         >
-          <div className="flex items-center gap-2.5">
-            <ShieldX className="w-4 h-4 text-sell shrink-0" />
-            <span>
-              <strong className="text-sell">TRADING HALTED:</strong> Market orders and submissions disabled for{" "}
-              {haltedAssetName || "this asset"}. Terminal is in read-only inspection mode.
+          <span className="absolute inset-y-3 left-0 w-[2px] rounded-r-full bg-sell" />
+          <div className="flex items-center gap-3">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border border-sell/40 bg-sell/10 text-sell">
+              <ShieldX className="h-4 w-4" />
             </span>
+            <div>
+              <p className="font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-sell-text">
+                Trading halted
+              </p>
+              <p className="pt-0.5 text-[11.5px] leading-relaxed text-text-muted">
+                Submissions are disabled for{" "}
+                <span className="font-medium text-text">{haltedAssetName || "this asset"}</span>.
+                The terminal is in read-only inspection mode.
+              </p>
+            </div>
           </div>
-          <span className="text-[10px] uppercase tracking-wider text-sell font-bold border border-sell/50 bg-sell/10 px-2 py-0.5 rounded-pill">
-            Halted by Circuit Breaker
+          <span className="rounded-full border border-sell/40 bg-sell/10 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.1em] text-sell-text">
+            Circuit breaker
           </span>
         </div>
       )}
 
-      {/* Engine Unavailable Banner */}
+      {/* Engine unavailable */}
       {isEngineUnavailable && (
         <div
           role="alert"
-          className="w-full rounded-panel border border-warning/40 bg-gradient-to-r from-warning/15 via-white/[0.02] to-transparent backdrop-blur-md py-2.5 px-4 flex items-center gap-2.5 text-xs text-text font-mono border-l-4 border-l-warning shadow-glass-sm"
+          className="relative flex items-center gap-3 overflow-hidden rounded-[14px] border border-warning/35 bg-gradient-to-r from-warning/[0.12] via-warning/[0.04] to-transparent px-4 py-3 shadow-glass-sm backdrop-blur-md animate-fade-up"
         >
-          <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
-          <span>
-            <strong className="text-warning">ENGINE BUSY:</strong> High transaction volume on the ledger. New orders may experience
-            settlement latency.
+          <span className="absolute inset-y-3 left-0 w-[2px] rounded-r-full bg-warning" />
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border border-warning/40 bg-warning/10 text-warning">
+            <AlertTriangle className="h-4 w-4" />
           </span>
+          <div>
+            <p className="font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-warning">
+              Engine busy
+            </p>
+            <p className="pt-0.5 text-[11.5px] leading-relaxed text-text-muted">
+              High transaction volume on the ledger. New orders may experience settlement latency.
+            </p>
+          </div>
         </div>
       )}
 
-      {/* Disconnected / Reconnecting Banner */}
+      {/* Disconnected */}
       {isDisconnected && (
         <div
           role="alert"
-          className="w-full rounded-panel border border-warning/40 bg-gradient-to-r from-warning/15 via-white/[0.02] to-transparent backdrop-blur-md py-2 px-4 flex items-center justify-between text-xs text-text font-mono border-l-4 border-l-warning shadow-glass-sm"
+          className={cn(
+            "relative flex flex-wrap items-center justify-between gap-3 overflow-hidden rounded-[14px] border border-warning/35 bg-gradient-to-r from-warning/[0.1] via-warning/[0.03] to-transparent px-4 py-3 shadow-glass-sm backdrop-blur-md",
+            "animate-fade-up"
+          )}
         >
-          <div className="flex items-center gap-2">
-            <WifiOff className="w-3.5 h-3.5 text-warning shrink-0" />
-            <span>
-              {connectionState === "RECONNECTING"
-                ? "Connection interrupted. Reconnecting with exponential backoff..."
-                : "WebSocket disconnected. Showing cached market snapshot. Submissions will fall back to REST."}
+          <span className="absolute inset-y-3 left-0 w-[2px] rounded-r-full bg-warning" />
+          <div className="flex items-center gap-3">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border border-warning/40 bg-warning/10 text-warning">
+              <WifiOff className="h-4 w-4" />
             </span>
+            <div>
+              <p className="font-mono text-[9px] font-bold uppercase tracking-[0.14em] text-warning">
+                {connectionState === "RECONNECTING" ? "Reconnecting" : "Live feed offline"}
+              </p>
+              <p className="pt-0.5 text-[11.5px] leading-relaxed text-text-muted">
+                {connectionState === "RECONNECTING"
+                  ? "Connection interrupted. Retrying with exponential backoff."
+                  : "Showing a cached market snapshot. Submissions fall back to REST."}
+              </p>
+            </div>
           </div>
           {onReconnectClick && (
             <button
               onClick={onReconnectClick}
-              className="text-[11px] font-semibold underline text-warning hover:text-text transition-colors"
+              className="flex items-center gap-1.5 rounded-full border border-warning/40 bg-warning/10 px-3 py-1.5 font-mono text-[10px] font-semibold text-warning transition-colors hover:bg-warning/20"
             >
-              Force Reconnect
+              <RotateCw className="h-3 w-3" />
+              Reconnect
             </button>
           )}
         </div>

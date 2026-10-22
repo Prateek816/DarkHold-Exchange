@@ -15,45 +15,53 @@ interface TradeTapeProps {
 export function TradeTape({ trades, className }: TradeTapeProps) {
   return (
     <GlassCard
-      className={cn("flex flex-col font-mono text-xs overflow-hidden p-0", className)}
+      className={cn("flex flex-col overflow-hidden p-0", className)}
       role="region"
-      aria-label="Recent Trades Tape"
+      aria-label="Recent trades tape"
     >
-      {/* Header */}
-      <div className="grid grid-cols-4 px-4 py-2.5 text-[11px] uppercase tracking-wider text-text-dim border-b border-glass-border bg-white/[0.02]">
-        <span>Price</span>
-        <span className="text-right">Qty</span>
-        <span className="text-right">Time</span>
-        <span className="text-right">Trader</span>
+      <div className="flex items-center justify-between border-b border-glass-border px-4 py-2.5">
+        <span className="font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-text">
+          Trade tape
+        </span>
+        <span className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.1em] text-text-dim">
+          <span className="h-1 w-1 animate-pulse rounded-full bg-brand-400 shadow-[0_0_5px_#19CBB0]" />
+          live
+        </span>
       </div>
 
-      {/* Trades List */}
-      <div className="overflow-y-auto max-h-[300px] divide-y divide-white/[0.03]">
+      <div className="grid grid-cols-4 border-b border-glass-border bg-white/[0.015] px-4 py-1.5 font-mono text-[9px] uppercase tracking-[0.1em] text-text-dim">
+        <span>Price</span>
+        <span className="text-right">Qty</span>
+        <span className="text-right">Age</span>
+        <span className="text-right">By</span>
+      </div>
+
+      <div className="no-scrollbar max-h-[300px] divide-y divide-white/[0.03] overflow-y-auto">
         {trades.length === 0 ? (
-          <div className="p-4 text-center text-text-dim text-xs">
-            No recent trades on the tape.
+          <div className="p-5 text-center font-mono text-[11px] text-text-dim">
+            Awaiting first print…
           </div>
         ) : (
           trades.map((trade, idx) => {
             const isBuy = trade.aggressor_side === "BUY";
             const isLatest = idx === 0;
-
-            // Compute relative time string ("NOW" for < 5s)
             const diffSec = Math.floor((Date.now() - trade.timestamp) / 1000);
             const timeStr = diffSec < 5 ? "NOW" : `${diffSec}s`;
 
             return (
               <div
                 key={trade.trade_id || trade.seq}
-                className="grid grid-cols-4 px-4 py-2 items-center hover:bg-white/[0.035] transition-colors"
+                className={cn(
+                  "grid grid-cols-4 items-center px-4 py-1.5 font-mono text-[10.5px] transition-colors hover:bg-white/[0.035]",
+                  isLatest && "animate-count-flash"
+                )}
               >
-                {/* Price with Aggressor Side dot */}
-                <span className="flex items-center gap-2 font-medium">
+                <span className="flex items-center gap-1.5 font-medium">
                   <span
                     className={cn(
-                      "w-2 h-2 rounded-full shrink-0",
+                      "h-1.5 w-1.5 shrink-0 rounded-full",
                       trade.is_sim
-                        ? "bg-sim shadow-[0_0_6px_rgba(124,92,255,0.6)]"
+                        ? "bg-violet-400 shadow-[0_0_6px_rgba(124,92,255,0.6)]"
                         : isBuy
                         ? "bg-buy shadow-[0_0_6px_rgba(34,197,94,0.6)]"
                         : "bg-sell shadow-[0_0_6px_rgba(240,80,110,0.6)]"
@@ -61,35 +69,39 @@ export function TradeTape({ trades, className }: TradeTapeProps) {
                     title={
                       trade.is_sim
                         ? "Simulated trader execution"
-                        : `${trade.aggressor_side} Aggressor`
+                        : `${trade.aggressor_side} aggressor`
                     }
                   />
-                  <span className={cn("tabular-nums", isBuy ? "text-buy-text font-semibold" : "text-sell font-semibold")}>
+                  <span
+                    className={cn(
+                      "tabular-nums",
+                      isBuy ? "font-semibold text-buy-text" : "font-semibold text-sell-text"
+                    )}
+                  >
                     {formatCurrency(trade.price)}
                   </span>
                 </span>
 
-                {/* Quantity */}
-                <span className="text-right text-text-muted tabular-nums">
+                <span className="text-right tabular-nums text-text-muted">
                   {formatQuantity(trade.qty)}
                 </span>
 
-                {/* Time (NOW style) */}
                 <span
                   className={cn(
-                    "text-right text-[11px] tabular-nums",
-                    timeStr === "NOW" ? "text-lime font-bold" : "text-text-dim"
+                    "text-right tabular-nums",
+                    timeStr === "NOW" ? "font-bold text-lime" : "text-text-dim"
                   )}
                 >
                   {timeStr}
                 </span>
 
-                {/* Counterparty / SIM badge */}
-                <div className="text-right flex justify-end">
+                <div className="flex justify-end">
                   {trade.is_sim ? (
                     <SimBadge label="SIM" size="sm" />
                   ) : (
-                    <span className="text-[10px] text-text-dim uppercase font-mono">Live</span>
+                    <span className="font-mono text-[9px] uppercase tracking-[0.08em] text-text-dim">
+                      live
+                    </span>
                   )}
                 </div>
               </div>

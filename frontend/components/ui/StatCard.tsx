@@ -31,30 +31,25 @@ export function StatCard({
   className,
 }: StatCardProps) {
   return (
-    <GlassCard glowEdge={glowEdge} className={cn("p-5 flex flex-col justify-between space-y-4", className)}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <IconTile icon={icon} variant={iconVariant} />
-          <div>
-            <span className="text-xs uppercase tracking-wider text-text-muted font-medium block">
-              {label}
-            </span>
-            <div className="flex items-baseline gap-2 pt-0.5">
-              <h3 className="text-2xl sm:text-3xl font-semibold text-text tabular-nums tracking-tight">
-                {value}
-              </h3>
-            </div>
-          </div>
-        </div>
-
-        {delta !== undefined && <DeltaPill value={delta} />}
+    <GlassCard
+      glowEdge={glowEdge}
+      className={cn("group flex flex-col justify-between gap-3 p-5", className)}
+    >
+      <div className="flex min-w-0 items-center gap-3">
+        <IconTile icon={icon} variant={iconVariant} />
+        <span className="data-label block min-w-0 truncate">{label}</span>
       </div>
 
-      {subValue && (
-        <p className="text-xs text-text-dim font-mono">{subValue}</p>
-      )}
+      <div className="flex flex-wrap items-end justify-between gap-x-2 gap-y-1.5">
+        <h3 className="min-w-0 truncate font-display text-[22px] font-semibold leading-none tracking-tight text-text tabular-nums sm:text-[26px]">
+          {value}
+        </h3>
+        {delta !== undefined && <DeltaPill value={delta} className="mb-0.5" />}
+      </div>
 
-      {bottomSlot && <div className="pt-2 border-t border-glass-border">{bottomSlot}</div>}
+      {subValue && <p className="font-mono text-[11px] text-text-dim">{subValue}</p>}
+
+      {bottomSlot && <div className="border-t border-glass-border pt-3">{bottomSlot}</div>}
     </GlassCard>
   );
 }

@@ -1,10 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { TransactionReceipt } from "@/lib/types";
 import { formatCurrency, formatFullDateTime } from "@/lib/format";
 import { SimBadge } from "@/components/ui/SimBadge";
-import { ShieldCheck, X, Copy, Check, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
+import { ShieldCheck, X, Copy, Check, ArrowRight, Fingerprint } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SettlementReceiptModalProps {
@@ -18,10 +19,19 @@ export function SettlementReceiptModal({
 }: SettlementReceiptModalProps) {
   const [copiedId, setCopiedId] = React.useState<string | null>(null);
 
+  useEffect(() => {
+    if (!receipt) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [receipt, onClose]);
+
   if (!receipt) return null;
 
   const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
+    navigator.clipboard?.writeText(text);
     setCopiedId(text);
     setTimeout(() => setCopiedId(null), 2000);
   };
@@ -32,113 +42,162 @@ export function SettlementReceiptModal({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-[12px] animate-in fade-in"
+      aria-labelledby="receipt-title"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-[12px]"
+      onMouseDown={onClose}
     >
-      <div className="relative w-full max-w-lg rounded-24 border border-white/10 bg-[#080B10]/95 backdrop-blur-[24px] p-6 sm:p-7 font-sans text-xs shadow-[0_24px_60px_-15px_rgba(0,0,0,0.9)] space-y-6">
-        {/* Top hairline highlight */}
-        <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 340, damping: 30 }}
+        className="relative max-h-[92vh] w-full max-w-lg space-y-5 overflow-y-auto rounded-[22px] border border-glass-border-strong bg-canvas-elevated/95 p-5 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.9)] backdrop-blur-[24px] sm:p-7 no-scrollbar"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
-        {/* Header with Grimoire Seal */}
-        <div className="flex items-start justify-between border-b border-white/8 pb-4">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 border-b border-glass-border pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-14 border border-buy/30 bg-buy-tint flex items-center justify-center shadow-[0_0_12px_rgba(34,197,94,0.25)]">
-              <ShieldCheck className="w-5 h-5 text-buy" />
-            </div>
+            <span className="flex h-10 w-10 items-center justify-center rounded-[13px] border border-buy/30 bg-buy-tint text-buy shadow-[0_0_18px_rgba(34,197,94,0.22)]">
+              <ShieldCheck className="h-5 w-5" />
+            </span>
             <div>
-              <h3 className="text-base font-semibold text-white tracking-tight">
-                Ledger Settlement Receipt
+              <h3
+                id="receipt-title"
+                className="font-display text-[16px] font-semibold tracking-tight text-text"
+              >
+                Settlement receipt
               </h3>
-              <p className="text-[11px] text-text-muted">
-                Cryptographically committed to the reserve-match-settle chain.
+              <p className="pt-0.5 text-[11px] leading-relaxed text-text-muted">
+                Committed to the reserve → match → settle chain.
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-text-muted hover:text-white hover:bg-white/10 transition-colors"
+            aria-label="Close receipt"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-glass-border bg-white/[0.04] text-text-muted transition-colors hover:bg-white/[0.08] hover:text-text"
           >
-            <X className="w-4 h-4" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Ledger Transaction ID */}
-        <div className="p-3.5 rounded-16 bg-white/[0.03] border border-white/8 flex items-center justify-between font-mono">
-          <div className="space-y-0.5">
-            <span className="text-[10px] uppercase tracking-wider text-text-dim">Ledger TX ID</span>
-            <p className="text-xs font-semibold text-white">{receipt.ledger_tx_id}</p>
-          </div>
-          <button
-            onClick={() => handleCopy(receipt.ledger_tx_id)}
-            className="p-2 rounded-10 hover:bg-white/10 border border-white/10 text-text-muted hover:text-white transition-colors"
-            title="Copy Ledger Transaction ID"
-          >
-            {copiedId === receipt.ledger_tx_id ? (
-              <Check className="w-3.5 h-3.5 text-buy" />
-            ) : (
-              <Copy className="w-3.5 h-3.5" />
-            )}
-          </button>
-        </div>
-
-        {/* Trade Details Grid */}
-        <div className="grid grid-cols-2 gap-4 border-y border-white/8 py-4 text-xs font-sans">
-          <div>
-            <span className="text-text-dim block text-[10px] uppercase tracking-wider">Asset</span>
-            <span className="text-white font-medium">{receipt.asset_name}</span>
-          </div>
-          <div>
-            <span className="text-text-dim block text-[10px] uppercase tracking-wider">Execution Side</span>
-            <span className={cn("font-semibold uppercase font-mono", receipt.side === "BUY" ? "text-buy" : "text-sell")}>
-              {receipt.side} ({receipt.qty} units)
-            </span>
-          </div>
-          <div>
-            <span className="text-text-dim block text-[10px] uppercase tracking-wider">Fill Price</span>
-            <span className="text-white font-mono">{formatCurrency(receipt.price)}</span>
-          </div>
-          <div>
-            <span className="text-text-dim block text-[10px] uppercase tracking-wider">Total Settled</span>
-            <span className="text-white font-bold font-mono text-sm">{formatCurrency(receipt.total_cost)}</span>
-          </div>
-          <div>
-            <span className="text-text-dim block text-[10px] uppercase tracking-wider">Counterparty</span>
-            <div className="flex items-center gap-1.5 pt-0.5 font-mono">
-              <span className="text-white">{receipt.counterparty_id}</span>
-              {receipt.counterparty_is_sim && <SimBadge label="SIM" size="sm" />}
-            </div>
-          </div>
-          <div>
-            <span className="text-text-dim block text-[10px] uppercase tracking-wider">Settlement Latency</span>
-            <span className="text-buy font-mono font-medium">{settlementLatencyMs} ms</span>
-          </div>
-        </div>
-
-        {/* Solvency Audit: Balance Before and After */}
-        <div className="space-y-1.5">
-          <span className="text-[10px] uppercase tracking-wider text-text-dim block font-medium">
-            Vault Balance Mutation Truth
-          </span>
-          <div className="p-3.5 rounded-16 bg-white/[0.025] border border-white/6 flex items-center justify-between font-mono">
-            <div>
-              <span className="text-[10px] text-text-dim block">Balance Before</span>
-              <span className="text-white font-medium">{formatCurrency(receipt.balance_before)}</span>
-            </div>
-            <ArrowRight className="w-4 h-4 text-text-dim" />
-            <div className="text-right">
-              <span className="text-[10px] text-text-dim block">Balance After</span>
-              <span className="text-buy font-bold text-sm">
-                {formatCurrency(receipt.balance_after)}
+        {/* Receipt body */}
+        <div className="space-y-4 rounded-panel border border-glass-border bg-canvas/60 p-4">
+          <div className="flex items-center justify-between gap-3 rounded-[11px] border border-glass-border bg-white/[0.025] p-3">
+            <div className="min-w-0 space-y-0.5">
+              <span className="flex items-center gap-1 font-mono text-[8.5px] uppercase tracking-[0.14em] text-text-dim">
+                <Fingerprint className="h-2.5 w-2.5" />
+                Ledger tx id
               </span>
+              <p className="truncate font-mono text-[11.5px] font-semibold text-text">
+                {receipt.ledger_tx_id}
+              </p>
+            </div>
+            <button
+              onClick={() => handleCopy(receipt.ledger_tx_id)}
+              aria-label="Copy ledger transaction ID"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] border border-glass-border bg-white/[0.03] text-text-muted transition-colors hover:bg-white/[0.08] hover:text-text"
+            >
+              {copiedId === receipt.ledger_tx_id ? (
+                <Check className="h-3.5 w-3.5 text-buy" />
+              ) : (
+                <Copy className="h-3.5 w-3.5" />
+              )}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3.5">
+            <div>
+              <span className="data-label block">Asset</span>
+              <span className="pt-0.5 block text-[12px] font-medium text-text">
+                {receipt.asset_name}
+              </span>
+            </div>
+            <div>
+              <span className="data-label block">Execution side</span>
+              <span
+                className={cn(
+                  "block pt-0.5 font-mono text-[11.5px] font-semibold uppercase",
+                  receipt.side === "BUY" ? "text-buy-text" : "text-sell-text"
+                )}
+              >
+                {receipt.side} · {receipt.qty} units
+              </span>
+            </div>
+            <div>
+              <span className="data-label block">Fill price</span>
+              <span className="block pt-0.5 font-mono text-[12px] text-text">
+                {formatCurrency(receipt.price)}
+              </span>
+            </div>
+            <div>
+              <span className="data-label block">Total settled</span>
+              <span className="block pt-0.5 font-mono text-[13px] font-bold text-text">
+                {formatCurrency(receipt.total_cost)}
+              </span>
+            </div>
+            <div>
+              <span className="data-label block">Counterparty</span>
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <span className="font-mono text-[11px] text-text">
+                  {receipt.counterparty_id}
+                </span>
+                {receipt.counterparty_is_sim && <SimBadge label="SIM" size="sm" />}
+              </div>
+            </div>
+            <div>
+              <span className="data-label block">Settlement latency</span>
+              <span className="block pt-0.5 font-mono text-[12px] font-medium text-buy-text">
+                {settlementLatencyMs} ms
+              </span>
+            </div>
+          </div>
+
+          <div className="border-t border-dashed border-white/[0.1] pt-3.5">
+            <span className="data-label block pb-2">Vault balance mutation</span>
+            <div className="flex items-center justify-between gap-3 rounded-[11px] border border-glass-border bg-white/[0.02] p-3 font-mono">
+              <div>
+                <span className="block text-[9px] uppercase tracking-[0.12em] text-text-dim">
+                  Before
+                </span>
+                <span className="text-[12px] font-medium text-text">
+                  {formatCurrency(receipt.balance_before)}
+                </span>
+              </div>
+              <ArrowRight className="h-4 w-4 text-text-dim" />
+              <div className="text-right">
+                <span className="block text-[9px] uppercase tracking-[0.12em] text-text-dim">
+                  After
+                </span>
+                <span className="text-[12px] font-bold text-buy-text">
+                  {formatCurrency(receipt.balance_after)}
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Timestamps */}
-        <div className="flex justify-between text-[11px] text-text-dim pt-2 border-t border-white/6 font-mono">
-          <span>Matched: {formatFullDateTime(receipt.matched_at)}</span>
-          <span>Settled: {formatFullDateTime(receipt.settled_at)}</span>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-glass-border pt-3 font-mono text-[9.5px] text-text-dim">
+          <span>Matched {formatFullDateTime(receipt.matched_at)}</span>
+          <span>Settled {formatFullDateTime(receipt.settled_at)}</span>
         </div>
-      </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between gap-3">
+          <span className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.1em] text-buy-text">
+            <ShieldCheck className="h-3 w-3" />
+            receipt verified
+          </span>
+          <button
+            onClick={onClose}
+            className="rounded-[11px] border border-glass-border bg-white/[0.04] px-4 py-2 text-[11.5px] font-medium text-text transition-colors hover:bg-white/[0.08]"
+          >
+            Close receipt
+          </button>
+        </div>
+      </motion.div>
     </div>
   );
 }

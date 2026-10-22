@@ -29,40 +29,41 @@ export function VaultBar({
   const availablePct = Math.min(100, Math.max(0, (available / safeTotal) * 100));
   const reservedPct = Math.min(100, Math.max(0, (reserved / safeTotal) * 100));
 
-  const formatFn = isCurrency ? formatCurrency : (val: number) => `${formatQuantity(val)} units`;
+  const formatFn = isCurrency
+    ? formatCurrency
+    : (val: number) => `${formatQuantity(val)} units`;
 
   if (variant === "compact") {
     return (
       <div
         className={cn(
-          "flex flex-col gap-1 px-3 py-1.5 rounded-pill bg-white/[0.035] border border-glass-border text-xs min-w-[210px] backdrop-blur-md shadow-glass-sm",
+          "flex min-w-[210px] flex-col gap-1.5 rounded-full border border-glass-border bg-white/[0.035] px-3.5 py-1.5 text-xs shadow-glass-sm backdrop-blur-md",
           className
         )}
         title={`Vault Balance: ${formatFn(available)} available, ${formatFn(reserved)} reserved in orders`}
       >
-        <div className="flex items-center justify-between font-mono text-[11px] leading-tight">
-          <span className="flex items-center gap-1.5 text-text font-bold">
-            <Unlock className="w-3 h-3 text-brand-400" />
+        <div className="flex items-center justify-between gap-3 font-mono text-[11px] leading-tight">
+          <span className="flex items-center gap-1.5 font-semibold text-text">
+            <Unlock className="h-3 w-3 text-brand-400" />
             <span className="tabular-nums">{formatFn(available)}</span>
-            <span className="text-text-dim text-[10px]">avail</span>
+            <span className="text-[9px] uppercase tracking-[0.12em] text-text-dim">avail</span>
           </span>
           {reserved > 0 && (
-            <span className="flex items-center gap-1.5 text-warning font-semibold">
-              <Lock className="w-3 h-3" />
+            <span className="flex items-center gap-1.5 font-semibold text-warning">
+              <Lock className="h-3 w-3" />
               <span className="tabular-nums">{formatFn(reserved)}</span>
-              <span className="text-text-dim text-[10px]">res</span>
+              <span className="text-[9px] uppercase tracking-[0.12em] text-text-dim">res</span>
             </span>
           )}
         </div>
 
-        {/* Dual-tone Progress Bar */}
-        <div className="w-full h-1.5 bg-white/[0.06] rounded-pill overflow-hidden flex p-[1px] gap-[1px]">
+        <div className="flex h-1.5 w-full gap-px overflow-hidden rounded-full bg-white/[0.06] p-px">
           <div
-            className="h-full bg-brand-400 rounded-pill transition-all duration-300 shadow-glow-teal"
+            className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400 shadow-glow-teal transition-all duration-300"
             style={{ width: `${availablePct}%` }}
           />
           <div
-            className="h-full bg-warning rounded-pill transition-all duration-300 shadow-glow-ward"
+            className="h-full rounded-full bg-warning shadow-glow-ward transition-all duration-300"
             style={{ width: `${reservedPct}%` }}
           />
         </div>
@@ -70,57 +71,63 @@ export function VaultBar({
     );
   }
 
-  // Large format for Portfolio
   return (
-    <GlassCard glowEdge="teal" className={cn("p-6 space-y-5 font-mono", className)}>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="space-y-1">
-          {label && (
-            <p className="text-xs uppercase tracking-widest text-text-dim font-medium">
-              {label}
-            </p>
-          )}
-          <h3 className="text-3xl sm:text-4xl font-semibold text-text tabular-nums tracking-tight">
+    <GlassCard glowEdge="teal" className={cn("space-y-5 p-6", className)}>
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div className="space-y-1.5">
+          <span className="eyebrow flex items-center gap-1.5">
+            <Shield className="h-3 w-3 text-brand-400" />
+            {label || "Vault Balance"}
+          </span>
+          <h3 className="font-display text-[32px] font-semibold leading-none tracking-tight text-text tabular-nums sm:text-[38px]">
             {formatFn(total || available + reserved)}
           </h3>
         </div>
 
-        {/* Detail pills */}
-        <div className="flex items-center gap-3 text-xs">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-pill bg-white/[0.035] border border-glass-border">
-            <Unlock className="w-3.5 h-3.5 text-brand-400" />
-            <span className="text-text-muted">Available:</span>
-            <span className="text-text font-bold tabular-nums">{formatFn(available)}</span>
-            <span className="text-text-dim">({availablePct.toFixed(1)}%)</span>
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="flex items-center gap-2 rounded-full border border-glass-border bg-white/[0.03] px-3 py-1.5">
+            <Unlock className="h-3.5 w-3.5 text-brand-400" />
+            <span className="text-[11px] text-text-muted">Available</span>
+            <span className="font-mono text-[12px] font-semibold text-text tabular-nums">
+              {formatFn(available)}
+            </span>
+            <span className="font-mono text-[10px] text-text-dim">
+              {availablePct.toFixed(1)}%
+            </span>
           </div>
 
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-pill bg-white/[0.035] border border-glass-border">
-            <Lock className="w-3.5 h-3.5 text-warning" />
-            <span className="text-text-muted">Reserved:</span>
-            <span className="text-warning font-bold tabular-nums">{formatFn(reserved)}</span>
-            <span className="text-text-dim">({reservedPct.toFixed(1)}%)</span>
+          <div className="flex items-center gap-2 rounded-full border border-glass-border bg-white/[0.03] px-3 py-1.5">
+            <Lock className="h-3.5 w-3.5 text-warning" />
+            <span className="text-[11px] text-text-muted">Reserved</span>
+            <span className="font-mono text-[12px] font-semibold text-warning tabular-nums">
+              {formatFn(reserved)}
+            </span>
+            <span className="font-mono text-[10px] text-text-dim">
+              {reservedPct.toFixed(1)}%
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Two-tone Bar with Round End Caps */}
-      <div className="space-y-2">
-        <div className="w-full h-3 rounded-pill bg-white/[0.05] border border-glass-border overflow-hidden p-[1px] flex gap-[2px]">
+      <div className="space-y-2.5">
+        <div className="flex h-3 w-full gap-[2px] overflow-hidden rounded-full border border-glass-border bg-white/[0.05] p-[2px]">
           <div
-            className="h-full rounded-pill bg-gradient-to-r from-brand-500 to-brand-400 transition-all duration-500 shadow-glow-teal"
+            className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-400 shadow-glow-teal transition-all duration-500"
             style={{ width: `${availablePct}%` }}
             title={`Available: ${formatFn(available)}`}
           />
           <div
-            className="h-full rounded-pill bg-gradient-to-r from-warning to-ward transition-all duration-500 shadow-glow-ward"
+            className="h-full rounded-full bg-gradient-to-r from-warning to-ward shadow-glow-ward transition-all duration-500"
             style={{ width: `${reservedPct}%` }}
             title={`Reserved: ${formatFn(reserved)}`}
           />
         </div>
 
-        <div className="flex justify-between text-[11px] text-text-dim">
+        <div className="flex items-center justify-between gap-3 font-mono text-[10px] text-text-dim">
           <span>0%</span>
-          <span>Settlement Pipeline Truth: Funds locked until order completion or cancellation</span>
+          <span className="hidden text-center sm:block">
+            Funds stay locked until settlement completes or the order is canceled
+          </span>
           <span>100%</span>
         </div>
       </div>

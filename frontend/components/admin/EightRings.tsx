@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ReconciliationRing } from "@/lib/types";
 import { formatFullDateTime } from "@/lib/format";
-import { RotateCw, ShieldCheck } from "lucide-react";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { RotateCw, ShieldCheck, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface EightRingsProps {
@@ -15,16 +16,27 @@ interface EightRingsProps {
 export function EightRings({ rings, onRunAudit, className }: EightRingsProps) {
   const [activeRingIndex, setActiveRingIndex] = useState<number | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
 
   const handleRun = () => {
+    if (isRunning || rings.length === 0) return;
+    if (timerRef.current) clearInterval(timerRef.current);
+
     setIsRunning(true);
     let step = 0;
-    const interval = setInterval(() => {
-      if (step < 8) {
+    timerRef.current = setInterval(() => {
+      if (step < rings.length) {
         setActiveRingIndex(step);
         step++;
       } else {
-        clearInterval(interval);
+        if (timerRef.current) clearInterval(timerRef.current);
+        timerRef.current = null;
         setIsRunning(false);
         setActiveRingIndex(null);
         onRunAudit();
@@ -32,104 +44,146 @@ export function EightRings({ rings, onRunAudit, className }: EightRingsProps) {
     }, 120);
   };
 
-  const allPassed = rings.every((r) => r.passed);
+  const failedCount = rings.filter((r) => !r.passed).length;
+  const allPassed = rings.length > 0 && failedCount === 0;
 
   return (
-    <div
-      className={cn(
-        "relative rounded-24 border border-white/8 bg-gradient-to-br from-white/[0.055] via-white/[0.02] to-white/[0.01] backdrop-blur-[18px] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.8)] p-6 space-y-5 overflow-hidden",
-        className
-      )}
-    >
-      {/* Top hairline highlight */}
-      <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
-
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/8 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-12 bg-buy-tint border border-buy/30 flex items-center justify-center shrink-0">
-            <ShieldCheck className="w-5 h-5 text-buy" />
-          </div>
+    <GlassCard className={cn("overflow-hidden p-0", className)}>
+      <div className="flex flex-col justify-between gap-4 border-b border-glass-border p-5 sm:flex-row sm:items-center">
+        <div className="flex items-start gap-3">
+          <span
+            className={cn(
+              "flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] border",
+              allPassed
+                ? "border-buy/30 bg-buy-tint text-buy"
+                : rings.length === 0
+                ? "border-glass-border bg-white/[0.04] text-text-muted"
+                : "border-sell/40 bg-sell-tint text-sell"
+            )}
+          >
+            <ShieldCheck className="h-4 w-4" />
+          </span>
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
+            <h3 className="font-display text-[15px] font-semibold tracking-tight text-text">
               The Eight Rings of Reconciliation
             </h3>
-            <p className="text-xs text-text-muted">
-              Automated invariants verifying double-entry ledger parity, inventory, and ward integrity.
+            <p className="pt-0.5 text-[11.5px] leading-relaxed text-text-muted">
+              Automated invariants verifying double-entry parity, inventory, and Ward integrity.
             </p>
           </div>
         </div>
 
         <button
           onClick={handleRun}
-          disabled={isRunning}
-          className="flex items-center gap-2 px-4 py-2 rounded-12 bg-white/[0.04] border border-white/10 text-xs font-semibold text-white hover:bg-white/[0.08] hover:border-brand-500/40 transition-all disabled:opacity-50"
+          disabled={isRunning || rings.length === 0}
+          className="flex shrink-0 items-center gap-2 self-start rounded-full border border-glass-border bg-white/[0.04] px-4 py-2 font-mono text-[10.5px] font-semibold text-text transition-all hover:border-brand-500/40 hover:bg-white/[0.07] disabled:opacity-50 sm:self-auto"
         >
-          <RotateCw className={cn("w-3.5 h-3.5", isRunning && "animate-spin text-brand-400")} />
-          <span>{isRunning ? "Verifying Invariants..." : "Run Reconciliation"}</span>
+          <RotateCw className={cn("h-3.5 w-3.5 text-brand-400", isRunning && "animate-spin")} />
+          <span>{isRunning ? "Verifying invariants…" : "Run reconciliation"}</span>
         </button>
       </div>
 
-      {/* R1-R8 Rings Visual Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-        {rings.map((ring, idx) => {
-          const isInspecting = activeRingIndex === idx;
+      <div className="grid grid-cols-2 gap-3 p-5 sm:grid-cols-4 lg:grid-cols-8">
+        {rings.length === 0 ? (
+          <div className="col-span-full rounded-[14px] border border-dashed border-glass-border bg-white/[0.015] px-4 py-8 text-center">
+            <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-text-dim">
+              Awaiting reconciliation snapshot…
+            </p>
+          </div>
+        ) : (
+          rings.map((ring, idx) => {
+            const isInspecting = activeRingIndex === idx;
 
-          return (
-            <div
-              key={ring.code}
-              className={cn(
-                "p-3.5 rounded-16 border flex flex-col items-center text-center space-y-2.5 transition-all duration-200 group relative cursor-help",
-                isInspecting
-                  ? "border-brand-400 bg-brand-500/10 scale-105 shadow-[0_0_20px_rgba(25,203,176,0.3)]"
-                  : ring.passed
-                  ? "border-white/8 bg-white/[0.025] hover:border-buy/40 hover:bg-buy/[0.04]"
-                  : "border-sell/40 bg-sell-tint"
-              )}
-              title={`${ring.name}: ${ring.description}`}
-            >
-              {/* Circular Ring Sigil */}
+            return (
               <div
+                key={ring.code}
                 className={cn(
-                  "w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all duration-300 font-mono",
+                  "group relative flex cursor-help flex-col items-center gap-2.5 rounded-[14px] border p-3.5 text-center transition-all duration-200",
                   isInspecting
-                    ? "border-brand-400 text-brand-300 animate-spin"
+                    ? "scale-105 border-brand-400/60 bg-brand-500/10 shadow-[0_0_20px_rgba(25,203,176,0.25)]"
                     : ring.passed
-                    ? "border-buy/60 text-buy shadow-[0_0_12px_rgba(34,197,94,0.3)] bg-buy/10"
-                    : "border-sell text-sell shadow-[0_0_12px_rgba(240,80,110,0.35)] bg-sell/10"
+                    ? "border-glass-border bg-white/[0.02] hover:border-buy/35 hover:bg-buy/[0.04]"
+                    : "border-sell/40 bg-sell/[0.06]"
                 )}
+                title={`${ring.name}: ${ring.description}`}
               >
-                <span className="font-bold text-xs">{ring.code}</span>
-              </div>
-
-              <div className="space-y-0.5 w-full">
-                <span className="block text-[11px] font-semibold text-white truncate">
-                  {ring.name}
-                </span>
-                <span
+                <div
                   className={cn(
-                    "text-[10px] font-medium uppercase tracking-wider block",
-                    ring.passed ? "text-buy" : "text-sell"
+                    "flex h-10 w-10 items-center justify-center rounded-full border-2 font-mono transition-all duration-300",
+                    isInspecting
+                      ? "animate-spin border-brand-400 text-brand-300"
+                      : ring.passed
+                      ? "border-buy/50 bg-buy/10 text-buy-text shadow-[0_0_12px_rgba(34,197,94,0.22)]"
+                      : "border-sell bg-sell/10 text-sell-text shadow-[0_0_12px_rgba(240,80,110,0.28)]"
                   )}
                 >
-                  {ring.passed ? "Pass (0 Err)" : "Discrepancy"}
-                </span>
+                  <span className="text-[11px] font-bold">{ring.code}</span>
+                </div>
+
+                <div className="w-full space-y-0.5">
+                  <span className="block line-clamp-2 min-h-[2.5em] text-[10.5px] font-semibold leading-tight text-text">
+                    {ring.name}
+                  </span>
+                  <span
+                    className={cn(
+                      "block font-mono text-[8.5px] font-medium uppercase tracking-[0.1em]",
+                      ring.passed ? "text-buy-text" : "text-sell-text"
+                    )}
+                  >
+                    {ring.passed ? "Pass · 0 err" : "Discrepancy"}
+                  </span>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
 
-      {/* Last Audit Verdict */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-text-muted border-t border-white/6 pt-3 gap-2">
+      <div className="flex flex-col justify-between gap-2 border-t border-glass-border px-5 py-3 text-[10.5px] text-text-muted sm:flex-row sm:items-center">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-buy inline-block shadow-[0_0_6px_#22C55E]" />
+          <span
+            className={cn(
+              "h-1.5 w-1.5 rounded-full",
+              isRunning
+                ? "animate-pulse bg-brand-400"
+                : rings.length === 0
+                ? "bg-white/25"
+                : allPassed
+                ? "bg-buy shadow-[0_0_6px_#22C55E]"
+                : "bg-sell shadow-[0_0_6px_#F0506E]"
+            )}
+          />
           <span>
-            Invariant Verdict: <strong className="text-buy font-semibold">ALL 8 RINGS VERIFIED</strong> (0
-            Discrepancies)
+            Invariant verdict:{" "}
+            <strong
+              className={cn(
+                "font-semibold",
+                rings.length === 0
+                  ? "text-text-muted"
+                  : allPassed
+                  ? "text-buy-text"
+                  : "text-sell-text"
+              )}
+            >
+              {rings.length === 0
+                ? "AWAITING SNAPSHOT"
+                : isRunning
+                ? "AUDIT IN PROGRESS"
+                : allPassed
+                ? `ALL ${rings.length} RINGS VERIFIED`
+                : `${failedCount} RING${failedCount === 1 ? "" : "S"} OUT OF BALANCE`}
+            </strong>
+            {!isRunning && allPassed && (
+              <span className="text-text-dim"> · 0 discrepancies</span>
+            )}
           </span>
         </div>
-        <span className="font-mono text-text-dim text-[11px]">Checked: {formatFullDateTime(rings[0]?.last_verified_at || Date.now())}</span>
+        <span className="font-mono text-[10px] text-text-dim">
+          {rings.length > 0
+            ? `Checked ${formatFullDateTime(rings[0].last_verified_at)}`
+            : "Awaiting first snapshot"}
+        </span>
       </div>
-    </div>
+    </GlassCard>
   );
 }

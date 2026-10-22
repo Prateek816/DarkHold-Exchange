@@ -11,26 +11,27 @@ import { cn } from "@/lib/utils";
 interface AllocationDonutProps {
   holdings: WalletHolding[];
   availableCredits: number;
+  reservedCredits?: number;
   className?: string;
 }
 
-const PALETTE = ["#19CBB0", "#7C5CFF", "#D6F24A", "#F5B544", "#5AA9FF"];
+const PALETTE = ["#7C5CFF", "#D6F24A", "#5AA9FF", "#F0506E"];
 
 export function AllocationDonut({
   holdings,
   availableCredits,
+  reservedCredits = 0,
   className,
 }: AllocationDonutProps) {
   const items = [
-    {
-      name: "Cash Credits",
-      value: availableCredits,
-      color: "#19CBB0",
-    },
+    { name: "Available credits", value: availableCredits, color: "#19CBB0" },
+    ...(reservedCredits > 0
+      ? [{ name: "Reserved credits", value: reservedCredits, color: "#F5B544" }]
+      : []),
     ...holdings.map((h, i) => ({
       name: h.name,
       value: h.total_units * h.current_price,
-      color: PALETTE[(i + 1) % PALETTE.length],
+      color: PALETTE[i % PALETTE.length],
     })),
   ];
 
@@ -42,30 +43,24 @@ export function AllocationDonut({
     const angle = fraction * 360;
     const startAngle = cumulativeAngle;
     cumulativeAngle += angle;
-    return {
-      ...item,
-      fraction,
-      startAngle,
-      angle,
-    };
+    return { ...item, fraction, startAngle, angle };
   });
 
   return (
-    <GlassCard glowEdge="teal" className={cn("p-6 space-y-4 font-mono", className)}>
+    <GlassCard glowEdge="teal" className={cn("flex flex-col gap-4 p-5 sm:p-6", className)}>
       <SectionHeader
         icon={PieChart}
         iconVariant="teal"
-        title="Asset Allocation Breakdown"
-        subtitle="Distribution across liquid credits and vault relics."
+        title="Asset allocation"
+        subtitle="Distribution across available, reserved, and vaulted value."
       />
 
-      <div className="flex flex-col sm:flex-row items-center gap-6 pt-2">
-        {/* Glowing Thick Ring Donut */}
-        <div className="relative w-40 h-40 shrink-0">
-          <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+      <div className="flex flex-col items-center gap-6 pt-1 sm:flex-row">
+        <div className="relative h-40 w-40 shrink-0">
+          <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" aria-hidden="true">
             <defs>
               <filter id="donut-glow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="2" result="blur" />
+                <feGaussianBlur stdDeviation="1.8" result="blur" />
                 <feMerge>
                   <feMergeNode in="blur" />
                   <feMergeNode in="SourceGraphic" />
@@ -73,14 +68,13 @@ export function AllocationDonut({
               </filter>
             </defs>
 
-            {/* Background track */}
             <circle
               cx="50"
               cy="50"
               r="38"
               fill="transparent"
               stroke="rgba(255, 255, 255, 0.05)"
-              strokeWidth="14"
+              strokeWidth="13"
             />
 
             {slices.map((slice, idx) => {
@@ -95,8 +89,7 @@ export function AllocationDonut({
                   r="38"
                   fill="transparent"
                   stroke={slice.color}
-                  strokeWidth="14"
-                  strokeLinecap="round"
+                  strokeWidth="13"
                   strokeDasharray={strokeDasharray}
                   strokeDashoffset={strokeDashoffset}
                   filter="url(#donut-glow)"
@@ -106,34 +99,35 @@ export function AllocationDonut({
             })}
           </svg>
 
-          {/* Centered Big Tabular Number */}
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className="text-[10px] text-text-dim uppercase font-mono">Portfolio</span>
-            <span className="text-sm font-bold text-text tabular-nums font-mono">
-              {formatCurrency(totalValuation, { showCents: false })}
+            <span className="font-mono text-[8.5px] uppercase tracking-[0.14em] text-text-dim">
+              Portfolio
             </span>
+            <span className="pt-0.5 font-display text-[16px] font-semibold tracking-tight text-text tabular-nums">
+              {formatCurrency(totalValuation)}
+            </span>
+            <span className="font-mono text-[8.5px] text-text-dim">total valuation</span>
           </div>
         </div>
 
-        {/* Legend as Glass Pills */}
-        <div className="flex-1 w-full space-y-2 text-xs">
+        <div className="w-full flex-1 space-y-1.5">
           {slices.map((slice, idx) => (
             <div
               key={idx}
-              className="flex items-center justify-between p-2 rounded-[12px] bg-white/[0.025] border border-glass-border hover:bg-white/[0.05] transition-colors"
+              className="flex items-center justify-between gap-3 rounded-[11px] border border-glass-border bg-white/[0.02] p-2 transition-colors hover:bg-white/[0.045]"
             >
-              <div className="flex items-center gap-2.5 truncate">
+              <div className="flex min-w-0 items-center gap-2.5">
                 <span
-                  className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm"
+                  className="h-2 w-2 shrink-0 rounded-full"
                   style={{ backgroundColor: slice.color }}
                 />
-                <span className="text-text-muted truncate text-xs">{slice.name}</span>
+                <span className="truncate text-[11px] text-text-muted">{slice.name}</span>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-text font-semibold tabular-nums">
+              <div className="flex shrink-0 items-center gap-2 font-mono">
+                <span className="text-[10.5px] font-semibold tabular-nums text-text">
                   {formatCurrency(slice.value)}
                 </span>
-                <span className="text-text-dim text-[11px] font-mono w-12 text-right">
+                <span className="w-10 text-right text-[9.5px] tabular-nums text-text-dim">
                   {formatPercent(slice.fraction * 100, false)}
                 </span>
               </div>

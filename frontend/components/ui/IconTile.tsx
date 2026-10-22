@@ -21,26 +21,26 @@ export function IconTile({
     size === "sm"
       ? "w-8 h-8 rounded-[10px]"
       : size === "lg"
-      ? "w-12 h-12 rounded-[14px]"
+      ? "w-12 h-12 rounded-[15px]"
       : "w-10 h-10 rounded-tile";
 
-  const iconSizes = size === "sm" ? 16 : size === "lg" ? 22 : 18;
+  const iconSizes = size === "sm" ? 15 : size === "lg" ? 22 : 18;
 
   const variantClasses =
     variant === "teal"
-      ? "border-brand-500/20 bg-brand-500/10 text-brand-400"
+      ? "border-brand-500/25 bg-gradient-to-br from-brand-500/15 to-brand-500/[0.04] text-brand-400"
       : variant === "violet"
-      ? "border-violet-500/25 bg-violet-500/10 text-violet-400"
+      ? "border-violet-500/25 bg-gradient-to-br from-violet-500/15 to-violet-500/[0.04] text-violet-300"
       : variant === "sell"
-      ? "border-sell/25 bg-sell/10 text-sell"
+      ? "border-sell/25 bg-gradient-to-br from-sell/15 to-sell/[0.04] text-sell-text"
       : variant === "amber"
-      ? "border-warning/25 bg-warning/10 text-warning"
+      ? "border-warning/25 bg-gradient-to-br from-warning/15 to-warning/[0.04] text-warning"
       : "border-glass-border bg-white/[0.035] text-text-muted";
 
   return (
     <div
       className={cn(
-        "flex items-center justify-center shrink-0 border backdrop-blur-sm shadow-sm transition-transform duration-200 group-hover:scale-105",
+        "relative flex shrink-0 items-center justify-center border shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition-transform duration-300 group-hover:scale-105",
         sizeClasses,
         variantClasses,
         className

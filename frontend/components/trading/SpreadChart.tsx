@@ -32,53 +32,91 @@ export function SpreadChart({
   const minSpread = Math.min(...pointsData.map((d) => d.spread), 0);
   const range = maxSpread - minSpread || 1;
 
-  const points = pointsData
-    .map((d, i) => {
-      const x = (i / (pointsData.length - 1)) * 96 + 2;
-      const y = 36 - ((d.spread - minSpread) / range) * 28;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(" ");
+  const coords = pointsData.map((d, i) => {
+    const x = (i / (pointsData.length - 1)) * 96 + 2;
+    const y = 36 - ((d.spread - minSpread) / range) * 28;
+    return { x, y };
+  });
 
-  const lastY = 36 - ((currentSpread - minSpread) / range) * 28;
+  const points = coords.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+  const area = `2,40 ${points} 98,40`;
+  const last = coords[coords.length - 1];
 
   return (
-    <GlassCard className={cn("p-4 font-mono space-y-2", className)}>
-      <div className="flex items-center justify-between text-xs">
-        <span className="uppercase tracking-wider text-text-dim text-[11px]">
-          Spread Over Time
+    <GlassCard className={cn("flex flex-col p-0", className)}>
+      <div className="flex items-center justify-between gap-3 border-b border-glass-border px-4 py-2.5">
+        <span className="font-display text-[11px] font-semibold uppercase tracking-[0.1em] text-text">
+          Spread
         </span>
-        <span className="text-text font-bold text-xs">
-          Now: <strong className="text-brand-400">{formatCurrency(currentSpread)}</strong>
+        <span className="flex items-center gap-1.5 font-mono text-[10px]">
+          <span className="text-text-dim">now</span>
+          <span className="font-bold tabular-nums text-brand-400">
+            {formatCurrency(currentSpread)}
+          </span>
         </span>
       </div>
 
-      <div className="h-16 w-full pt-1">
-        <svg viewBox="0 0 100 40" preserveAspectRatio="none" className="w-full h-full overflow-visible">
-          <defs>
-            <filter id="spread-glow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="1.5" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
+      <div className="px-2 pb-2 pt-3">
+        <div className="h-16 w-full">
+          <svg
+            viewBox="0 0 100 40"
+            preserveAspectRatio="none"
+            className="h-full w-full overflow-visible"
+          >
+            <defs>
+              <linearGradient id="spread-area-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#19CBB0" stopOpacity="0.24" />
+                <stop offset="100%" stopColor="#19CBB0" stopOpacity="0" />
+              </linearGradient>
+              <filter id="spread-glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="1.2" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
 
-          {/* Glowing Monotone Line */}
-          <polyline
-            fill="none"
-            stroke="#19CBB0"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            filter="url(#spread-glow)"
-            points={points}
-          />
+            <line
+              x1="0"
+              y1="30"
+              x2="100"
+              y2="30"
+              stroke="rgba(255,255,255,0.05)"
+              strokeDasharray="2 2"
+            />
 
-          {/* End Dot */}
-          <circle cx="98" cy={lastY} r="3" fill="#D6F24A" className="animate-pulse" />
-        </svg>
+            <polygon points={area} fill="url(#spread-area-grad)" />
+
+            <polyline
+              fill="none"
+              stroke="#19CBB0"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              filter="url(#spread-glow)"
+              points={points}
+            />
+
+            {last && (
+              <>
+                <circle cx={last.x} cy={last.y} r="3.4" fill="rgba(25,203,176,0.22)" />
+                <circle
+                  cx={last.x}
+                  cy={last.y}
+                  r="1.8"
+                  fill="#D6F24A"
+                  className="animate-pulse"
+                />
+              </>
+            )}
+          </svg>
+        </div>
+
+        <div className="flex items-center justify-between pt-1 font-mono text-[9px] text-text-dim">
+          <span>min {formatCurrency(minSpread)}</span>
+          <span>max {formatCurrency(maxSpread)}</span>
+        </div>
       </div>
     </GlassCard>
   );

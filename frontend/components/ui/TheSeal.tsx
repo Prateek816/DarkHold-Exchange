@@ -151,7 +151,7 @@ export function TheSeal({
               : isSettled
               ? "text-buy"
               : isMatched
-              ? "text-white"
+              ? "text-text"
               : "text-text-muted"
           )}
         >

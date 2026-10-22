@@ -19,8 +19,9 @@ const CandleChart = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="w-full h-[420px] rounded-card border border-glass-border bg-white/[0.02] flex items-center justify-center font-mono text-xs text-text-dim animate-shimmer">
-        Initializing Lightweight Canvas...
+      <div className="flex h-[420px] w-full items-center justify-center rounded-card border border-glass-border bg-white/[0.02] font-mono text-xs text-text-dim">
+        <Loader2 className="mr-2 h-4 w-4 animate-spin text-brand-400" />
+        Initializing chart canvas…
       </div>
     ),
   }
@@ -188,9 +189,9 @@ export function TradeTerminalView({ assetId }: TradeTerminalViewProps) {
 
   if (assetLoading || !asset) {
     return (
-      <div className="flex-1 flex items-center justify-center p-12 text-text font-mono">
-        <Loader2 className="w-6 h-6 animate-spin text-brand-400 mr-2" />
-        <span>Initializing Obsidian Terminal for {assetId}...</span>
+      <div className="flex-1 flex items-center justify-center p-12 font-mono text-text">
+        <Loader2 className="mr-2 h-6 w-6 animate-spin text-brand-400" />
+        <span className="text-sm">Initializing Obsidian terminal for {assetId}…</span>
       </div>
     );
   }
@@ -202,7 +203,7 @@ export function TradeTerminalView({ assetId }: TradeTerminalViewProps) {
   const currentSpread = bestAsk && bestBid ? bestAsk - bestBid : 0;
 
   return (
-    <div className="flex-1 flex flex-col w-full space-y-4">
+    <div className="page-shell">
       {/* Global Banners */}
       <GlobalBanners
         connectionState={connectionState}
@@ -211,16 +212,16 @@ export function TradeTerminalView({ assetId }: TradeTerminalViewProps) {
       />
 
       {/* Back Link */}
-      <div className="flex items-center justify-between text-xs font-mono text-text-dim">
+      <div className="flex items-center justify-between gap-3 font-mono text-[10px] text-text-dim">
         <Link
           href="/market"
-          className="inline-flex items-center gap-1.5 hover:text-text transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-full border border-glass-border bg-white/[0.025] px-3 py-1.5 transition-colors hover:bg-white/[0.06] hover:text-text"
         >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>&larr; Back to Marketplace</span>
+          <ArrowLeft className="h-3 w-3" />
+          <span>Back to marketplace</span>
         </Link>
-        <span className="text-[11px] uppercase tracking-wider text-text-dim">
-          Obsidian Terminal Protocol
+        <span className="uppercase tracking-[0.14em] text-text-dim">
+          Obsidian terminal protocol
         </span>
       </div>
 

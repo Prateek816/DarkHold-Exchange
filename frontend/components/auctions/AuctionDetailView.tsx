@@ -10,8 +10,10 @@ import { useUiStore } from "@/lib/stores/uiStore";
 import { OdometerPrice } from "@/components/auctions/OdometerPrice";
 import { DecayCurveChart } from "@/components/auctions/DecayCurveChart";
 import { SimBadge } from "@/components/ui/SimBadge";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { GlassCard } from "@/components/ui/GlassCard";
 import { formatCurrency, formatQuantity } from "@/lib/format";
-import { ArrowLeft, Check, AlertCircle, Loader2, WifiOff } from "lucide-react";
+import { ArrowLeft, Check, AlertCircle, Loader2, WifiOff, Gavel } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AuctionDetailViewProps {
@@ -28,7 +30,6 @@ export function AuctionDetailView({ auctionId }: AuctionDetailViewProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isWon, setIsWon] = useState(false);
 
-  // Fetch auction details
   const {
     data: auction,
     isLoading,
@@ -39,12 +40,9 @@ export function AuctionDetailView({ auctionId }: AuctionDetailViewProps) {
   });
 
   useEffect(() => {
-    if (auction) {
-      setLivePrice(auction.current_price);
-    }
+    if (auction) setLivePrice(auction.current_price);
   }, [auction]);
 
-  // Subscribe to auction WebSocket channel
   useEffect(() => {
     const channel = `auction:${auctionId}`;
     fakeWs.subscribe(channel);
@@ -63,9 +61,9 @@ export function AuctionDetailView({ auctionId }: AuctionDetailViewProps) {
 
   if (isLoading || !auction) {
     return (
-      <div className="flex-1 flex items-center justify-center p-12 text-text-muted font-sans">
-        <Loader2 className="w-5 h-5 animate-spin text-brand-400 mr-2" />
-        <span>Loading Dutch Auction Details...</span>
+      <div className="flex flex-1 items-center justify-center p-12 font-sans text-text-muted">
+        <Loader2 className="mr-2 h-5 w-5 animate-spin text-brand-400" />
+        <span className="text-sm">Loading Dutch auction details…</span>
       </div>
     );
   }
@@ -86,10 +84,8 @@ export function AuctionDetailView({ auctionId }: AuctionDetailViewProps) {
         };
       }
 
-      // Simulate auction purchase execution
       await new Promise((r) => setTimeout(r, 600));
 
-      // Refresh wallet & auction
       const freshWallet = await api.getWallet();
       setWalletFromServer(freshWallet);
       refetch();
@@ -97,30 +93,29 @@ export function AuctionDetailView({ auctionId }: AuctionDetailViewProps) {
       setIsWon(true);
       addToast({
         type: "success",
-        title: "Auction Won!",
+        title: "Auction won",
         message: `Acquired ${auction.qty}x ${auction.asset_name} at ${formatCurrency(
           livePrice
         )}. Settled into vault inventory.`,
       });
     } catch (err: any) {
+      let message = "Auction transaction could not be processed. Please retry.";
+
       if (err.code === "INSUFFICIENT_FUNDS") {
-        setErrorMessage(
-          `Insufficient funds: You need ${formatCurrency(err.context?.needed)} but have ${formatCurrency(
-            err.context?.available
-          )} available.`
-        );
+        message = `Insufficient funds: you need ${formatCurrency(
+          err.context?.needed
+        )} but have ${formatCurrency(err.context?.available)} available.`;
       } else if (err.code === "AUCTION_ALREADY_SOLD") {
-        setErrorMessage("Another buyer accepted just before you.");
+        message = "Another buyer accepted just before you.";
       } else if (err.code === "PRICE_MOVED") {
-        setErrorMessage("Price moved during submission. Refreshed to latest tick. Retry.");
-      } else {
-        setErrorMessage("Auction transaction could not be processed. Please retry.");
+        message = "Price moved during submission. Refreshed to the latest tick — retry.";
       }
 
+      setErrorMessage(message);
       addToast({
         type: "error",
-        title: "Acceptance Failed",
-        message: errorMessage || "Auction transaction declined.",
+        title: "Acceptance failed",
+        message,
       });
     } finally {
       setIsSubmitting(false);
@@ -128,67 +123,61 @@ export function AuctionDetailView({ auctionId }: AuctionDetailViewProps) {
   };
 
   return (
-    <div className="flex-1 px-4 sm:px-6 py-6 max-w-5xl mx-auto w-full space-y-6">
-      {/* Back Link */}
+    <div className="page-shell mx-auto w-full max-w-5xl">
       <Link
         href="/auctions"
-        className="inline-flex items-center gap-1.5 text-xs text-text-muted hover:text-white transition-colors"
+        className="inline-flex w-fit items-center gap-1.5 rounded-full border border-glass-border bg-white/[0.025] px-3 py-1.5 font-mono text-[10px] text-text-muted transition-colors hover:bg-white/[0.06] hover:text-text"
       >
-        <ArrowLeft className="w-3.5 h-3.5" />
-        <span>Back to Dutch Auctions</span>
+        <ArrowLeft className="h-3 w-3" />
+        <span>Back to Dutch auctions</span>
       </Link>
 
-      {/* Disconnected Warning */}
       {isDisconnected && (
-        <div className="p-3.5 rounded-16 bg-warning/10 border border-warning/30 flex items-center justify-between text-warning text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-panel border border-warning/30 bg-warning/[0.08] p-3.5 text-xs text-warning">
           <div className="flex items-center gap-2">
-            <WifiOff className="w-4 h-4" />
+            <WifiOff className="h-4 w-4" />
             <span>Showing cached auction price. Accept will execute directly via REST.</span>
           </div>
-          <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-warning/40 bg-warning/10">
-            REST Fallback
+          <span className="rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.12em]">
+            REST fallback
           </span>
         </div>
       )}
 
-      {/* Header Info */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/8 pb-5">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              {auction.asset_name}
-            </h1>
-            {auction.is_sim_seller && <SimBadge label="SIM" size="sm" />}
-          </div>
-          <p className="text-text-muted text-xs pt-1">
-            Lot Size: {formatQuantity(auction.qty)} unit(s) • Seller: <span className="font-mono text-text-dim">{auction.seller_id}</span>
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
+      <PageHeader
+        eyebrow={`Dutch auction · ${auction.auction_id}`}
+        title={auction.asset_name}
+        description={`Lot size ${formatQuantity(auction.qty)} unit(s) · Seller ${auction.seller_id}`}
+        icon={Gavel}
+        badge={auction.is_sim_seller ? <SimBadge label="SIM" size="sm" /> : undefined}
+        actions={
           <span
             className={cn(
-              "px-3 py-1 rounded-full text-xs uppercase font-bold tracking-wider border",
+              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.12em]",
               isWon || auction.status === "SOLD"
-                ? "bg-buy-tint text-buy border-buy/40"
+                ? "border-buy/40 bg-buy/10 text-buy-text"
                 : isActive
-                ? "bg-warning/10 text-warning border-warning/40 animate-pulse"
-                : "bg-white/[0.04] text-text-dim border-white/8"
+                ? "border-warning/40 bg-warning/10 text-warning"
+                : "border-glass-border bg-white/[0.04] text-text-dim"
             )}
           >
-            {isWon ? "WON BY YOU" : auction.status}
+            {isActive && (
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning opacity-70" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-warning" />
+              </span>
+            )}
+            {isWon ? "Won by you" : auction.status}
           </span>
-        </div>
-      </div>
+        }
+      />
 
-      {/* Odometer Price Display */}
       <OdometerPrice
         currentPrice={livePrice}
         nextStepSeconds={auction.next_step_in_seconds || 12}
         priceDecrement={auction.price_decrement}
       />
 
-      {/* Decay Curve SVG Visualization */}
       <DecayCurveChart
         startPrice={auction.start_price}
         floorPrice={auction.floor_price}
@@ -199,26 +188,21 @@ export function AuctionDetailView({ auctionId }: AuctionDetailViewProps) {
         height={180}
       />
 
-      {/* Transaction Acceptance Box */}
-      <div className="relative rounded-24 border border-white/8 bg-gradient-to-br from-white/[0.06] via-white/[0.025] to-white/[0.01] p-6 sm:p-8 backdrop-blur-[18px] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.8)] space-y-5">
-        {/* Top hairline highlight */}
-        <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/8 pb-4">
+      <GlassCard glowEdge={isActive ? "teal" : "none"} className="space-y-5 p-6 sm:p-8">
+        <div className="flex flex-col justify-between gap-4 border-b border-glass-border pb-4 sm:flex-row sm:items-center">
           <div>
-            <span className="text-[10px] uppercase font-medium tracking-wider text-text-dim block">
-              Total Acquisition Cost
-            </span>
-            <span className="text-2xl sm:text-3xl font-bold font-sans text-white tabular-nums">
+            <span className="data-label block">Total acquisition cost</span>
+            <span className="font-display text-[28px] font-semibold leading-none tracking-tight text-text tabular-nums sm:text-[32px]">
               {formatCurrency(totalCost)}
             </span>
           </div>
           <div className="sm:text-right">
-            <span className="text-[10px] uppercase font-medium tracking-wider text-text-dim block">
-              Available Balance
-            </span>
+            <span className="data-label block">Available balance</span>
             <span
-              className={cn("text-base font-semibold tabular-nums", isAffordable ? "text-buy" : "text-sell")}
+              className={cn(
+                "font-mono text-base font-semibold tabular-nums",
+                isAffordable ? "text-buy-text" : "text-sell-text"
+              )}
             >
               {formatCurrency(availableCredits)}
             </span>
@@ -226,8 +210,8 @@ export function AuctionDetailView({ auctionId }: AuctionDetailViewProps) {
         </div>
 
         {errorMessage && (
-          <div className="p-3.5 rounded-16 bg-sell-tint border border-sell/40 text-text text-xs flex items-center gap-2.5">
-            <AlertCircle className="w-4 h-4 text-sell shrink-0" />
+          <div className="flex items-center gap-2.5 rounded-panel border border-sell/40 bg-sell/[0.08] p-3.5 text-xs text-text">
+            <AlertCircle className="h-4 w-4 shrink-0 text-sell" />
             <span>{errorMessage}</span>
           </div>
         )}
@@ -236,35 +220,36 @@ export function AuctionDetailView({ auctionId }: AuctionDetailViewProps) {
           onClick={handleAcceptAuction}
           disabled={!isActive || isSubmitting}
           className={cn(
-            "w-full py-3.5 rounded-12 font-semibold text-xs sm:text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2",
+            "flex w-full items-center justify-center gap-2 rounded-[12px] py-3.5 text-[12px] font-bold uppercase tracking-[0.08em] transition-all sm:text-[13px]",
             isWon
-              ? "bg-buy text-white cursor-default"
+              ? "cursor-default bg-buy/15 text-buy-text"
               : !isActive
-              ? "bg-white/[0.04] text-text-dim border border-white/8 cursor-not-allowed"
-              : "bg-brand-500 hover:bg-brand-400 text-bg shadow-[0_0_24px_rgba(25,203,176,0.35)] disabled:opacity-50"
+              ? "cursor-not-allowed border border-glass-border bg-white/[0.04] text-text-dim"
+              : "bg-gradient-to-r from-brand-400 to-brand-500 text-canvas shadow-[0_10px_28px_-8px_rgba(25,203,176,0.5)] hover:-translate-y-px disabled:opacity-50"
           )}
         >
           {isSubmitting ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Transacting on Ledger...</span>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Transacting on ledger…</span>
             </>
           ) : isWon ? (
             <>
-              <Check className="w-4 h-4" />
-              <span>Auction Successfully Won</span>
+              <Check className="h-4 w-4" />
+              <span>Auction successfully won</span>
             </>
           ) : !isActive ? (
-            <span>Auction Closed</span>
+            <span>Auction closed</span>
           ) : (
-            <span>Accept at Current Price ({formatCurrency(livePrice)})</span>
+            <span>Accept at current price · {formatCurrency(livePrice)}</span>
           )}
         </button>
 
-        <p className="text-[11px] text-text-dim text-center">
-          The displayed price is client-interpolated and display-only. Server matching engine holds authoritative final fill truth.
+        <p className="text-center text-[10.5px] leading-relaxed text-text-dim">
+          The displayed price is client-interpolated and display-only. The server matching engine
+          holds authoritative final fill truth.
         </p>
-      </div>
+      </GlassCard>
     </div>
   );
 }

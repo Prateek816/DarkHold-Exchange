@@ -18,25 +18,32 @@ export function AssetSparkline({
   isPositive = true,
   className,
 }: AssetSparklineProps) {
+  const rawId = React.useId();
+  const uid = rawId.replace(/[^a-zA-Z0-9_-]/g, "");
+
   if (!data || data.length < 2) {
-    return <div className="h-9 w-28 bg-white/[0.04] rounded-panel animate-shimmer" />;
+    return (
+      <div className="h-9 w-28 animate-pulse rounded-panel border border-glass-border bg-white/[0.03]" />
+    );
   }
 
   const min = Math.min(...data);
   const max = Math.max(...data);
   const range = max - min || 1;
 
-  const points = data
-    .map((val, idx) => {
-      const x = (idx / (data.length - 1)) * (width - 6) + 3;
-      const y = height - 5 - ((val - min) / range) * (height - 10);
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(" ");
+  const coords = data.map((val, idx) => {
+    const x = (idx / (data.length - 1)) * (width - 6) + 3;
+    const y = height - 5 - ((val - min) / range) * (height - 10);
+    return { x, y };
+  });
+
+  const points = coords.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+  const area = `3,${height} ${points} ${width - 3},${height}`;
 
   const colorHex = isPositive ? "#19CBB0" : "#F0506E";
-  const lastX = width - 3;
-  const lastY = height - 5 - ((data[data.length - 1] - min) / range) * (height - 10);
+  const last = coords[coords.length - 1];
+  const lastX = last.x;
+  const lastY = last.y;
 
   return (
     <div className={cn("inline-block select-none", className)}>
@@ -48,8 +55,12 @@ export function AssetSparkline({
         aria-hidden="true"
       >
         <defs>
-          <filter id={`sparkline-glow-${isPositive ? "pos" : "neg"}`} x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="1.5" result="blur" />
+          <linearGradient id={`${uid}-area`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={colorHex} stopOpacity="0.24" />
+            <stop offset="100%" stopColor={colorHex} stopOpacity="0" />
+          </linearGradient>
+          <filter id={`${uid}-glow`} x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="1.2" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
@@ -57,20 +68,20 @@ export function AssetSparkline({
           </filter>
         </defs>
 
-        {/* Glow Polyline */}
+        <polygon points={area} fill={`url(#${uid}-area)`} />
+
         <polyline
           fill="none"
           stroke={colorHex}
-          strokeWidth="2"
+          strokeWidth="1.8"
           strokeLinecap="round"
           strokeLinejoin="round"
-          filter={`url(#sparkline-glow-${isPositive ? "pos" : "neg"})`}
+          filter={`url(#${uid}-glow)`}
           points={points}
         />
 
-        {/* End Pulse Dot with Halo */}
-        <circle cx={lastX} cy={lastY} r="4" fill={colorHex} opacity="0.3" className="animate-ping" />
-        <circle cx={lastX} cy={lastY} r="2.5" fill="#FFFFFF" stroke={colorHex} strokeWidth="1" />
+        <circle cx={lastX} cy={lastY} r="4" fill={colorHex} opacity="0.22" className="animate-ping" />
+        <circle cx={lastX} cy={lastY} r="2.2" fill={colorHex} stroke="#04060A" strokeWidth="1" />
       </svg>
     </div>
   );

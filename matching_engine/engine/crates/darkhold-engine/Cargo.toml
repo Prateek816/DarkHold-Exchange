@@ -1,0 +1,45 @@
+[package]
+name = "darkhold-engine"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[lib]
+name = "darkhold_engine"
+path = "src/lib.rs"
+
+[[bin]]
+name = "darkhold-engine"
+path = "src/main.rs"
+
+[dependencies]
+darkhold-core = { path = "../darkhold-core" }
+
+anyhow.workspace = true
+crc32fast.workspace = true
+crossbeam-channel.workspace = true
+futures-util.workspace = true
+hdrhistogram.workspace = true
+parking_lot.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber = { workspace = true, features = ["env-filter", "json"] }
+uuid.workspace = true
+
+# HTTP layer (Step 6). Trim or extend to match the imports in http/*.rs.
+async-stream = "0.3"
+axum = "0.7"
+bytes = "1"
+tokio-stream = { version = "0.1", features = ["sync"] }
+tower = { version = "0.4", features = ["limit"] }
+
+[dev-dependencies]
+futures-util.workspace = true
+reqwest.workspace = true
+serde_json.workspace = true
+tempfile.workspace = true
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+uuid.workspace = true

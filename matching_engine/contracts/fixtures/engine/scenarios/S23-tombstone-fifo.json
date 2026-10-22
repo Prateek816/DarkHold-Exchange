@@ -1,0 +1,372 @@
+{
+  "name": "S23-tombstone-fifo",
+  "description": "Cancelled orders skipped in FIFO.",
+  "engine_epoch": "e-test0001",
+  "steps": [
+    {
+      "ts": 1000,
+      "command": {
+        "type": "ConfigureAsset",
+        "asset": "TEST-A",
+        "tick_size": 1,
+        "min_qty": 1,
+        "max_qty": 1000,
+        "collar_max_price": null,
+        "status": "ACTIVE"
+      },
+      "expect_reply": {
+        "status": "OK",
+        "seq": 1,
+        "last_seq": 1,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "asset": "TEST-A"
+      },
+      "expect_events": [
+        {
+          "type": "AssetConfigured",
+          "engine_epoch": "e-test0001",
+          "seq": 1,
+          "ts": 1000,
+          "asset": "TEST-A",
+          "tick_size": 1,
+          "min_qty": 1,
+          "max_qty": 1000,
+          "collar_max_price": null,
+          "status": "ACTIVE"
+        }
+      ]
+    },
+    {
+      "ts": 1001,
+      "command": {
+        "type": "SubmitOrder",
+        "order_id": "a0000000-0000-4000-8000-000000000001",
+        "asset": "TEST-A",
+        "user_id": "U1",
+        "side": "BUY",
+        "order_type": "LIMIT",
+        "tif": "GTC",
+        "qty": 1,
+        "price": 100
+      },
+      "expect_reply": {
+        "status": "ACCEPTED",
+        "seq": 2,
+        "last_seq": 2,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "order_id": "a0000000-0000-4000-8000-000000000001"
+      },
+      "expect_events": [
+        {
+          "type": "OrderAccepted",
+          "engine_epoch": "e-test0001",
+          "seq": 2,
+          "ts": 1001,
+          "asset": "TEST-A",
+          "order_id": "a0000000-0000-4000-8000-000000000001",
+          "user_id": "U1",
+          "side": "BUY",
+          "order_type": "LIMIT",
+          "tif": "GTC",
+          "price": 100,
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "ts": 1002,
+      "command": {
+        "type": "SubmitOrder",
+        "order_id": "a0000000-0000-4000-8000-000000000002",
+        "asset": "TEST-A",
+        "user_id": "U2",
+        "side": "BUY",
+        "order_type": "LIMIT",
+        "tif": "GTC",
+        "qty": 1,
+        "price": 100
+      },
+      "expect_reply": {
+        "status": "ACCEPTED",
+        "seq": 3,
+        "last_seq": 3,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "order_id": "a0000000-0000-4000-8000-000000000002"
+      },
+      "expect_events": [
+        {
+          "type": "OrderAccepted",
+          "engine_epoch": "e-test0001",
+          "seq": 3,
+          "ts": 1002,
+          "asset": "TEST-A",
+          "order_id": "a0000000-0000-4000-8000-000000000002",
+          "user_id": "U2",
+          "side": "BUY",
+          "order_type": "LIMIT",
+          "tif": "GTC",
+          "price": 100,
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "ts": 1003,
+      "command": {
+        "type": "SubmitOrder",
+        "order_id": "a0000000-0000-4000-8000-000000000003",
+        "asset": "TEST-A",
+        "user_id": "U3",
+        "side": "BUY",
+        "order_type": "LIMIT",
+        "tif": "GTC",
+        "qty": 1,
+        "price": 100
+      },
+      "expect_reply": {
+        "status": "ACCEPTED",
+        "seq": 4,
+        "last_seq": 4,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "order_id": "a0000000-0000-4000-8000-000000000003"
+      },
+      "expect_events": [
+        {
+          "type": "OrderAccepted",
+          "engine_epoch": "e-test0001",
+          "seq": 4,
+          "ts": 1003,
+          "asset": "TEST-A",
+          "order_id": "a0000000-0000-4000-8000-000000000003",
+          "user_id": "U3",
+          "side": "BUY",
+          "order_type": "LIMIT",
+          "tif": "GTC",
+          "price": 100,
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "ts": 1004,
+      "command": {
+        "type": "SubmitOrder",
+        "order_id": "a0000000-0000-4000-8000-000000000004",
+        "asset": "TEST-A",
+        "user_id": "U4",
+        "side": "BUY",
+        "order_type": "LIMIT",
+        "tif": "GTC",
+        "qty": 1,
+        "price": 100
+      },
+      "expect_reply": {
+        "status": "ACCEPTED",
+        "seq": 5,
+        "last_seq": 5,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "order_id": "a0000000-0000-4000-8000-000000000004"
+      },
+      "expect_events": [
+        {
+          "type": "OrderAccepted",
+          "engine_epoch": "e-test0001",
+          "seq": 5,
+          "ts": 1004,
+          "asset": "TEST-A",
+          "order_id": "a0000000-0000-4000-8000-000000000004",
+          "user_id": "U4",
+          "side": "BUY",
+          "order_type": "LIMIT",
+          "tif": "GTC",
+          "price": 100,
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "ts": 1005,
+      "command": {
+        "type": "CancelOrder",
+        "order_id": "a0000000-0000-4000-8000-000000000002",
+        "reason": "USER"
+      },
+      "expect_reply": {
+        "status": "CANCELED",
+        "seq": 6,
+        "last_seq": 6,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "order_id": "a0000000-0000-4000-8000-000000000002",
+        "remaining_qty": 1
+      },
+      "expect_events": [
+        {
+          "type": "OrderCanceled",
+          "engine_epoch": "e-test0001",
+          "seq": 6,
+          "ts": 1005,
+          "asset": "TEST-A",
+          "order_id": "a0000000-0000-4000-8000-000000000002",
+          "user_id": "U2",
+          "filled_qty": 0,
+          "remaining_qty": 1,
+          "reason": "USER"
+        }
+      ]
+    },
+    {
+      "ts": 1006,
+      "command": {
+        "type": "CancelOrder",
+        "order_id": "a0000000-0000-4000-8000-000000000003",
+        "reason": "USER"
+      },
+      "expect_reply": {
+        "status": "CANCELED",
+        "seq": 7,
+        "last_seq": 7,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "order_id": "a0000000-0000-4000-8000-000000000003",
+        "remaining_qty": 1
+      },
+      "expect_events": [
+        {
+          "type": "OrderCanceled",
+          "engine_epoch": "e-test0001",
+          "seq": 7,
+          "ts": 1006,
+          "asset": "TEST-A",
+          "order_id": "a0000000-0000-4000-8000-000000000003",
+          "user_id": "U3",
+          "filled_qty": 0,
+          "remaining_qty": 1,
+          "reason": "USER"
+        }
+      ]
+    },
+    {
+      "ts": 1007,
+      "command": {
+        "type": "SubmitOrder",
+        "order_id": "a0000000-0000-4000-8000-000000000005",
+        "asset": "TEST-A",
+        "user_id": "U5",
+        "side": "SELL",
+        "order_type": "LIMIT",
+        "tif": "GTC",
+        "qty": 3,
+        "price": 100
+      },
+      "expect_reply": {
+        "status": "ACCEPTED",
+        "seq": 8,
+        "last_seq": 13,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "order_id": "a0000000-0000-4000-8000-000000000005"
+      },
+      "expect_events": [
+        {
+          "type": "OrderAccepted",
+          "engine_epoch": "e-test0001",
+          "seq": 8,
+          "ts": 1007,
+          "asset": "TEST-A",
+          "order_id": "a0000000-0000-4000-8000-000000000005",
+          "user_id": "U5",
+          "side": "SELL",
+          "order_type": "LIMIT",
+          "tif": "GTC",
+          "price": 100,
+          "qty": 3
+        },
+        {
+          "type": "TradeExecuted",
+          "engine_epoch": "e-test0001",
+          "seq": 9,
+          "ts": 1007,
+          "asset": "TEST-A",
+          "trade_id": "e-test0001:9",
+          "price": 100,
+          "qty": 1,
+          "buy_order_id": "a0000000-0000-4000-8000-000000000001",
+          "sell_order_id": "a0000000-0000-4000-8000-000000000005",
+          "buy_user_id": "U1",
+          "sell_user_id": "U5",
+          "maker_order_id": "a0000000-0000-4000-8000-000000000001",
+          "taker_order_id": "a0000000-0000-4000-8000-000000000005",
+          "taker_side": "SELL",
+          "buy_remaining": 0,
+          "sell_remaining": 2
+        },
+        {
+          "type": "OrderFilled",
+          "engine_epoch": "e-test0001",
+          "seq": 10,
+          "ts": 1007,
+          "asset": "TEST-A",
+          "order_id": "a0000000-0000-4000-8000-000000000001",
+          "user_id": "U1",
+          "filled_qty": 1
+        },
+        {
+          "type": "TradeExecuted",
+          "engine_epoch": "e-test0001",
+          "seq": 11,
+          "ts": 1007,
+          "asset": "TEST-A",
+          "trade_id": "e-test0001:11",
+          "price": 100,
+          "qty": 1,
+          "buy_order_id": "a0000000-0000-4000-8000-000000000004",
+          "sell_order_id": "a0000000-0000-4000-8000-000000000005",
+          "buy_user_id": "U4",
+          "sell_user_id": "U5",
+          "maker_order_id": "a0000000-0000-4000-8000-000000000004",
+          "taker_order_id": "a0000000-0000-4000-8000-000000000005",
+          "taker_side": "SELL",
+          "buy_remaining": 0,
+          "sell_remaining": 1
+        },
+        {
+          "type": "OrderFilled",
+          "engine_epoch": "e-test0001",
+          "seq": 12,
+          "ts": 1007,
+          "asset": "TEST-A",
+          "order_id": "a0000000-0000-4000-8000-000000000004",
+          "user_id": "U4",
+          "filled_qty": 1
+        },
+        {
+          "type": "OrderPartiallyFilled",
+          "engine_epoch": "e-test0001",
+          "seq": 13,
+          "ts": 1007,
+          "asset": "TEST-A",
+          "order_id": "a0000000-0000-4000-8000-000000000005",
+          "user_id": "U5",
+          "filled_qty": 2,
+          "remaining_qty": 1
+        }
+      ],
+      "expect_book": {
+        "bids": [],
+        "asks": [
+          {
+            "price": 100,
+            "qty": 1,
+            "orders": 1
+          }
+        ]
+      }
+    }
+  ]
+}

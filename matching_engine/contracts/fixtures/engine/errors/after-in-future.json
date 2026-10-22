@@ -1,0 +1,10 @@
+{
+  "error": {
+    "code": "AFTER_IN_FUTURE",
+    "message": "Resume point is ahead of the engine",
+    "details": {
+      "current_seq": 10,
+      "current_epoch": "e-test0001"
+    }
+  }
+}

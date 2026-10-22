@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://darkhold.local/contracts/schemas/command.configure-asset.schema.json",
+  "title": "ConfigureAssetCommand",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "ConfigureAsset"
+    },
+    "asset": {
+      "type": "string",
+      "pattern": "^[A-Z0-9_-]{1,32}$"
+    },
+    "tick_size": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "min_qty": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "max_qty": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "collar_max_price": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ACTIVE",
+        "HALTED"
+      ]
+    }
+  },
+  "required": [
+    "type",
+    "asset",
+    "tick_size",
+    "min_qty",
+    "max_qty",
+    "collar_max_price",
+    "status"
+  ],
+  "additionalProperties": false
+}

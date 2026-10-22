@@ -1,0 +1,9 @@
+{
+  "error": {
+    "code": "EPOCH_MISMATCH",
+    "message": "Requested epoch differs from the engine's current epoch",
+    "details": {
+      "current_epoch": "e-test0001"
+    }
+  }
+}

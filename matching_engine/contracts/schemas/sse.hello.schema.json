@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://darkhold.local/contracts/schemas/sse.hello.schema.json",
+  "title": "SseHello",
+  "type": "object",
+  "properties": {
+    "engine_epoch": {
+      "type": "string",
+      "pattern": "^e-[0-9a-z]{8}$"
+    },
+    "current_seq": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "ring_start_seq": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "asset": {
+            "type": "string",
+            "pattern": "^[A-Z0-9_-]{1,32}$"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "HALTED"
+            ]
+          }
+        },
+        "required": [
+          "asset",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "server_time": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    }
+  },
+  "required": [
+    "engine_epoch",
+    "current_seq",
+    "ring_start_seq",
+    "assets",
+    "server_time"
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://darkhold.local/contracts/schemas/error.envelope.schema.json",
+  "title": "ErrorEnvelope",
+  "type": "object",
+  "properties": {
+    "error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "VALIDATION_FAILED",
+            "UNAUTHENTICATED",
+            "NOT_FOUND",
+            "PAYLOAD_TOO_LARGE",
+            "ENGINE_BUSY",
+            "ENGINE_UNAVAILABLE",
+            "COMMAND_TIMEOUT",
+            "EPOCH_MISMATCH",
+            "AFTER_IN_FUTURE",
+            "GONE",
+            "TOO_MANY_SUBSCRIBERS",
+            "INTERNAL"
+          ]
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "details"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "error"
+  ],
+  "additionalProperties": false
+}

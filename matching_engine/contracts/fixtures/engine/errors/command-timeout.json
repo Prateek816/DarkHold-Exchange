@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "COMMAND_TIMEOUT",
+    "message": "No reply in time; the command may still execute",
+    "details": {}
+  }
+}

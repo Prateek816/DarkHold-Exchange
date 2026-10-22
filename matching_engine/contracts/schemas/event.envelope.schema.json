@@ -1,0 +1,575 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://darkhold.local/contracts/schemas/event.envelope.schema.json",
+  "title": "EventEnvelope",
+  "oneOf": [
+    {
+      "title": "AssetConfigured",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "AssetConfigured"
+        },
+        "engine_epoch": {
+          "type": "string",
+          "pattern": "^e-[0-9a-z]{8}$"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "ts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "asset": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_-]{1,32}$"
+        },
+        "tick_size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "min_qty": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "max_qty": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "collar_max_price": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "HALTED"
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "engine_epoch",
+        "seq",
+        "ts",
+        "asset",
+        "tick_size",
+        "min_qty",
+        "max_qty",
+        "collar_max_price",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "title": "AssetHalted",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "AssetHalted"
+        },
+        "engine_epoch": {
+          "type": "string",
+          "pattern": "^e-[0-9a-z]{8}$"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "ts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "asset": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_-]{1,32}$"
+        }
+      },
+      "required": [
+        "type",
+        "engine_epoch",
+        "seq",
+        "ts",
+        "asset"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "title": "AssetResumed",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "AssetResumed"
+        },
+        "engine_epoch": {
+          "type": "string",
+          "pattern": "^e-[0-9a-z]{8}$"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "ts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "asset": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_-]{1,32}$"
+        }
+      },
+      "required": [
+        "type",
+        "engine_epoch",
+        "seq",
+        "ts",
+        "asset"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "title": "OrderAccepted",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "OrderAccepted"
+        },
+        "engine_epoch": {
+          "type": "string",
+          "pattern": "^e-[0-9a-z]{8}$"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "ts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "asset": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_-]{1,32}$"
+        },
+        "order_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[\\x21-\\x7E]{1,64}$"
+        },
+        "side": {
+          "type": "string",
+          "enum": [
+            "BUY",
+            "SELL"
+          ]
+        },
+        "order_type": {
+          "type": "string",
+          "enum": [
+            "LIMIT",
+            "MARKET"
+          ]
+        },
+        "tif": {
+          "type": "string",
+          "enum": [
+            "GTC",
+            "IOC"
+          ]
+        },
+        "price": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "qty": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "type",
+        "engine_epoch",
+        "seq",
+        "ts",
+        "asset",
+        "order_id",
+        "user_id",
+        "side",
+        "order_type",
+        "tif",
+        "price",
+        "qty"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "title": "OrderRejected",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "OrderRejected"
+        },
+        "engine_epoch": {
+          "type": "string",
+          "pattern": "^e-[0-9a-z]{8}$"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "ts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "asset": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_-]{1,32}$"
+        },
+        "order_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[\\x21-\\x7E]{1,64}$"
+        },
+        "code": {
+          "type": "string",
+          "enum": [
+            "UNKNOWN_ASSET",
+            "ASSET_HALTED",
+            "INVALID_QTY",
+            "INVALID_PRICE",
+            "PRICE_NOT_ON_TICK",
+            "PRICE_ABOVE_COLLAR",
+            "NOTIONAL_OVERFLOW",
+            "INVALID_TIF"
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "engine_epoch",
+        "seq",
+        "ts",
+        "asset",
+        "order_id",
+        "user_id",
+        "code"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "title": "TradeExecuted",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "TradeExecuted"
+        },
+        "engine_epoch": {
+          "type": "string",
+          "pattern": "^e-[0-9a-z]{8}$"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "ts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "asset": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_-]{1,32}$"
+        },
+        "trade_id": {
+          "type": "string",
+          "pattern": "^e-[0-9a-z]{8}:[1-9][0-9]*$"
+        },
+        "price": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "qty": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "buy_order_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "sell_order_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "buy_user_id": {
+          "type": "string",
+          "pattern": "^[\\x21-\\x7E]{1,64}$"
+        },
+        "sell_user_id": {
+          "type": "string",
+          "pattern": "^[\\x21-\\x7E]{1,64}$"
+        },
+        "maker_order_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "taker_order_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "taker_side": {
+          "type": "string",
+          "enum": [
+            "BUY",
+            "SELL"
+          ]
+        },
+        "buy_remaining": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "sell_remaining": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "type",
+        "engine_epoch",
+        "seq",
+        "ts",
+        "asset",
+        "trade_id",
+        "price",
+        "qty",
+        "buy_order_id",
+        "sell_order_id",
+        "buy_user_id",
+        "sell_user_id",
+        "maker_order_id",
+        "taker_order_id",
+        "taker_side",
+        "buy_remaining",
+        "sell_remaining"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "title": "OrderPartiallyFilled",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "OrderPartiallyFilled"
+        },
+        "engine_epoch": {
+          "type": "string",
+          "pattern": "^e-[0-9a-z]{8}$"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "ts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "asset": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_-]{1,32}$"
+        },
+        "order_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[\\x21-\\x7E]{1,64}$"
+        },
+        "filled_qty": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "remaining_qty": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "type",
+        "engine_epoch",
+        "seq",
+        "ts",
+        "asset",
+        "order_id",
+        "user_id",
+        "filled_qty",
+        "remaining_qty"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "title": "OrderFilled",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "OrderFilled"
+        },
+        "engine_epoch": {
+          "type": "string",
+          "pattern": "^e-[0-9a-z]{8}$"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "ts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "asset": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_-]{1,32}$"
+        },
+        "order_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[\\x21-\\x7E]{1,64}$"
+        },
+        "filled_qty": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "type",
+        "engine_epoch",
+        "seq",
+        "ts",
+        "asset",
+        "order_id",
+        "user_id",
+        "filled_qty"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "title": "OrderCanceled",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "OrderCanceled"
+        },
+        "engine_epoch": {
+          "type": "string",
+          "pattern": "^e-[0-9a-z]{8}$"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "ts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "asset": {
+          "type": "string",
+          "pattern": "^[A-Z0-9_-]{1,32}$"
+        },
+        "order_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "user_id": {
+          "type": "string",
+          "pattern": "^[\\x21-\\x7E]{1,64}$"
+        },
+        "filled_qty": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "remaining_qty": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "USER",
+            "POLICY_BREACH",
+            "ADMIN",
+            "IOC_REMAINDER",
+            "NO_LIQUIDITY",
+            "SELF_TRADE_PREVENTED"
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "engine_epoch",
+        "seq",
+        "ts",
+        "asset",
+        "order_id",
+        "user_id",
+        "filled_qty",
+        "remaining_qty",
+        "reason"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

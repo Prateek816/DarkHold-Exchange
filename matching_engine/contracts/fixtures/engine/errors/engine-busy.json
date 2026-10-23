@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "ENGINE_BUSY",
+    "message": "Command queue full; retry after Retry-After seconds",
+    "details": {}
+  }
+}

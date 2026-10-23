@@ -22,4 +22,8 @@ router.post("/:id/cancel", requireAuth, (req, res, next) =>
   ordersController.cancelOrder(req, res, next)
 );
 
+router.delete("/:id", requireAuth, (req, res, next) =>
+  ordersController.cancelOrder(req, res, next)
+);
+
 export default router;

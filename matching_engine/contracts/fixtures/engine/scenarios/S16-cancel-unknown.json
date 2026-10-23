@@ -1,0 +1,62 @@
+{
+  "name": "S16-cancel-unknown",
+  "description": "Cancel of unknown id.",
+  "engine_epoch": "e-test0001",
+  "steps": [
+    {
+      "ts": 1000,
+      "command": {
+        "type": "ConfigureAsset",
+        "asset": "TEST-A",
+        "tick_size": 1,
+        "min_qty": 1,
+        "max_qty": 1000,
+        "collar_max_price": null,
+        "status": "ACTIVE"
+      },
+      "expect_reply": {
+        "status": "OK",
+        "seq": 1,
+        "last_seq": 1,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "asset": "TEST-A"
+      },
+      "expect_events": [
+        {
+          "type": "AssetConfigured",
+          "engine_epoch": "e-test0001",
+          "seq": 1,
+          "ts": 1000,
+          "asset": "TEST-A",
+          "tick_size": 1,
+          "min_qty": 1,
+          "max_qty": 1000,
+          "collar_max_price": null,
+          "status": "ACTIVE"
+        }
+      ]
+    },
+    {
+      "ts": 1001,
+      "command": {
+        "type": "CancelOrder",
+        "order_id": "a0000000-0000-4000-8000-000000000007",
+        "reason": "USER"
+      },
+      "expect_reply": {
+        "status": "UNKNOWN_ORDER",
+        "seq": null,
+        "last_seq": 1,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "order_id": "a0000000-0000-4000-8000-000000000007"
+      },
+      "expect_events": [],
+      "expect_book": {
+        "bids": [],
+        "asks": []
+      }
+    }
+  ]
+}

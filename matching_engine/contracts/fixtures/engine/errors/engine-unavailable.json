@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "ENGINE_UNAVAILABLE",
+    "message": "Core thread is not alive",
+    "details": {}
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "PAYLOAD_TOO_LARGE",
+    "message": "Request body over limit",
+    "details": {}
+  }
+}

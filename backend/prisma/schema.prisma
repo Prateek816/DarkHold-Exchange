@@ -29,6 +29,7 @@ enum OrderType {
 }
 
 enum OrderStatus {
+  PENDING_SUBMIT
   OPEN
   PARTIALLY_FILLED
   FILLED
@@ -180,6 +181,12 @@ model Order {
   status            OrderStatus      @default(OPEN)
   settlementStatus  SettlementStatus @default(PENDING)
   idempotencyKey    String?          @unique
+  engineSeq         BigInt?
+  engineEpoch       String?
+  cancelReason      String?
+  rejectCode        String?
+  submitAttempts    Int              @default(0)
+  submittedAt       DateTime?
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 
@@ -195,29 +202,37 @@ model Order {
 }
 
 model Trade {
-  id             String   @id // "TRD-..."
+  id             String      @id // "TRD-..." or "e-epoch:seq"
   assetId        String
   buyOrderId     String?
   sellOrderId    String?
   buyerId        String
   sellerId       String
-  executionPrice BigInt   // minor units
+  executionPrice BigInt      // minor units
   quantity       Int
-  totalCost      BigInt   // minor units
-  isSim          Boolean  @default(false)
-  matchedAt      DateTime @default(now())
-  settledAt      DateTime @default(now())
+  totalCost      BigInt      // minor units
+  isSim          Boolean     @default(false)
+  seq            BigInt?
+  engineEpoch    String?
+  ts             BigInt?
+  takerSide      OrderSide?
+  state          String      @default("SETTLED") // "PENDING_SETTLEMENT" | "SETTLED" | "SETTLEMENT_FAILED"
+  settleAttempts Int         @default(0)
+  lastError      String?
+  matchedAt      DateTime    @default(now())
+  settledAt      DateTime    @default(now())
 
-  asset          Asset    @relation(fields: [assetId], references: [id], onDelete: Restrict)
-  buyer          User     @relation("BuyerTrades", fields: [buyerId], references: [id], onDelete: Restrict)
-  seller         User     @relation("SellerTrades", fields: [sellerId], references: [id], onDelete: Restrict)
-  buyOrder       Order?   @relation("BuyOrderTrades", fields: [buyOrderId], references: [id])
-  sellOrder      Order?   @relation("SellOrderTrades", fields: [sellOrderId], references: [id])
+  asset          Asset       @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  buyer          User        @relation("BuyerTrades", fields: [buyerId], references: [id], onDelete: Restrict)
+  seller         User        @relation("SellerTrades", fields: [sellerId], references: [id], onDelete: Restrict)
+  buyOrder       Order?      @relation("BuyOrderTrades", fields: [buyOrderId], references: [id])
+  sellOrder      Order?      @relation("SellOrderTrades", fields: [sellOrderId], references: [id])
 
   @@index([assetId])
   @@index([buyerId])
   @@index([sellerId])
   @@index([matchedAt])
+  @@index([state])
   @@map("trades")
 }
 
@@ -284,4 +299,32 @@ model IdempotencyRecord {
   @@index([key])
   @@index([expiresAt])
   @@map("idempotency_records")
+}
+
+model ConsumerOffset {
+  consumer    String   @id // "engine-main"
+  engineEpoch String
+  lastSeq     BigInt
+  updatedAt   DateTime @updatedAt
+
+  @@map("consumer_offset")
+}
+
+model CandleRecord {
+  id         String   @id @default(cuid())
+  assetId    String
+  interval   String   // "5s" | "1m"
+  openTime   BigInt
+  open       BigInt
+  high       BigInt
+  low        BigInt
+  close      BigInt
+  volume     BigInt
+  tradeCount Int
+  origin     String   @default("ENGINE") // "ENGINE" | "SEEDED_SIM"
+  createdAt  DateTime @default(now())
+
+  @@unique([assetId, interval, openTime])
+  @@index([assetId, interval, openTime])
+  @@map("candles")
 }

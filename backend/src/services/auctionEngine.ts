@@ -46,16 +46,19 @@ export class AuctionService {
     qty: number;
     startPrice: number;
     floorPrice: number;
-    durationMinutes: number;
+    durationMinutes?: number;
+    durationSeconds?: number;
     stepSeconds?: number;
     idempotencyKey?: string;
   }) {
-    const asset = await prisma.asset.findUnique({
-      where: { id: params.assetId },
+    const asset = await prisma.asset.findFirst({
+      where: {
+        OR: [{ id: params.assetId }, { symbol: params.assetId }],
+      },
     });
 
     if (!asset) {
-      throw new AppError(404, "VALIDATION_FAILED", "Asset not found.");
+      throw new AppError(404, "VALIDATION_FAILED", `Asset not found: ${params.assetId}`);
     }
 
     const startPriceBig = BigInt(params.startPrice);
@@ -75,12 +78,13 @@ export class AuctionService {
     }
 
     // Reserve inventory units from seller
-    await walletsService.reserveHoldingUnits(params.sellerId, params.assetId, params.qty);
+    await walletsService.reserveHoldingUnits(params.sellerId, asset.id, params.qty);
 
     const now = new Date();
-    const endTime = new Date(now.getTime() + params.durationMinutes * 60 * 1000);
+    const durationSeconds = params.durationSeconds ?? ((params.durationMinutes ?? 2) * 60);
+    const endTime = new Date(now.getTime() + durationSeconds * 1000);
     const stepSeconds = params.stepSeconds || 15;
-    const totalSteps = Math.max(1, Math.floor((params.durationMinutes * 60) / stepSeconds));
+    const totalSteps = Math.max(1, Math.floor(durationSeconds / stepSeconds));
     const priceDecrement = (startPriceBig - floorPriceBig) / BigInt(totalSteps) || BigInt(50);
 
     const auctionId = `AUC-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
@@ -88,7 +92,7 @@ export class AuctionService {
     const created = await prisma.auction.create({
       data: {
         id: auctionId,
-        assetId: params.assetId,
+        assetId: asset.id,
         sellerId: params.sellerId,
         quantity: params.qty,
         remainingQuantity: params.qty,

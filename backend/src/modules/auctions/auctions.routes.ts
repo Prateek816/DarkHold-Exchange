@@ -28,4 +28,8 @@ router.post("/:id/cancel", requireAuth, (req, res, next) =>
   auctionsController.cancelAuction(req, res, next)
 );
 
+router.delete("/:id", requireAuth, (req, res, next) =>
+  auctionsController.cancelAuction(req, res, next)
+);
+
 export default router;

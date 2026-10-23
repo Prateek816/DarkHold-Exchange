@@ -1,0 +1,236 @@
+[
+  {
+    "code": "UNKNOWN_ASSET",
+    "http": 200,
+    "layer": "engine-reject",
+    "message": "Asset is not configured in the engine"
+  },
+  {
+    "code": "ASSET_HALTED",
+    "http": 200,
+    "layer": "engine-reject",
+    "message": "Asset is halted; new orders are not accepted"
+  },
+  {
+    "code": "INVALID_QTY",
+    "http": 200,
+    "layer": "engine-reject",
+    "message": "Quantity is outside the asset's min/max quantity"
+  },
+  {
+    "code": "INVALID_PRICE",
+    "http": 200,
+    "layer": "engine-reject",
+    "message": "Price must be between 1 and 2^53-1"
+  },
+  {
+    "code": "PRICE_NOT_ON_TICK",
+    "http": 200,
+    "layer": "engine-reject",
+    "message": "Price is not a multiple of the asset's tick size"
+  },
+  {
+    "code": "PRICE_ABOVE_COLLAR",
+    "http": 200,
+    "layer": "engine-reject",
+    "message": "Price is above the asset's collar"
+  },
+  {
+    "code": "NOTIONAL_OVERFLOW",
+    "http": 200,
+    "layer": "engine-reject",
+    "message": "price x qty overflows or exceeds 2^53-1"
+  },
+  {
+    "code": "INVALID_TIF",
+    "http": 200,
+    "layer": "engine-reject",
+    "message": "MARKET orders must be IOC"
+  },
+  {
+    "code": "ORDER_ID_REUSED",
+    "http": 200,
+    "layer": "engine-reject",
+    "message": "order_id already used with different order parameters"
+  },
+  {
+    "code": "INVALID_CONFIG",
+    "http": 200,
+    "layer": "engine-reject",
+    "message": "Asset configuration is invalid"
+  },
+  {
+    "code": "VALIDATION_FAILED",
+    "http": 400,
+    "layer": "engine-transport",
+    "message": "Malformed JSON, unknown field, wrong type, bad enum, bad uuid, or bad id format"
+  },
+  {
+    "code": "UNAUTHENTICATED",
+    "http": 401,
+    "layer": "engine-transport",
+    "message": "Missing or wrong X-Engine-Token"
+  },
+  {
+    "code": "NOT_FOUND",
+    "http": 404,
+    "layer": "engine-transport",
+    "message": "Unknown order or asset on query"
+  },
+  {
+    "code": "PAYLOAD_TOO_LARGE",
+    "http": 413,
+    "layer": "engine-transport",
+    "message": "Request body over limit"
+  },
+  {
+    "code": "ENGINE_BUSY",
+    "http": 503,
+    "layer": "engine-transport",
+    "message": "Command queue full; retry after Retry-After seconds"
+  },
+  {
+    "code": "ENGINE_UNAVAILABLE",
+    "http": 503,
+    "layer": "engine-transport",
+    "message": "Core thread is not alive"
+  },
+  {
+    "code": "COMMAND_TIMEOUT",
+    "http": 504,
+    "layer": "engine-transport",
+    "message": "No reply in time; the command may still execute"
+  },
+  {
+    "code": "EPOCH_MISMATCH",
+    "http": 409,
+    "layer": "engine-transport",
+    "message": "Requested epoch differs from the engine's current epoch"
+  },
+  {
+    "code": "AFTER_IN_FUTURE",
+    "http": 409,
+    "layer": "engine-transport",
+    "message": "Resume point is ahead of the engine"
+  },
+  {
+    "code": "GONE",
+    "http": 410,
+    "layer": "engine-transport",
+    "message": "Resume point is older than the retained ring"
+  },
+  {
+    "code": "TOO_MANY_SUBSCRIBERS",
+    "http": 503,
+    "layer": "engine-transport",
+    "message": "SSE subscriber cap reached"
+  },
+  {
+    "code": "INTERNAL",
+    "http": 500,
+    "layer": "engine-transport",
+    "message": "Unexpected engine error"
+  },
+  {
+    "code": "FORBIDDEN",
+    "http": 403,
+    "layer": "api",
+    "message": "Authenticated but not allowed"
+  },
+  {
+    "code": "RATE_LIMITED",
+    "http": 429,
+    "layer": "api",
+    "message": "Rate limit exceeded; see retry time"
+  },
+  {
+    "code": "IDEMPOTENCY_CONFLICT",
+    "http": 409,
+    "layer": "api",
+    "message": "Idempotency key reused with a different request"
+  },
+  {
+    "code": "EMAIL_TAKEN",
+    "http": 409,
+    "layer": "api",
+    "message": "Email already registered"
+  },
+  {
+    "code": "INSUFFICIENT_FUNDS",
+    "http": 422,
+    "layer": "api",
+    "message": "Available funds do not cover the order"
+  },
+  {
+    "code": "INSUFFICIENT_HOLDINGS",
+    "http": 422,
+    "layer": "api",
+    "message": "Available units do not cover the order"
+  },
+  {
+    "code": "PRICE_ABOVE_CEILING",
+    "http": 422,
+    "layer": "api",
+    "message": "Price is above the asset's resale ceiling"
+  },
+  {
+    "code": "ASSET_NOT_TRADABLE",
+    "http": 422,
+    "layer": "api",
+    "message": "Asset is not currently tradable"
+  },
+  {
+    "code": "HOLDING_CAP_EXCEEDED",
+    "http": 422,
+    "layer": "api",
+    "message": "Per-account holding cap would be exceeded"
+  },
+  {
+    "code": "MAX_OPEN_ORDERS",
+    "http": 422,
+    "layer": "api",
+    "message": "Open order limit reached"
+  },
+  {
+    "code": "ORDER_NOT_FOUND",
+    "http": 404,
+    "layer": "api",
+    "message": "Order does not exist"
+  },
+  {
+    "code": "ORDER_NOT_CANCELABLE",
+    "http": 409,
+    "layer": "api",
+    "message": "Order is already filled, canceled, or not yet submitted"
+  },
+  {
+    "code": "SELF_TRADE_PREVENTED",
+    "http": 422,
+    "layer": "api",
+    "message": "Order canceled to prevent a self trade"
+  },
+  {
+    "code": "NO_LIQUIDITY",
+    "http": 422,
+    "layer": "api",
+    "message": "No liquidity at or within the protection price"
+  },
+  {
+    "code": "AUCTION_NOT_ACTIVE",
+    "http": 409,
+    "layer": "api",
+    "message": "Auction is not active"
+  },
+  {
+    "code": "AUCTION_ALREADY_SOLD",
+    "http": 409,
+    "layer": "api",
+    "message": "Auction was already sold"
+  },
+  {
+    "code": "PRICE_MOVED",
+    "http": 409,
+    "layer": "api",
+    "message": "Auction price moved above max_price"
+  }
+]

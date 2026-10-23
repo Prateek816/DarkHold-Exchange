@@ -18,6 +18,10 @@ export type ErrorCode =
   | "AUCTION_ALREADY_SOLD"
   | "PRICE_MOVED"
   | "IDEMPOTENCY_CONFLICT"
+  | "ORDER_NOT_FOUND"
+  | "AUCTION_NOT_FOUND"
+  | "ASSET_NOT_FOUND"
+  | "REQUEST_IN_PROGRESS"
   | "INTERNAL_ERROR";
 
 export interface ApiErrorContext {
@@ -63,15 +67,22 @@ export class AppError extends Error {
     Object.setPrototypeOf(this, new.target.prototype);
   }
 
-  public toPayload(): ApiErrorPayload {
+  public toPayload(): any {
+    const details = {
+      ...(this.context || {}),
+      request_id: this.requestId,
+    };
     return {
       code: this.code,
       message: this.message,
-      context: {
-        ...this.context,
+      context: details,
+      requestId: this.requestId,
+      error: {
+        code: this.code,
+        message: this.message,
+        details: this.context || {},
         request_id: this.requestId,
       },
-      requestId: this.requestId,
     };
   }
 }
@@ -115,7 +126,7 @@ export class RateLimitedError extends AppError {
 export class InsufficientFundsError extends AppError {
   constructor(needed: number, available: number, requestId?: string) {
     super(
-      400,
+      422,
       "INSUFFICIENT_FUNDS",
       `Insufficient funds: needed ${needed}, available ${available}`,
       { needed, available },
@@ -127,7 +138,7 @@ export class InsufficientFundsError extends AppError {
 export class InsufficientHoldingsError extends AppError {
   constructor(available: number, requestId?: string) {
     super(
-      400,
+      422,
       "INSUFFICIENT_HOLDINGS",
       `Insufficient asset holdings: available ${available}`,
       { available },
@@ -139,7 +150,7 @@ export class InsufficientHoldingsError extends AppError {
 export class PriceAboveCeilingError extends AppError {
   constructor(ceiling: number, pct: number, face: number, requestId?: string) {
     super(
-      400,
+      422,
       "PRICE_ABOVE_CEILING",
       `Price exceeds resale ceiling cap of ${ceiling} (${pct}% of face value ${face})`,
       { ceiling, pct, face },
@@ -150,13 +161,13 @@ export class PriceAboveCeilingError extends AppError {
 
 export class AssetNotTradableError extends AppError {
   constructor(message: string = "Trading on this asset has been halted by the exchange.", requestId?: string) {
-    super(400, "ASSET_NOT_TRADABLE", message, undefined, requestId);
+    super(422, "ASSET_NOT_TRADABLE", message, undefined, requestId);
   }
 }
 
 export class SelfTradePreventedError extends AppError {
   constructor(message: string = "Self-trade prevention: Order would match your own resting order.", requestId?: string) {
-    super(400, "SELF_TRADE_PREVENTED", message, undefined, requestId);
+    super(422, "SELF_TRADE_PREVENTED", message, undefined, requestId);
   }
 }
 

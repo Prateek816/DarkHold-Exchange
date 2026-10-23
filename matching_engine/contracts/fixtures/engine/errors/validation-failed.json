@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "VALIDATION_FAILED",
+    "message": "Malformed JSON, unknown field, wrong type, bad enum, bad uuid, or bad id format",
+    "details": {}
+  }
+}

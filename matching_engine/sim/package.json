@@ -1,0 +1,31 @@
+{
+  "name": "@darkhold/sim",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node dist/main.js",
+    "dev": "tsx src/main.ts",
+    "build": "tsup src/main.ts src/history/cli.ts --format esm --target node20 --clean --out-dir dist",
+    "typecheck": "tsc --noEmit",
+    "seed:history": "tsx src/history/cli.ts",
+    "seed:fixture": "tsx src/history/cli.ts --seed darkhold-history-1 --end 2026-10-01T12:00:00Z --out ../../ops/seed/candles.seeded.json && tsx src/history/cli.ts --seed darkhold-history-1 --end 2026-10-01T12:00:00Z --out ../contracts/fixtures/market/candles.seeded.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@darkhold/candles": "*",
+    "express": "^4.21.0",
+    "pino": "^9.5.0",
+    "ws": "^8.18.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.16.0",
+    "@types/ws": "^8.5.12",
+    "tsup": "^8.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

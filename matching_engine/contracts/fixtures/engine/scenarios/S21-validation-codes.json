@@ -1,0 +1,427 @@
+{
+  "name": "S21-validation-codes",
+  "description": "One step per reject code.",
+  "engine_epoch": "e-test0001",
+  "steps": [
+    {
+      "ts": 1000,
+      "command": {
+        "type": "ConfigureAsset",
+        "asset": "TEST-A",
+        "tick_size": 1,
+        "min_qty": 1,
+        "max_qty": 1000,
+        "collar_max_price": null,
+        "status": "ACTIVE"
+      },
+      "expect_reply": {
+        "status": "OK",
+        "seq": 1,
+        "last_seq": 1,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "asset": "TEST-A"
+      },
+      "expect_events": [
+        {
+          "type": "AssetConfigured",
+          "engine_epoch": "e-test0001",
+          "seq": 1,
+          "ts": 1000,
+          "asset": "TEST-A",
+          "tick_size": 1,
+          "min_qty": 1,
+          "max_qty": 1000,
+          "collar_max_price": null,
+          "status": "ACTIVE"
+        }
+      ]
+    },
+    {
+      "ts": 1001,
+      "command": {
+        "type": "SubmitOrder",
+        "order_id": "a0000000-0000-4000-8000-000000000008",
+        "asset": "TEST-A",
+        "user_id": "U1",
+        "side": "BUY",
+        "order_type": "LIMIT",
+        "tif": "GTC",
+        "qty": 0,
+        "price": 100
+      },
+      "expect_reply": {
+        "status": "REJECTED",
+        "seq": 2,
+        "last_seq": 2,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "order_id": "a0000000-0000-4000-8000-000000000008",
+        "code": "INVALID_QTY"
+      },
+      "expect_events": [
+        {
+          "type": "OrderRejected",
+          "engine_epoch": "e-test0001",
+          "seq": 2,
+          "ts": 1001,
+          "asset": "TEST-A",
+          "order_id": "a0000000-0000-4000-8000-000000000008",
+          "user_id": "U1",
+          "code": "INVALID_QTY"
+        }
+      ]
+    },
+    {
+      "ts": 1002,
+      "command": {
+        "type": "SubmitOrder",
+        "order_id": "a0000000-0000-4000-8000-000000000009",
+        "asset": "TEST-A",
+        "user_id": "U1",
+        "side": "BUY",
+        "order_type": "LIMIT",
+        "tif": "GTC",
+        "qty": 2000,
+        "price": 100
+      },
+      "expect_reply": {
+        "status": "REJECTED",
+        "seq": 3,
+        "last_seq": 3,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "order_id": "a0000000-0000-4000-8000-000000000009",
+        "code": "INVALID_QTY"
+      },
+      "expect_events": [
+        {
+          "type": "OrderRejected",
+          "engine_epoch": "e-test0001",
+          "seq": 3,
+          "ts": 1002,
+          "asset": "TEST-A",
+          "order_id": "a0000000-0000-4000-8000-000000000009",
+          "user_id": "U1",
+          "code": "INVALID_QTY"
+        }
+      ]
+    },
+    {
+      "ts": 1003,
+      "command": {
+        "type": "SubmitOrder",
+        "order_id": "a0000000-0000-4000-8000-00000000000a",
+        "asset": "TEST-A",
+        "user_id": "U1",
+        "side": "BUY",
+        "order_type": "LIMIT",
+        "tif": "GTC",
+        "qty": 1,
+        "price": 0
+      },
+      "expect_reply": {
+        "status": "REJECTED",
+        "seq": 4,
+        "last_seq": 4,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "order_id": "a0000000-0000-4000-8000-00000000000a",
+        "code": "INVALID_PRICE"
+      },
+      "expect_events": [
+        {
+          "type": "OrderRejected",
+          "engine_epoch": "e-test0001",
+          "seq": 4,
+          "ts": 1003,
+          "asset": "TEST-A",
+          "order_id": "a0000000-0000-4000-8000-00000000000a",
+          "user_id": "U1",
+          "code": "INVALID_PRICE"
+        }
+      ]
+    },
+    {
+      "ts": 1004,
+      "command": {
+        "type": "ConfigureAsset",
+        "asset": "TEST-A",
+        "tick_size": 10,
+        "min_qty": 1,
+        "max_qty": 1000,
+        "collar_max_price": null,
+        "status": "ACTIVE"
+      },
+      "expect_reply": {
+        "status": "OK",
+        "seq": 5,
+        "last_seq": 5,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "asset": "TEST-A"
+      },
+      "expect_events": [
+        {
+          "type": "AssetConfigured",
+          "engine_epoch": "e-test0001",
+          "seq": 5,
+          "ts": 1004,
+          "asset": "TEST-A",
+          "tick_size": 10,
+          "min_qty": 1,
+          "max_qty": 1000,
+          "collar_max_price": null,
+          "status": "ACTIVE"
+        }
+      ]
+    },
+    {
+      "ts": 1005,
+      "command": {
+        "type": "SubmitOrder",
+        "order_id": "a0000000-0000-4000-8000-00000000000b",
+        "asset": "TEST-A",
+        "user_id": "U1",
+        "side": "BUY",
+        "order_type": "LIMIT",
+        "tif": "GTC",
+        "qty": 1,
+        "price": 105
+      },
+      "expect_reply": {
+        "status": "REJECTED",
+        "seq": 6,
+        "last_seq": 6,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "order_id": "a0000000-0000-4000-8000-00000000000b",
+        "code": "PRICE_NOT_ON_TICK"
+      },
+      "expect_events": [
+        {
+          "type": "OrderRejected",
+          "engine_epoch": "e-test0001",
+          "seq": 6,
+          "ts": 1005,
+          "asset": "TEST-A",
+          "order_id": "a0000000-0000-4000-8000-00000000000b",
+          "user_id": "U1",
+          "code": "PRICE_NOT_ON_TICK"
+        }
+      ]
+    },
+    {
+      "ts": 1006,
+      "command": {
+        "type": "ConfigureAsset",
+        "asset": "TEST-A",
+        "tick_size": 10,
+        "min_qty": 1,
+        "max_qty": 1000,
+        "collar_max_price": 200,
+        "status": "ACTIVE"
+      },
+      "expect_reply": {
+        "status": "OK",
+        "seq": 7,
+        "last_seq": 7,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "asset": "TEST-A"
+      },
+      "expect_events": [
+        {
+          "type": "AssetConfigured",
+          "engine_epoch": "e-test0001",
+          "seq": 7,
+          "ts": 1006,
+          "asset": "TEST-A",
+          "tick_size": 10,
+          "min_qty": 1,
+          "max_qty": 1000,
+          "collar_max_price": 200,
+          "status": "ACTIVE"
+        }
+      ]
+    },
+    {
+      "ts": 1007,
+      "command": {
+        "type": "SubmitOrder",
+        "order_id": "a0000000-0000-4000-8000-00000000000c",
+        "asset": "TEST-A",
+        "user_id": "U1",
+        "side": "BUY",
+        "order_type": "LIMIT",
+        "tif": "GTC",
+        "qty": 1,
+        "price": 250
+      },
+      "expect_reply": {
+        "status": "REJECTED",
+        "seq": 8,
+        "last_seq": 8,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "order_id": "a0000000-0000-4000-8000-00000000000c",
+        "code": "PRICE_ABOVE_COLLAR"
+      },
+      "expect_events": [
+        {
+          "type": "OrderRejected",
+          "engine_epoch": "e-test0001",
+          "seq": 8,
+          "ts": 1007,
+          "asset": "TEST-A",
+          "order_id": "a0000000-0000-4000-8000-00000000000c",
+          "user_id": "U1",
+          "code": "PRICE_ABOVE_COLLAR"
+        }
+      ]
+    },
+    {
+      "ts": 1008,
+      "command": {
+        "type": "ConfigureAsset",
+        "asset": "TEST-A",
+        "tick_size": 1,
+        "min_qty": 1,
+        "max_qty": 1000,
+        "collar_max_price": null,
+        "status": "ACTIVE"
+      },
+      "expect_reply": {
+        "status": "OK",
+        "seq": 9,
+        "last_seq": 9,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "asset": "TEST-A"
+      },
+      "expect_events": [
+        {
+          "type": "AssetConfigured",
+          "engine_epoch": "e-test0001",
+          "seq": 9,
+          "ts": 1008,
+          "asset": "TEST-A",
+          "tick_size": 1,
+          "min_qty": 1,
+          "max_qty": 1000,
+          "collar_max_price": null,
+          "status": "ACTIVE"
+        }
+      ]
+    },
+    {
+      "ts": 1009,
+      "command": {
+        "type": "SubmitOrder",
+        "order_id": "a0000000-0000-4000-8000-00000000000d",
+        "asset": "TEST-A",
+        "user_id": "U1",
+        "side": "BUY",
+        "order_type": "LIMIT",
+        "tif": "GTC",
+        "qty": 10,
+        "price": 9007199254740000
+      },
+      "expect_reply": {
+        "status": "REJECTED",
+        "seq": 10,
+        "last_seq": 10,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "order_id": "a0000000-0000-4000-8000-00000000000d",
+        "code": "NOTIONAL_OVERFLOW"
+      },
+      "expect_events": [
+        {
+          "type": "OrderRejected",
+          "engine_epoch": "e-test0001",
+          "seq": 10,
+          "ts": 1009,
+          "asset": "TEST-A",
+          "order_id": "a0000000-0000-4000-8000-00000000000d",
+          "user_id": "U1",
+          "code": "NOTIONAL_OVERFLOW"
+        }
+      ]
+    },
+    {
+      "ts": 1010,
+      "command": {
+        "type": "SubmitOrder",
+        "order_id": "a0000000-0000-4000-8000-00000000000e",
+        "asset": "TEST-A",
+        "user_id": "U1",
+        "side": "BUY",
+        "order_type": "MARKET",
+        "tif": "GTC",
+        "qty": 1,
+        "price": 100
+      },
+      "expect_reply": {
+        "status": "REJECTED",
+        "seq": 11,
+        "last_seq": 11,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "order_id": "a0000000-0000-4000-8000-00000000000e",
+        "code": "INVALID_TIF"
+      },
+      "expect_events": [
+        {
+          "type": "OrderRejected",
+          "engine_epoch": "e-test0001",
+          "seq": 11,
+          "ts": 1010,
+          "asset": "TEST-A",
+          "order_id": "a0000000-0000-4000-8000-00000000000e",
+          "user_id": "U1",
+          "code": "INVALID_TIF"
+        }
+      ]
+    },
+    {
+      "ts": 1011,
+      "command": {
+        "type": "SubmitOrder",
+        "order_id": "a0000000-0000-4000-8000-00000000000f",
+        "asset": "NOPE",
+        "user_id": "U1",
+        "side": "BUY",
+        "order_type": "LIMIT",
+        "tif": "GTC",
+        "qty": 1,
+        "price": 100
+      },
+      "expect_reply": {
+        "status": "REJECTED",
+        "seq": 12,
+        "last_seq": 12,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "order_id": "a0000000-0000-4000-8000-00000000000f",
+        "code": "UNKNOWN_ASSET"
+      },
+      "expect_events": [
+        {
+          "type": "OrderRejected",
+          "engine_epoch": "e-test0001",
+          "seq": 12,
+          "ts": 1011,
+          "asset": "NOPE",
+          "order_id": "a0000000-0000-4000-8000-00000000000f",
+          "user_id": "U1",
+          "code": "UNKNOWN_ASSET"
+        }
+      ],
+      "expect_book": {
+        "bids": [],
+        "asks": []
+      }
+    }
+  ]
+}

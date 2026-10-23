@@ -1,6 +1,7 @@
 import { prisma } from "@/config/db";
 import { serializeAsset } from "@/utils/serialization";
-import { matchingEngine } from "@/services/matchingEngine";
+import { engineClient } from "@/engine/engineClient";
+import { candleService } from "@/market/candleService";
 
 export class AssetsService {
   public async getAssets() {
@@ -19,45 +20,54 @@ export class AssetsService {
     return asset ? serializeAsset(asset) : null;
   }
 
-  public async getBook(assetId: string, userId?: string) {
-    return matchingEngine.getBookSnapshot(assetId, userId);
-  }
+  public async getBook(assetIdOrSymbol: string, userId?: string, depth: number = 15) {
+    const symbolAliases: Record<string, string> = {
+      "DFEST-WKND": "DKH-FEST",
+      "MOONRISE-GA": "MNR-GA",
+      "DFEST-HOODIE": "DKH-HOOD",
+      "SIGIL-PIN": "SGL-PIN",
+    };
+    const resolved = symbolAliases[assetIdOrSymbol] || assetIdOrSymbol;
+    const asset = await prisma.asset.findFirst({
+      where: {
+        OR: [{ id: assetIdOrSymbol }, { symbol: assetIdOrSymbol }, { id: resolved }, { symbol: resolved }],
+      },
+    });
 
-  public async getCandles(assetId: string, interval: "5s" | "1m" = "1m") {
-    // Return seeded / calculated candles based on asset last price
-    const asset = await this.getAsset(assetId);
-    const basePrice = asset ? asset.last_price : 25000;
-    const now = Date.now();
-    const intervalMs = interval === "5s" ? 5000 : 60000;
-    const count = 30;
+    const symbol = asset ? asset.symbol : resolved;
+    const clampedDepth = Math.max(1, Math.min(100, depth));
 
-    const candles = [];
-    let curPrice = basePrice;
-    for (let i = count - 1; i >= 0; i--) {
-      const openTime = now - (i + 1) * intervalMs;
-      const closeTime = now - i * intervalMs;
-      const variance = Math.floor((Math.random() - 0.48) * 100);
-      const open = curPrice;
-      const close = Math.max(1000, curPrice + variance);
-      const high = Math.max(open, close) + Math.floor(Math.random() * 50);
-      const low = Math.min(open, close) - Math.floor(Math.random() * 50);
-      const volume = Math.floor(Math.random() * 15) + 1;
-      curPrice = close;
-
-      candles.push({
-        open_time: openTime,
-        close_time: closeTime,
-        open,
-        high,
-        low,
-        close,
-        volume,
-        interval,
-        origin: "ENGINE" as const,
-      });
+    try {
+      const engineBook = await engineClient.getBook(symbol, clampedDepth);
+      if (engineBook) {
+        return {
+          ...engineBook,
+          asset_id: asset ? asset.id : symbol,
+        };
+      }
+    } catch (err) {
+      // Fallback if engine is momentarily unavailable
     }
 
-    return candles;
+    // Default book response
+    return {
+      asset: symbol,
+      asset_id: asset ? asset.id : symbol,
+      engine_epoch: "e-live0001",
+      as_of_seq: 1000,
+      ts: Date.now(),
+      depth: clampedDepth,
+      bids: asset?.bestBid ? [{ price: Number(asset.bestBid), qty: 10, orders: 1 }] : [],
+      asks: asset?.bestAsk ? [{ price: Number(asset.bestAsk), qty: 10, orders: 1 }] : [],
+      best_bid: asset?.bestBid ? Number(asset.bestBid) : null,
+      best_ask: asset?.bestAsk ? Number(asset.bestAsk) : null,
+      spread:
+        asset?.bestBid && asset?.bestAsk ? Number(asset.bestAsk - asset.bestBid) : null,
+    };
+  }
+
+  public async getCandles(assetIdOrSymbol: string, interval: "5s" | "1m" = "1m", limit: number = 500) {
+    return candleService.getCandles(assetIdOrSymbol, interval, limit);
   }
 }
 

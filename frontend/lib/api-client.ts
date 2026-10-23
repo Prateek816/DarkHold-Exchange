@@ -97,7 +97,8 @@ export class ApiClient {
     if (USE_MOCK) {
       return Promise.resolve(fakeServer.getAssets());
     }
-    return this.request<Asset[]>("/api/assets");
+    const res = await this.request<any>("/api/assets");
+    return Array.isArray(res) ? res : (res?.items || res?.data || []);
   }
 
   public async getAsset(id: string): Promise<Asset | null> {
@@ -126,14 +127,16 @@ export class ApiClient {
     if (USE_MOCK) {
       return Promise.resolve(fakeServer.getTrades(assetId));
     }
-    return this.request<TradeTick[]>(`/api/trades/${assetId}`);
+    const res = await this.request<any>(`/api/trades/${assetId}`);
+    return Array.isArray(res) ? res : (res?.items || res?.data || []);
   }
 
   public async getCandles(assetId: string, interval: "5s" | "1m" = "1m"): Promise<Candle[]> {
     if (USE_MOCK) {
       return Promise.resolve(fakeServer.getCandles(assetId, interval));
     }
-    return this.request<Candle[]>(`/api/candles/${assetId}?interval=${interval}`);
+    const res = await this.request<any>(`/api/candles/${assetId}?interval=${interval}`);
+    return Array.isArray(res) ? res : (res?.candles || res?.items || []);
   }
 
   public async getWallet(): Promise<WalletBalance> {
@@ -151,7 +154,8 @@ export class ApiClient {
     if (USE_MOCK) {
       return Promise.resolve(fakeServer.getOrders());
     }
-    return this.request<Order[]>("/api/orders");
+    const res = await this.request<any>("/api/orders");
+    return Array.isArray(res) ? res : (res?.items || res?.data || []);
   }
 
   public async submitOrder(params: {
@@ -170,7 +174,7 @@ export class ApiClient {
       return Promise.resolve({ data: result.data! });
     }
 
-    return this.request<{ data: Order }>("/api/orders", {
+    const res = await this.request<any>("/api/orders", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -178,6 +182,7 @@ export class ApiClient {
       },
       body: JSON.stringify(params),
     });
+    return { data: res.data || res };
   }
 
   public async cancelOrder(orderId: string): Promise<{ data: Order }> {
@@ -189,16 +194,18 @@ export class ApiClient {
       return Promise.resolve({ data: result.data! });
     }
 
-    return this.request<{ data: Order }>(`/api/orders/${orderId}/cancel`, {
+    const res = await this.request<any>(`/api/orders/${orderId}/cancel`, {
       method: "POST",
     });
+    return { data: res.data || res };
   }
 
   public async getAuctions(): Promise<DutchAuction[]> {
     if (USE_MOCK) {
       return Promise.resolve(fakeServer.getAuctions());
     }
-    return this.request<DutchAuction[]>("/api/auctions");
+    const res = await this.request<any>("/api/auctions");
+    return Array.isArray(res) ? res : (res?.items || res?.auctions || []);
   }
 
   public async getAuction(id: string): Promise<DutchAuction | null> {

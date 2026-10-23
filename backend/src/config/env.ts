@@ -24,6 +24,14 @@ const envSchema = z.object({
     .string()
     .optional()
     .transform((val) => val !== "false"),
+  ENGINE_URL: z.string().default("http://localhost:7000"),
+  ENGINE_TOKEN: z.string().default("dev-token"),
+  ENGINE_CMD_TIMEOUT_MS: z.coerce.number().default(3000),
+  RESOLVER_STALE_MS: z.coerce.number().default(3000),
+  WS_ENABLED: z
+    .string()
+    .optional()
+    .transform((val) => val !== "false"),
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { fakeWs } from "@/mocks/fake-websocket";
 import { useWalletStore } from "@/lib/stores/walletStore";
@@ -21,6 +21,7 @@ interface AuctionDetailViewProps {
 }
 
 export function AuctionDetailView({ auctionId }: AuctionDetailViewProps) {
+  const queryClient = useQueryClient();
   const { availableCredits, setWalletFromServer } = useWalletStore();
   const { connectionState, addToast } = useUiStore();
   const isDisconnected = connectionState === "DISCONNECTED" || connectionState === "RECONNECTING";
@@ -29,6 +30,8 @@ export function AuctionDetailView({ auctionId }: AuctionDetailViewProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isWon, setIsWon] = useState(false);
+  const isWonRef = useRef(isWon);
+  isWonRef.current = isWon;
 
   const {
     data: auction,
@@ -40,7 +43,12 @@ export function AuctionDetailView({ auctionId }: AuctionDetailViewProps) {
   });
 
   useEffect(() => {
-    if (auction) setLivePrice(auction.current_price);
+    if (auction) {
+      setLivePrice(auction.current_price);
+      if (auction.status === "SOLD" && auction.winning_buyer_id === "trader_01") {
+        setIsWon(true);
+      }
+    }
   }, [auction]);
 
   useEffect(() => {
@@ -49,7 +57,9 @@ export function AuctionDetailView({ auctionId }: AuctionDetailViewProps) {
 
     const removeListener = fakeWs.addListener((event, data) => {
       if (event === `auction_price_update:${auctionId}`) {
-        setLivePrice(data.current_price);
+        if (!isWonRef.current && auction?.status === "ACTIVE") {
+          setLivePrice(data.current_price);
+        }
       }
     });
 
@@ -57,7 +67,7 @@ export function AuctionDetailView({ auctionId }: AuctionDetailViewProps) {
       fakeWs.unsubscribe(channel);
       removeListener();
     };
-  }, [auctionId]);
+  }, [auctionId, auction?.status]);
 
   if (isLoading || !auction) {
     return (
@@ -84,18 +94,25 @@ export function AuctionDetailView({ auctionId }: AuctionDetailViewProps) {
         };
       }
 
-      await new Promise((r) => setTimeout(r, 600));
+      const res = await api.buyAuction({
+        auctionId,
+        maxPrice: livePrice,
+      });
 
       const freshWallet = await api.getWallet();
       setWalletFromServer(freshWallet);
-      refetch();
+      await refetch();
+      queryClient.invalidateQueries({ queryKey: ["auctions"] });
+      queryClient.invalidateQueries({ queryKey: ["receipts"] });
+      queryClient.invalidateQueries({ queryKey: ["wallet"] });
 
       setIsWon(true);
+      setLivePrice(res.auction.current_price);
       addToast({
         type: "success",
         title: "Auction won",
-        message: `Acquired ${auction.qty}x ${auction.asset_name} at ${formatCurrency(
-          livePrice
+        message: `Acquired ${res.auction.qty}x ${res.auction.asset_name} at ${formatCurrency(
+          res.auction.current_price
         )}. Settled into vault inventory.`,
       });
     } catch (err: any) {
@@ -109,6 +126,8 @@ export function AuctionDetailView({ auctionId }: AuctionDetailViewProps) {
         message = "Another buyer accepted just before you.";
       } else if (err.code === "PRICE_MOVED") {
         message = "Price moved during submission. Refreshed to the latest tick — retry.";
+      } else if (err.message) {
+        message = err.message;
       }
 
       setErrorMessage(message);

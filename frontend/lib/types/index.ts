@@ -170,3 +170,15 @@ export interface MLRiskAccount {
 }
 
 export type ConnectionState = "CONNECTING" | "AUTHENTICATING" | "SYNCING" | "LIVE" | "RECONNECTING" | "DISCONNECTED";
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+}
+
+export interface AuthSessionResponse {
+  user: AuthUser;
+  token: string;
+  expires_at: number;
+}

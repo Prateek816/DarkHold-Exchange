@@ -17,6 +17,7 @@ import {
   Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/lib/stores/authStore";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -44,6 +45,7 @@ const NAV_GROUPS = [
 
 export function Sidebar({ collapsed, onToggleCollapse, className }: SidebarProps) {
   const pathname = usePathname();
+  const { user } = useAuthStore();
 
   return (
     <aside
@@ -190,7 +192,7 @@ export function Sidebar({ collapsed, onToggleCollapse, className }: SidebarProps
             "group flex items-center gap-2.5 rounded-[13px] border border-glass-border bg-white/[0.02] p-2 transition-colors hover:border-violet-500/30 hover:bg-violet-500/[0.07]",
             collapsed && "justify-center"
           )}
-          title="trader_01 (Demo Account)"
+          title={`${user?.name || "trader_01"} (${user?.email || "Account"})`}
         >
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[9px] border border-violet-500/35 bg-violet-500/15 text-violet-300">
             <User className="h-3.5 w-3.5" />
@@ -198,7 +200,7 @@ export function Sidebar({ collapsed, onToggleCollapse, className }: SidebarProps
           {!collapsed && (
             <span className="min-w-0 flex-1 truncate">
               <p className="truncate text-[12px] font-semibold text-text transition-colors group-hover:text-violet-300">
-                trader_01
+                {user?.name || "trader_01"}
               </p>
               <p className="font-mono text-[10px] text-text-dim">5,000 Credits</p>
             </span>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useWalletStore } from "@/lib/stores/walletStore";
 import { useUiStore } from "@/lib/stores/uiStore";
+import { useAuthStore } from "@/lib/stores/authStore";
 import { LivePill } from "@/components/ui/LivePill";
 import { formatCurrency } from "@/lib/format";
 import { Bell, User, Lock, Unlock, ChevronRight, Command } from "lucide-react";
@@ -23,6 +24,7 @@ const PAGE_TITLES: Record<string, string> = {
 export function TopHeader() {
   const pathname = usePathname();
   const { availableCredits, reservedCredits, totalCredits } = useWalletStore();
+  const { user } = useAuthStore();
   const { connectionState } = useUiStore();
 
   const resolveTitle = () => {
@@ -142,7 +144,7 @@ export function TopHeader() {
               <User className="w-3 h-3" />
             </span>
             <span className="hidden lg:inline font-mono text-[10px] uppercase tracking-[0.12em]">
-              trader_01
+              {user?.name || "trader_01"}
             </span>
           </Link>
         </div>

@@ -4,6 +4,9 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUiStore } from "@/lib/stores/uiStore";
 import { useWalletStore } from "@/lib/stores/walletStore";
+import { useAuthStore } from "@/lib/stores/authStore";
+import { api } from "@/lib/api-client";
+import { formatErrorMessage } from "@/lib/errors";
 import { SegmentedTabs } from "@/components/ui/SegmentedTabs";
 import {
   Lock,
@@ -22,7 +25,8 @@ import { cn } from "@/lib/utils";
 export default function LoginPage() {
   const router = useRouter();
   const { addToast } = useUiStore();
-  const { availableCredits } = useWalletStore();
+  const { availableCredits, setWalletFromServer } = useWalletStore();
+  const { setSession } = useAuthStore();
 
   const [activeTab, setActiveTab] = useState<"LOGIN" | "REGISTER">("LOGIN");
   const [email, setEmail] = useState("");
@@ -45,33 +49,12 @@ export default function LoginPage() {
     return () => clearInterval(timer);
   }, [rateLimitSeconds]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setEmailError(null);
     setGeneralError(null);
 
     if (rateLimitSeconds > 0) return;
-
-    if (activeTab === "REGISTER" && email.toLowerCase() === "taken@darkhold.io") {
-      setEmailError("EMAIL_TAKEN: This email is already bound to an existing grimoire account.");
-      return;
-    }
-
-    if (activeTab === "LOGIN" && password === "wrongpassword") {
-      setGeneralError("Email or password incorrect.");
-      return;
-    }
-
-    if (password === "ratelimit") {
-      setRateLimitSeconds(10);
-      addToast({
-        type: "warning",
-        title: "Rate limited",
-        message: "Too many auth attempts. Please wait 10 seconds.",
-        countdownSeconds: 10,
-      });
-      return;
-    }
 
     if (activeTab === "REGISTER" && !registrationValid) {
       setGeneralError("Passphrase must meet all three security requirements before registration.");
@@ -80,15 +63,63 @@ export default function LoginPage() {
 
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      if (activeTab === "LOGIN") {
+        const res = await api.login({ email, password });
+        setSession(res.user, res.token);
+        const freshWallet = await api.getWallet();
+        setWalletFromServer(freshWallet);
+        addToast({
+          type: "success",
+          title: "Grimoire session established",
+          message: `Logged in as ${res.user.name || res.user.email}. Authenticated session active.`,
+        });
+        router.push("/market");
+      } else {
+        const res = await api.register({ email, password });
+        setSession(res.user, res.token);
+        const freshWallet = await api.getWallet();
+        setWalletFromServer(freshWallet);
+        addToast({
+          type: "success",
+          title: "Account forged & initiated",
+          message: "Registration complete. Starter credits ($5,000.00) credited to your vault.",
+        });
+        router.push("/market");
+      }
+    } catch (err: any) {
+      if (err.code === "RATE_LIMITED") {
+        const retrySec = err.context?.retry_after_seconds ?? 10;
+        setRateLimitSeconds(retrySec);
+        addToast({
+          type: "warning",
+          title: "Rate limited",
+          message: `Too many auth attempts. Please wait ${retrySec} seconds.`,
+          countdownSeconds: retrySec,
+        });
+      } else if (err.context?.field === "email" || err.code === "EMAIL_TAKEN") {
+        setEmailError(
+          err.context?.field_message ||
+            err.message ||
+            "This email is already bound to an existing grimoire account."
+        );
+      } else if (err.code === "UNAUTHENTICATED") {
+        setGeneralError(err.context?.field_message || "Email or password incorrect.");
+      } else if (err.context?.field === "password") {
+        setGeneralError(
+          err.context?.field_message ||
+            "Passphrase must meet all security requirements before registration."
+        );
+      } else {
+        setGeneralError(
+          err.message ||
+            formatErrorMessage(err.code, err.context) ||
+            "Authentication failed. Please verify credentials."
+        );
+      }
+    } finally {
       setIsLoading(false);
-      addToast({
-        type: "success",
-        title: "Grimoire session established",
-        message: "Logged in successfully. Starter credits ($5,000.00) credited to your vault.",
-      });
-      router.push("/market");
-    }, 800);
+    }
   };
 
   const resetErrors = () => {

@@ -13,6 +13,7 @@ import { generateMockBookSnapshot } from "./fixtures/orderBook";
 import { generateMockTrades } from "./fixtures/trades";
 import { MOCK_ORDERS } from "./fixtures/orders";
 import { MOCK_AUCTIONS } from "./fixtures/auctions";
+import { fakeServer } from "./fake-server";
 import { MockScenarioType } from "./scenarios";
 
 type WebSocketListener = (event: string, data: any) => void;
@@ -139,6 +140,9 @@ class FakeWebSocketService {
         // 3. Emit Auction price decay updates
         if (channel.startsWith("auction:")) {
           const auctionId = channel.replace("auction:", "");
+          const auc = fakeServer.getAuction(auctionId);
+          if (auc && auc.status !== "ACTIVE") return;
+
           this.emit(`auction_price_update:${auctionId}`, {
             auction_id: auctionId,
             current_price: 25800 - (Math.floor((Date.now() / 5000) % 20) * 50),

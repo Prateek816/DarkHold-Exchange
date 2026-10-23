@@ -47,7 +47,7 @@ export function formatErrorMessage(code: ErrorCode, context?: ApiErrorContext): 
     case "VALIDATION_FAILED":
       return context?.field_message || "Validation failed for the submitted values.";
     case "UNAUTHENTICATED":
-      return "Session expired or credentials incorrect. Please log in.";
+      return context?.field_message || "Session expired or credentials incorrect. Please log in.";
     case "FORBIDDEN":
       return "You do not have permission to perform this action.";
     case "RATE_LIMITED":

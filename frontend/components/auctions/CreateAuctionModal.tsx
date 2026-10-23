@@ -3,10 +3,14 @@
 import React, { useEffect, useState } from "react";
 import { WalletHolding } from "@/lib/types";
 import { formatCurrency, formatQuantity } from "@/lib/format";
+import { formatErrorMessage } from "@/lib/errors";
 import { DecayCurveChart } from "./DecayCurveChart";
 import { useUiStore } from "@/lib/stores/uiStore";
+import { useWalletStore } from "@/lib/stores/walletStore";
+import { api } from "@/lib/api-client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Gavel, ShieldAlert, Hourglass } from "lucide-react";
+import { X, Gavel, ShieldAlert, Hourglass, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface CreateAuctionModalProps {
@@ -22,7 +26,14 @@ export function CreateAuctionModal({
   holdings,
   onAuctionCreated,
 }: CreateAuctionModalProps) {
+  const queryClient = useQueryClient();
   const { addToast } = useUiStore();
+  const { setWalletFromServer } = useWalletStore();
+
+  const { data: assets = [] } = useQuery({
+    queryKey: ["assets"],
+    queryFn: () => api.getAssets(),
+  });
 
   const [selectedAssetId, setSelectedAssetId] = useState(
     holdings[0]?.asset_id || "DARKHOLD-PASS-2026"
@@ -32,6 +43,12 @@ export function CreateAuctionModal({
   const [floorPriceInput, setFloorPriceInput] = useState<string>("230.00");
   const [stepSeconds, setStepSeconds] = useState<number>(15);
   const [durationMinutes, setDurationMinutes] = useState<number>(30);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  const activeHolding = holdings.find((h) => h.asset_id === selectedAssetId);
+  const currentAsset = assets.find((a) => a.id === selectedAssetId);
+  const ceilingPrice = currentAsset?.ceiling_price ?? 27500;
+  const availableUnits = activeHolding?.available_units ?? 0;
 
   // Keep the selected holding valid if the vault loads or changes while mounted.
   useEffect(() => {
@@ -43,6 +60,16 @@ export function CreateAuctionModal({
     }
   }, [holdings, selectedAssetId]);
 
+  // Adjust suggested start & floor prices to match the asset's ceiling price
+  useEffect(() => {
+    if (currentAsset) {
+      const suggestedStartMinor = currentAsset.ceiling_price;
+      const suggestedFloorMinor = Math.max(100, Math.round(suggestedStartMinor * 0.85));
+      setStartPriceInput((suggestedStartMinor / 100).toFixed(2));
+      setFloorPriceInput((suggestedFloorMinor / 100).toFixed(2));
+    }
+  }, [selectedAssetId, currentAsset]);
+
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -51,10 +78,6 @@ export function CreateAuctionModal({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, onClose]);
-
-  const activeHolding = holdings.find((h) => h.asset_id === selectedAssetId);
-  const ceilingPrice = 27500; // Simulated ceiling
-  const availableUnits = activeHolding?.available_units ?? 0;
 
   const parseMinor = (value: string) => {
     const parsed = Number.parseFloat(value);
@@ -67,9 +90,10 @@ export function CreateAuctionModal({
   const isAboveCeiling = startPriceMinor > ceilingPrice;
   const isFloorInvalid = floorPriceMinor > startPriceMinor || floorPriceMinor <= 0;
   const isQuantityInvalid = qty < 1 || qty > availableUnits;
-  const canLaunch = Boolean(activeHolding) && !isAboveCeiling && !isFloorInvalid && !isQuantityInvalid;
+  const canLaunch =
+    Boolean(activeHolding) && !isAboveCeiling && !isFloorInvalid && !isQuantityInvalid && !isSubmitting;
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!activeHolding) {
       addToast({
         type: "error",
@@ -83,7 +107,7 @@ export function CreateAuctionModal({
       addToast({
         type: "error",
         title: "The Ward rejection",
-        message: "Start price exceeds the festival resale ceiling cap.",
+        message: `Start price exceeds the resale ceiling cap (${formatCurrency(ceilingPrice)}).`,
       });
       return;
     }
@@ -106,14 +130,44 @@ export function CreateAuctionModal({
       return;
     }
 
-    addToast({
-      type: "success",
-      title: "Dutch auction created",
-      message: `Auction launched for ${qty}x ${activeHolding.symbol || "relic"}. Units locked in vault reservation.`,
-    });
+    setIsSubmitting(true);
+    try {
+      const idempotencyKey = `AUC-IDEMP-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+      await api.createAuction({
+        idempotencyKey,
+        assetId: activeHolding.asset_id,
+        qty,
+        startPrice: startPriceMinor,
+        floorPrice: floorPriceMinor,
+        durationMinutes,
+        stepSeconds,
+      });
 
-    onClose();
-    onAuctionCreated?.();
+      const freshWallet = await api.getWallet();
+      setWalletFromServer(freshWallet);
+      queryClient.invalidateQueries({ queryKey: ["auctions"] });
+      queryClient.invalidateQueries({ queryKey: ["wallet"] });
+
+      addToast({
+        type: "success",
+        title: "Dutch auction created",
+        message: `Auction launched for ${qty}x ${activeHolding.symbol || "relic"}. Units locked in vault reservation.`,
+      });
+
+      onClose();
+      onAuctionCreated?.();
+    } catch (err: any) {
+      const message = err.code
+        ? formatErrorMessage(err.code, err.context)
+        : err.message || "An error occurred creating the auction.";
+      addToast({
+        type: "error",
+        title: "Failed to create auction",
+        message,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const now = Date.now();
@@ -353,9 +407,16 @@ export function CreateAuctionModal({
                 <button
                   onClick={handleCreate}
                   disabled={!canLaunch}
-                  className="rounded-[11px] bg-gradient-to-r from-brand-400 to-brand-500 px-5 py-2.5 text-[11.5px] font-bold text-canvas shadow-[0_8px_24px_-8px_rgba(25,203,176,0.55)] transition-all hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex items-center gap-1.5 rounded-[11px] bg-gradient-to-r from-brand-400 to-brand-500 px-5 py-2.5 text-[11.5px] font-bold text-canvas shadow-[0_8px_24px_-8px_rgba(25,203,176,0.55)] transition-all hover:-translate-y-px disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  Launch auction
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Launching…</span>
+                    </>
+                  ) : (
+                    <span>Launch auction</span>
+                  )}
                 </button>
               </div>
             </div>

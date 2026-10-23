@@ -23,6 +23,7 @@ import {
   Radio,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/lib/stores/authStore";
 
 const TICKER = [
   { symbol: "DKH-FEST", price: 26850, change: 4.8 },
@@ -46,10 +47,12 @@ const BOOK_BIDS = [
 ];
 
 export default function LandingPage() {
+  const { isAuthenticated, user } = useAuthStore();
+
   return (
     <div className="flex flex-1 flex-col gap-8 sm:gap-12">
       {/* ================= LIVE TAPE ================= */}
-      <div className="marquee-mask relative overflow-hidden rounded-[14px] border border-glass-border bg-white/[0.018] backdrop-blur-[16px]">
+      <div className="marquee-mask relative overflow-hidden rounded-[14px] border border-glass-border bg-canvas-elevated/80 transform-gpu">
         <div className="marquee-track py-2.5">
           {[0, 1].map((copy) => (
             <div
@@ -98,16 +101,25 @@ export default function LandingPage() {
         {/* Aurora */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -top-24 left-1/2 h-[420px] w-[820px] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(25,203,176,0.16),transparent_65%)] blur-2xl"
+          className="pointer-events-none absolute -top-24 left-1/2 h-[420px] w-[820px] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse_at_center,rgba(25,203,176,0.16),transparent_65%)] transform-gpu"
         />
 
         <div className="relative z-10 flex flex-col items-start gap-6">
           <Reveal>
-            <span className="inline-flex items-center gap-2 rounded-full border border-warning/30 bg-warning/[0.08] px-3.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-warning">
-              <ShieldAlert className="h-3 w-3" />
-              Anti-scalping invariant · enforced
-              <span className="ml-1 h-1 w-1 rounded-full bg-warning/70" />
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-2 rounded-full border border-warning/30 bg-warning/[0.08] px-3.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-warning">
+                <ShieldAlert className="h-3 w-3" />
+                Anti-scalping invariant · enforced
+                <span className="ml-1 h-1 w-1 rounded-full bg-warning/70" />
+              </span>
+
+              {isAuthenticated && user && (
+                <span className="inline-flex items-center gap-2 rounded-full border border-buy/30 bg-buy/[0.08] px-3.5 py-1.5 text-[10px] font-mono uppercase tracking-[0.14em] text-buy-text animate-fade-in">
+                  <span className="h-1.5 w-1.5 rounded-full bg-buy animate-pulse" />
+                  Active session: {user.name || user.email}
+                </span>
+              )}
+            </div>
           </Reveal>
 
           <Reveal delay={0.06}>
@@ -127,32 +139,63 @@ export default function LandingPage() {
 
           <Reveal delay={0.18} className="w-full">
             <div className="flex flex-wrap items-center gap-3">
-              <Link
-                href="/market"
-                className="group flex items-center gap-2 rounded-[12px] bg-gradient-to-r from-brand-400 to-brand-500 px-5 py-3 text-[12.5px] font-bold text-canvas shadow-[0_10px_32px_-8px_rgba(25,203,176,0.55)] transition-all duration-300 hover:-translate-y-px hover:shadow-[0_16px_40px_-8px_rgba(25,203,176,0.65)]"
-              >
-                Enter the marketplace
-                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <Link
+                    href="/market"
+                    className="group flex items-center gap-2 rounded-[12px] bg-gradient-to-r from-brand-400 to-brand-500 px-5 py-3 text-[12.5px] font-bold text-canvas shadow-[0_10px_32px_-8px_rgba(25,203,176,0.55)] transition-all duration-300 hover:-translate-y-px hover:shadow-[0_16px_40px_-8px_rgba(25,203,176,0.65)]"
+                  >
+                    Enter Exchange
+                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                  </Link>
 
-              <Link
-                href="/trade/DARKHOLD-PASS-2026"
-                className="group flex items-center gap-2 rounded-[12px] border border-glass-border bg-white/[0.04] px-5 py-3 text-[12.5px] font-semibold text-text transition-all duration-300 hover:-translate-y-px hover:border-brand-500/35 hover:bg-white/[0.07]"
-              >
-                <Terminal className="h-4 w-4 text-brand-400" />
-                Open terminal
-                <span className="ml-1 rounded-full border border-buy/30 bg-buy/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-buy-text">
-                  live
-                </span>
-              </Link>
+                  <Link
+                    href="/trade/DARKHOLD-PASS-2026"
+                    className="group flex items-center gap-2 rounded-[12px] border border-glass-border bg-white/[0.04] px-5 py-3 text-[12.5px] font-semibold text-text transition-all duration-300 hover:-translate-y-px hover:border-brand-500/35 hover:bg-white/[0.07]"
+                  >
+                    <Terminal className="h-4 w-4 text-brand-400" />
+                    Open terminal
+                    <span className="ml-1 rounded-full border border-buy/30 bg-buy/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-buy-text">
+                      live
+                    </span>
+                  </Link>
 
-              <Link
-                href="/demo"
-                className="flex items-center gap-1.5 px-2 py-3 text-[12px] font-medium text-text-dim transition-colors hover:text-text"
-              >
-                <Sparkles className="h-3.5 w-3.5 text-violet-400" />
-                Operator console
-              </Link>
+                  {(user?.role === "ADMIN" || user?.role === "OPERATOR") && (
+                    <Link
+                      href="/demo"
+                      className="flex items-center gap-1.5 px-2 py-3 text-[12px] font-medium text-text-dim transition-colors hover:text-text"
+                    >
+                      <Sparkles className="h-3.5 w-3.5 text-violet-400" />
+                      Operator console
+                    </Link>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login?redirect=/market"
+                    className="group flex items-center gap-2 rounded-[12px] bg-gradient-to-r from-brand-400 to-brand-500 px-5 py-3 text-[12.5px] font-bold text-canvas shadow-[0_10px_32px_-8px_rgba(25,203,176,0.55)] transition-all duration-300 hover:-translate-y-px hover:shadow-[0_16px_40px_-8px_rgba(25,203,176,0.65)]"
+                  >
+                    Enter Exchange
+                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                  </Link>
+
+                  <Link
+                    href="/login"
+                    className="group flex items-center gap-2 rounded-[12px] border border-glass-border bg-white/[0.04] px-5 py-3 text-[12.5px] font-semibold text-text transition-all duration-300 hover:-translate-y-px hover:border-brand-500/35 hover:bg-white/[0.07]"
+                  >
+                    Sign in
+                  </Link>
+
+                  <Link
+                    href="/register"
+                    className="flex items-center gap-1.5 rounded-[12px] border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-[12px] font-medium text-violet-300 transition-colors hover:bg-violet-500/20"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-violet-400" />
+                    Register
+                  </Link>
+                </>
+              )}
             </div>
           </Reveal>
 
@@ -338,7 +381,7 @@ export default function LandingPage() {
 
       {/* ================= PROTOCOL STORY ================= */}
       <section className="mx-auto w-full max-w-[1200px] px-1 py-2">
-        <div className="relative overflow-hidden rounded-[24px] border border-glass-border bg-gradient-to-b from-white/[0.035] to-white/[0.008] p-6 backdrop-blur-[16px] sm:p-9">
+        <div className="relative overflow-hidden rounded-[24px] border border-glass-border bg-gradient-to-b from-white/[0.035] to-white/[0.008] p-6 backdrop-blur-[10px] transform-gpu sm:p-9">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 animate-aurora rounded-full bg-violet-500/10 blur-3xl"
@@ -458,10 +501,10 @@ export default function LandingPage() {
               </div>
 
               <Link
-                href="/market"
+                href={isAuthenticated ? "/market" : "/login?redirect=/market"}
                 className="group flex shrink-0 items-center gap-2 rounded-[12px] bg-gradient-to-r from-brand-400 to-brand-500 px-5 py-3 text-[12.5px] font-bold text-canvas shadow-[0_10px_32px_-8px_rgba(25,203,176,0.55)] transition-all duration-300 hover:-translate-y-px"
               >
-                Start trading
+                {isAuthenticated ? "Enter Exchange" : "Start trading"}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
             </div>

@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Layers,
@@ -15,9 +15,14 @@ import {
   User,
   Info,
   Activity,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/stores/authStore";
+import { useWalletStore } from "@/lib/stores/walletStore";
+import { useUiStore } from "@/lib/stores/uiStore";
+import { api } from "@/lib/api-client";
+import { formatCurrency } from "@/lib/format";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -25,27 +30,48 @@ interface SidebarProps {
   className?: string;
 }
 
-const NAV_GROUPS = [
-  {
-    title: "Exchange",
-    items: [
-      { href: "/market", label: "Marketplace", icon: Layers },
-      { href: "/trade/DARKHOLD-PASS-2026", label: "Terminal", icon: Terminal },
-      { href: "/auctions", label: "Dutch Auctions", icon: Gavel },
-    ],
-  },
-  {
-    title: "Solvency & Control",
-    items: [
-      { href: "/portfolio", label: "Portfolio", icon: Shield },
-      { href: "/demo", label: "Demo Console", icon: Sparkles },
-    ],
-  },
-];
-
 export function Sidebar({ collapsed, onToggleCollapse, className }: SidebarProps) {
   const pathname = usePathname();
-  const { user } = useAuthStore();
+  const router = useRouter();
+  const { user, isAuthenticated, clearSession } = useAuthStore();
+  const { availableCredits, clearWallet } = useWalletStore();
+  const { addToast } = useUiStore();
+
+  const handleLogout = async () => {
+    try {
+      await api.logout();
+    } catch {
+      // ignore
+    }
+    clearSession();
+    clearWallet();
+    addToast({
+      type: "success",
+      title: "Grimoire session closed",
+      message: "You have been safely logged out.",
+    });
+    router.push("/");
+  };
+
+  const navGroups = [
+    {
+      title: "Exchange",
+      items: [
+        { href: "/market", label: "Marketplace", icon: Layers },
+        { href: "/trade/DARKHOLD-PASS-2026", label: "Terminal", icon: Terminal },
+        { href: "/auctions", label: "Dutch Auctions", icon: Gavel },
+      ],
+    },
+    {
+      title: "Solvency & Control",
+      items: [
+        { href: "/portfolio", label: "Portfolio", icon: Shield },
+        ...(user?.role === "ADMIN" || user?.role === "OPERATOR"
+          ? [{ href: "/demo", label: "Operator Console", icon: Sparkles }]
+          : []),
+      ],
+    },
+  ];
 
   return (
     <aside
@@ -111,7 +137,7 @@ export function Sidebar({ collapsed, onToggleCollapse, className }: SidebarProps
 
         {/* Navigation */}
         <nav className="space-y-5">
-          {NAV_GROUPS.map((group) => (
+          {navGroups.map((group) => (
             <div key={group.title} className="space-y-1.5">
               {!collapsed && <span className="eyebrow block px-3">{group.title}</span>}
 
@@ -119,7 +145,7 @@ export function Sidebar({ collapsed, onToggleCollapse, className }: SidebarProps
                 {group.items.map((item) => {
                   const isActive =
                     item.href === "/market"
-                      ? pathname === "/market" || pathname === "/"
+                      ? pathname === "/market"
                       : item.href.startsWith("/trade")
                       ? pathname.startsWith("/trade")
                       : pathname.startsWith(item.href);
@@ -186,26 +212,65 @@ export function Sidebar({ collapsed, onToggleCollapse, className }: SidebarProps
           </div>
         )}
 
-        <Link
-          href="/login"
-          className={cn(
-            "group flex items-center gap-2.5 rounded-[13px] border border-glass-border bg-white/[0.02] p-2 transition-colors hover:border-violet-500/30 hover:bg-violet-500/[0.07]",
-            collapsed && "justify-center"
-          )}
-          title={`${user?.name || "trader_01"} (${user?.email || "Account"})`}
-        >
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[9px] border border-violet-500/35 bg-violet-500/15 text-violet-300">
-            <User className="h-3.5 w-3.5" />
-          </span>
-          {!collapsed && (
-            <span className="min-w-0 flex-1 truncate">
-              <p className="truncate text-[12px] font-semibold text-text transition-colors group-hover:text-violet-300">
-                {user?.name || "trader_01"}
-              </p>
-              <p className="font-mono text-[10px] text-text-dim">5,000 Credits</p>
+        {isAuthenticated ? (
+          <div
+            className={cn(
+              "flex items-center justify-between rounded-[13px] border border-glass-border bg-white/[0.02] p-2",
+              collapsed && "justify-center"
+            )}
+          >
+            <Link
+              href="/portfolio"
+              className="flex min-w-0 flex-1 items-center gap-2.5"
+              title={`${user?.name || user?.email} (${user?.role || "TRADER"})`}
+            >
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[9px] border border-violet-500/35 bg-violet-500/15 text-violet-300">
+                <User className="h-3.5 w-3.5" />
+              </span>
+              {!collapsed && (
+                <span className="min-w-0 flex-1 truncate">
+                  <p className="truncate text-[12px] font-semibold text-text">
+                    {user?.name || user?.email?.split("@")[0] || "Trader"}
+                  </p>
+                  <p className="font-mono text-[10px] text-text-dim tabular-nums">
+                    {formatCurrency(availableCredits)}
+                  </p>
+                </span>
+              )}
+            </Link>
+
+            {!collapsed && (
+              <button
+                onClick={handleLogout}
+                className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] text-text-dim hover:bg-sell/10 hover:text-sell transition-colors"
+                title="Sign out"
+                aria-label="Logout"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        ) : (
+          <Link
+            href="/login"
+            className={cn(
+              "group flex items-center gap-2.5 rounded-[13px] border border-glass-border bg-white/[0.02] p-2 transition-colors hover:border-brand-500/30 hover:bg-brand-500/[0.07]",
+              collapsed && "justify-center"
+            )}
+          >
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[9px] border border-brand-500/35 bg-brand-500/15 text-brand-400">
+              <User className="h-3.5 w-3.5" />
             </span>
-          )}
-        </Link>
+            {!collapsed && (
+              <span className="min-w-0 flex-1 truncate">
+                <p className="truncate text-[12px] font-semibold text-text group-hover:text-brand-300 transition-colors">
+                  Sign in
+                </p>
+                <p className="font-mono text-[10px] text-text-dim">Access exchange vault</p>
+              </span>
+            )}
+          </Link>
+        )}
 
         {!collapsed && (
           <div className="flex items-start gap-1.5 rounded-[11px] border border-glass-border bg-white/[0.015] p-2.5 text-[10px] leading-relaxed text-text-dim">

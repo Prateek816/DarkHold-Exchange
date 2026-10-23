@@ -50,8 +50,36 @@ describe("REST API Endpoints", () => {
     expect(Array.isArray(res.body.asks)).toBe(true);
   });
 
-  it("GET /api/admin/reconciliation returns 8 reconciliation rings", async () => {
+  it("GET /api/admin/reconciliation rejects unauthenticated request with 401 UNAUTHENTICATED", async () => {
     const res = await request(app).get("/api/admin/reconciliation");
+    expect(res.status).toBe(401);
+    expect(res.body.code).toBe("UNAUTHENTICATED");
+  });
+
+  it("GET /api/admin/reconciliation rejects ordinary TRADER with 403 FORBIDDEN", async () => {
+    const traderLogin = await request(app)
+      .post("/api/auth/login")
+      .send({ email: "trader@darkhold.io", password: "darkhold2026!" });
+    expect(traderLogin.status).toBe(200);
+    const traderCookie = traderLogin.headers["set-cookie"];
+
+    const res = await request(app)
+      .get("/api/admin/reconciliation")
+      .set("Cookie", traderCookie);
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe("FORBIDDEN");
+  });
+
+  it("GET /api/admin/reconciliation returns 8 reconciliation rings when authenticated as ADMIN", async () => {
+    const adminLogin = await request(app)
+      .post("/api/auth/login")
+      .send({ email: "admin@darkhold.io", password: "darkhold2026!" });
+    expect(adminLogin.status).toBe(200);
+    const adminCookie = adminLogin.headers["set-cookie"];
+
+    const res = await request(app)
+      .get("/api/admin/reconciliation")
+      .set("Cookie", adminCookie);
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.length).toBe(8);

@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 import { env } from "@/config/env";
 import { apiRateLimiter } from "@/middleware/rateLimiter";
 import { errorHandler } from "@/middleware/errorHandler";
-import { optionalAuth } from "@/middleware/auth";
+import { optionalAuth, requireAuth } from "@/middleware/auth";
 
 // Routes
 import authRoutes from "@/modules/auth/auth.routes";
@@ -69,7 +69,7 @@ export function createApp(): Express {
   app.get("/api/candles/:assetId", (req, res, next) =>
     assetsController.getCandles(req, res, next)
   );
-  app.get("/api/receipts", (req, res, next) =>
+  app.get("/api/receipts", requireAuth, (req, res, next) =>
     walletsController.getTransactions(req, res, next)
   );
 

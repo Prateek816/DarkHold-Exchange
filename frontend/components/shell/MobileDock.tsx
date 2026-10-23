@@ -4,20 +4,29 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Layers, Terminal, Gavel, Shield, Sparkles } from "lucide-react";
+import { Layers, Terminal, Gavel, Shield, Sparkles, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/lib/stores/authStore";
 
-const ITEMS = [
-  { href: "/market", label: "Market", icon: Layers },
-  { href: "/trade/DARKHOLD-PASS-2026", label: "Terminal", icon: Terminal },
-  { href: "/auctions", label: "Auctions", icon: Gavel },
-  { href: "/portfolio", label: "Vault", icon: Shield },
-  { href: "/demo", label: "Console", icon: Sparkles },
-];
-
-/** Floating bottom dock — the only navigation surface on small screens. */
 export function MobileDock() {
   const pathname = usePathname();
+  const { user, isAuthenticated } = useAuthStore();
+
+  const items = [
+    { href: "/market", label: "Market", icon: Layers },
+    { href: "/trade/DARKHOLD-PASS-2026", label: "Terminal", icon: Terminal },
+    { href: "/auctions", label: "Auctions", icon: Gavel },
+    { href: "/portfolio", label: "Vault", icon: Shield },
+    ...(user?.role === "ADMIN" || user?.role === "OPERATOR"
+      ? [{ href: "/demo", label: "Console", icon: Sparkles }]
+      : [
+          {
+            href: isAuthenticated ? "/portfolio" : "/login",
+            label: isAuthenticated ? "Profile" : "Sign in",
+            icon: User,
+          },
+        ]),
+  ];
 
   return (
     <nav
@@ -26,7 +35,7 @@ export function MobileDock() {
       style={{ paddingBottom: "max(6px, env(safe-area-inset-bottom))" }}
     >
       <div className="grid grid-cols-5 gap-1 p-1.5">
-        {ITEMS.map((item) => {
+        {items.map((item) => {
           const isActive =
             item.href === "/market"
               ? pathname === "/market" || pathname === "/"

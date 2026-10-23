@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, Suspense } from "react";
+import Link from "next/link";
 import { useUiStore } from "@/lib/stores/uiStore";
 import { useWalletStore } from "@/lib/stores/walletStore";
 import { useAuthStore } from "@/lib/stores/authStore";
@@ -11,6 +11,7 @@ import { SegmentedTabs } from "@/components/ui/SegmentedTabs";
 import {
   Lock,
   Mail,
+  User,
   ArrowRight,
   Loader2,
   AlertOctagon,
@@ -20,15 +21,25 @@ import {
   Sparkles,
   Check,
 } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-export default function LoginPage() {
+function LoginForm({ initialTab }: { initialTab?: "LOGIN" | "REGISTER" }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get("redirect") || "/market";
+  const tabParam = searchParams.get("tab");
+
   const { addToast } = useUiStore();
   const { availableCredits, setWalletFromServer } = useWalletStore();
   const { setSession } = useAuthStore();
 
-  const [activeTab, setActiveTab] = useState<"LOGIN" | "REGISTER">("LOGIN");
+  const isRegisterRoute = pathname === "/register" || tabParam?.toUpperCase() === "REGISTER";
+  const [activeTab, setActiveTab] = useState<"LOGIN" | "REGISTER">(
+    initialTab || (isRegisterRoute ? "REGISTER" : "LOGIN")
+  );
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -39,9 +50,10 @@ export default function LoginPage() {
   const [rateLimitSeconds, setRateLimitSeconds] = useState<number>(0);
 
   const hasMinLen = password.length >= 8;
+  const hasUppercase = /[A-Z]/.test(password);
   const hasNumber = /\d/.test(password);
-  const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-  const registrationValid = hasMinLen && hasNumber && hasSymbol;
+  const hasSymbol = /[^A-Za-z0-9]/.test(password);
+  const registrationValid = hasMinLen && hasUppercase && hasNumber && hasSymbol;
 
   useEffect(() => {
     if (rateLimitSeconds <= 0) return;
@@ -51,13 +63,14 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     setEmailError(null);
     setGeneralError(null);
 
     if (rateLimitSeconds > 0) return;
 
     if (activeTab === "REGISTER" && !registrationValid) {
-      setGeneralError("Passphrase must meet all three security requirements before registration.");
+      setGeneralError("Passphrase must meet all four security requirements before registration.");
       return;
     }
 
@@ -67,29 +80,37 @@ export default function LoginPage() {
       if (activeTab === "LOGIN") {
         const res = await api.login({ email, password });
         setSession(res.user, res.token);
-        const freshWallet = await api.getWallet();
-        setWalletFromServer(freshWallet);
+        try {
+          const freshWallet = await api.getWallet();
+          setWalletFromServer(freshWallet);
+        } catch {
+          // ignore non-fatal initial wallet sync
+        }
         addToast({
           type: "success",
           title: "Grimoire session established",
           message: `Logged in as ${res.user.name || res.user.email}. Authenticated session active.`,
         });
-        router.push("/market");
+        router.push(redirectParam);
       } else {
-        const res = await api.register({ email, password });
+        const res = await api.register({ email, password, name: name.trim() || undefined });
         setSession(res.user, res.token);
-        const freshWallet = await api.getWallet();
-        setWalletFromServer(freshWallet);
+        try {
+          const freshWallet = await api.getWallet();
+          setWalletFromServer(freshWallet);
+        } catch {
+          // ignore non-fatal initial wallet sync
+        }
         addToast({
           type: "success",
           title: "Account forged & initiated",
           message: "Registration complete. Starter credits ($5,000.00) credited to your vault.",
         });
-        router.push("/market");
+        router.push(redirectParam);
       }
     } catch (err: any) {
       if (err.code === "RATE_LIMITED") {
-        const retrySec = err.context?.retry_after_seconds ?? 10;
+        const retrySec = err.context?.retry_after_seconds ?? 60;
         setRateLimitSeconds(retrySec);
         addToast({
           type: "warning",
@@ -104,7 +125,7 @@ export default function LoginPage() {
             "This email is already bound to an existing grimoire account."
         );
       } else if (err.code === "UNAUTHENTICATED") {
-        setGeneralError(err.context?.field_message || "Email or password incorrect.");
+        setGeneralError(err.context?.field_message || "Invalid email or password.");
       } else if (err.context?.field === "password") {
         setGeneralError(
           err.context?.field_message ||
@@ -142,7 +163,7 @@ export default function LoginPage() {
           />
 
           <div className="relative space-y-8">
-            <div className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-[13px] border border-brand-500/40 bg-brand-500/10 shadow-glow-teal">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="stroke-brand-400 stroke-[1.8]">
                   <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5" />
@@ -157,7 +178,7 @@ export default function LoginPage() {
                   Exchange
                 </p>
               </div>
-            </div>
+            </Link>
 
             <div className="space-y-3">
               <span className="eyebrow">Ceremonial access</span>
@@ -190,9 +211,9 @@ export default function LoginPage() {
           </div>
 
           <div className="relative flex items-center justify-between border-t border-glass-border pt-5 font-mono text-[10px] text-text-dim">
-            <span>VAULT BALANCE</span>
+            <span>STARTING VAULT</span>
             <span className="font-semibold tabular-nums text-brand-400">
-              ${(availableCredits / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              $5,000.00
             </span>
           </div>
         </aside>
@@ -209,7 +230,7 @@ export default function LoginPage() {
             </h2>
             <p className="text-[12px] text-text-muted">
               {activeTab === "LOGIN"
-                ? "Sign in to resume your simulated trading vault."
+                ? "Sign in to resume your trading vault."
                 : "Register to receive 5,000 simulated starter credits."}
             </p>
           </div>
@@ -243,6 +264,29 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4" autoComplete="on">
+            {activeTab === "REGISTER" && (
+              <div className="space-y-1.5 animate-fade-in">
+                <label
+                  htmlFor="auth-name"
+                  className="block font-mono text-[9px] uppercase tracking-[0.14em] text-text-dim"
+                >
+                  Trader Name (Optional)
+                </label>
+                <div className="relative">
+                  <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-dim" />
+                  <input
+                    id="auth-name"
+                    type="text"
+                    autoComplete="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Grand Archon"
+                    className="w-full rounded-[12px] border border-glass-border bg-white/[0.04] py-2.5 pl-9 pr-3.5 font-mono text-xs text-text transition-colors placeholder:text-text-dim/70 focus:border-brand-500/60 focus:bg-white/[0.055] focus:outline-none"
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <label
                 htmlFor="auth-email"
@@ -258,7 +302,10 @@ export default function LoginPage() {
                   required
                   autoComplete="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (emailError) setEmailError(null);
+                  }}
                   placeholder="trader@darkhold.io"
                   className={cn(
                     "w-full rounded-[12px] border bg-white/[0.04] py-2.5 pl-9 pr-3.5 font-mono text-xs text-text transition-colors placeholder:text-text-dim/70 focus:outline-none",
@@ -288,7 +335,10 @@ export default function LoginPage() {
                   required
                   autoComplete={activeTab === "LOGIN" ? "current-password" : "new-password"}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (generalError) setGeneralError(null);
+                  }}
                   placeholder="••••••••••••"
                   className="w-full rounded-[12px] border border-glass-border bg-white/[0.04] py-2.5 pl-9 pr-10 font-mono text-xs text-text transition-colors placeholder:text-text-dim/70 focus:border-brand-500/60 focus:bg-white/[0.055] focus:outline-none"
                 />
@@ -303,21 +353,22 @@ export default function LoginPage() {
               </div>
 
               {activeTab === "REGISTER" && (
-                <div className="space-y-1.5 pt-2">
+                <div className="space-y-1.5 pt-2 animate-fade-in">
                   <span className="block font-mono text-[9px] uppercase tracking-[0.12em] text-text-dim">
                     Security requirements
                   </span>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px]">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 font-mono text-[10px]">
                     {[
-                      { ok: hasMinLen, label: "8+ chars" },
+                      { ok: hasMinLen, label: "8+ characters" },
+                      { ok: hasUppercase, label: "1 uppercase" },
                       { ok: hasNumber, label: "1 number" },
-                      { ok: hasSymbol, label: "1 symbol" },
+                      { ok: hasSymbol, label: "1 special symbol" },
                     ].map((rule) => (
                       <span
                         key={rule.label}
                         className={cn(
                           "flex items-center gap-1 transition-colors",
-                          rule.ok ? "text-buy-text" : "text-text-dim"
+                          rule.ok ? "text-buy-text font-semibold" : "text-text-dim"
                         )}
                       >
                         <Check className={cn("h-3 w-3", !rule.ok && "opacity-40")} />
@@ -327,7 +378,7 @@ export default function LoginPage() {
                   </div>
                   {!registrationValid && (
                     <p className="text-[10px] leading-relaxed text-text-dim">
-                      All requirements must be met to forge a new account.
+                      All 4 security requirements must be satisfied before initiation.
                     </p>
                   )}
                 </div>
@@ -335,6 +386,7 @@ export default function LoginPage() {
             </div>
 
             <button
+              id="auth-submit-btn"
               type="submit"
               disabled={
                 isLoading ||
@@ -346,7 +398,7 @@ export default function LoginPage() {
               {isLoading ? (
                 <>
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  <span>Authenticating…</span>
+                  <span>Authenticating with exchange…</span>
                 </>
               ) : (
                 <>
@@ -359,18 +411,31 @@ export default function LoginPage() {
 
           <div className="mt-5 rounded-[12px] border border-glass-border bg-white/[0.02] p-3">
             <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-text-dim">
-              Test shortcuts
+              Seed credentials
             </p>
             <p className="pt-1 text-[10.5px] leading-relaxed text-text-dim">
-              Use password{" "}
-              <code className="rounded bg-white/[0.06] px-1 py-0.5 text-text-muted">wrongpassword</code>{" "}
-              or{" "}
-              <code className="rounded bg-white/[0.06] px-1 py-0.5 text-text-muted">ratelimit</code>{" "}
-              to preview error handling.
+              Trader: <code className="rounded bg-white/[0.06] px-1 py-0.5 text-text-muted">trader@darkhold.io</code> / <code className="rounded bg-white/[0.06] px-1 py-0.5 text-text-muted">darkhold2026!</code>
+            </p>
+            <p className="pt-1 text-[10.5px] leading-relaxed text-text-dim">
+              Admin: <code className="rounded bg-white/[0.06] px-1 py-0.5 text-text-muted">admin@darkhold.io</code> / <code className="rounded bg-white/[0.06] px-1 py-0.5 text-text-muted">darkhold2026!</code>
             </p>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-1 items-center justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-brand-400" />
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

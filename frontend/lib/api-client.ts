@@ -16,16 +16,20 @@ import { fakeServer } from "@/mocks/fake-server";
 import { ApiErrorPayload } from "./errors";
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK !== "false";
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (typeof window === "undefined"
+    ? process.env.BACKEND_URL || "http://localhost:4000"
+    : "");
 
 export class ApiClient {
   private authToken: string | null = null;
 
   constructor() {
     if (typeof window !== "undefined") {
-      this.authToken = localStorage.getItem("dkh_auth_token") || "dkh_sess_trader_01_live";
+      this.authToken = localStorage.getItem("dkh_auth_token");
     } else {
-      this.authToken = "dkh_sess_trader_01_live";
+      this.authToken = null;
     }
   }
 
@@ -133,10 +137,14 @@ export class ApiClient {
   }
 
   public async getWallet(): Promise<WalletBalance> {
-    if (USE_MOCK) {
-      return Promise.resolve(fakeServer.getWallet());
+    try {
+      return await this.request<WalletBalance>("/api/wallet");
+    } catch (err) {
+      if (USE_MOCK) {
+        return Promise.resolve(fakeServer.getWallet());
+      }
+      throw err;
     }
-    return this.request<WalletBalance>("/api/wallet");
   }
 
   public async getOrders(): Promise<Order[]> {
@@ -269,15 +277,6 @@ export class ApiClient {
 
   // ================= Auth Client Methods =================
   public async login(params: { email: string; password: string }): Promise<AuthSessionResponse> {
-    if (USE_MOCK) {
-      const result = fakeServer.login(params);
-      if (result.error) {
-        throw result.error;
-      }
-      this.setAuthToken(result.data!.token);
-      return Promise.resolve(result.data!);
-    }
-
     const data = await this.request<AuthSessionResponse>("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -292,15 +291,6 @@ export class ApiClient {
     password: string;
     name?: string;
   }): Promise<AuthSessionResponse> {
-    if (USE_MOCK) {
-      const result = fakeServer.register(params);
-      if (result.error) {
-        throw result.error;
-      }
-      this.setAuthToken(result.data!.token);
-      return Promise.resolve(result.data!);
-    }
-
     const data = await this.request<AuthSessionResponse>("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -311,17 +301,8 @@ export class ApiClient {
   }
 
   public async getSession(): Promise<AuthUser | null> {
-    if (USE_MOCK) {
-      const result = fakeServer.getSession(this.authToken || undefined);
-      if (result.error || !result.data) {
-        return null;
-      }
-      return Promise.resolve(result.data.user);
-    }
-
-    if (!this.authToken) return null;
     try {
-      const data = await this.request<{ user: AuthUser }>("/api/auth/session");
+      const data = await this.request<{ user: AuthUser }>("/api/auth/me");
       return data.user;
     } catch {
       return null;
@@ -329,22 +310,12 @@ export class ApiClient {
   }
 
   public async logout(): Promise<void> {
-    if (USE_MOCK) {
-      if (this.authToken) {
-        fakeServer.logout(this.authToken);
-      }
-      this.setAuthToken(null);
-      return Promise.resolve();
-    }
-
-    if (this.authToken) {
-      try {
-        await this.request<void>("/api/auth/logout", {
-          method: "POST",
-        });
-      } catch {
-        // ignore network error on logout
-      }
+    try {
+      await this.request<void>("/api/auth/logout", {
+        method: "POST",
+      });
+    } catch {
+      // ignore network error on logout
     }
     this.setAuthToken(null);
   }

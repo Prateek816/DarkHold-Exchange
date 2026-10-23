@@ -12,6 +12,7 @@ interface WalletState {
   // Authoritative server updates only - no optimistic computation
   setWalletFromServer: (data: WalletBalance) => void;
   updateHoldingFromServer: (holding: WalletHolding) => void;
+  clearWallet: () => void;
 }
 
 export const useWalletStore = create<WalletState>((set) => ({
@@ -42,5 +43,15 @@ export const useWalletStore = create<WalletState>((set) => ({
         newHoldings.push(updated);
       }
       return { holdings: newHoldings, lastUpdated: Date.now() };
+    }),
+
+  clearWallet: () =>
+    set({
+      availableCredits: 0,
+      reservedCredits: 0,
+      totalCredits: 0,
+      holdings: [],
+      isLoading: false,
+      lastUpdated: Date.now(),
     }),
 }));

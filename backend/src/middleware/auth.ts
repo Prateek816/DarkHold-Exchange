@@ -46,7 +46,12 @@ export async function extractUserFromRequest(req: Request): Promise<Authenticate
       include: { user: true },
     });
 
-    if (!session || session.revokedAt || session.expiresAt < new Date()) {
+    if (
+      !session ||
+      session.revokedAt ||
+      session.expiresAt < new Date() ||
+      session.user.status !== "ACTIVE"
+    ) {
       return null;
     }
 

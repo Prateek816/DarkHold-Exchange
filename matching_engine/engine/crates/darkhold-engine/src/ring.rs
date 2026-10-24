@@ -25,6 +25,19 @@ struct Inner {
     published: u64,
 }
 
+pub type Ring = EventRing;
+
+fn event_kind(json: &str) -> String {
+    let key = "\"type\":\"";
+    match json.find(key) {
+        Some(i) => {
+            let rest = &json[i + key.len()..];
+            rest.split('"').next().unwrap_or("event").to_string()
+        }
+        None => "event".to_string(),
+    }
+}
+
 pub struct EventRing {
     capacity: usize,
     inner: RwLock<Inner>,
@@ -32,7 +45,11 @@ pub struct EventRing {
 }
 
 impl EventRing {
-    pub fn new(capacity: usize, initial_seq: u64) -> Self {
+    pub fn new(capacity: usize) -> Self {
+        Self::with_initial_seq(capacity, 0)
+    }
+
+    pub fn with_initial_seq(capacity: usize, initial_seq: u64) -> Self {
         let (tx, _rx) = watch::channel(initial_seq);
         EventRing {
             capacity: capacity.max(1),
@@ -44,8 +61,21 @@ impl EventRing {
         }
     }
 
+    /// (seq, serialized event JSON). The SSE event name is read from the JSON `type` field.
+    pub fn push_batch(&self, entries: Vec<(u64, Arc<str>)>) {
+        let v = entries
+            .into_iter()
+            .map(|(seq, data)| RingEntry {
+                seq,
+                kind: Arc::from(event_kind(&data)),
+                data,
+            })
+            .collect();
+        self.push_entries(v);
+    }
+
     /// Entries must be contiguous and in order.
-    pub fn push_batch(&self, entries: Vec<RingEntry>) {
+    pub fn push_entries(&self, entries: Vec<RingEntry>) {
         if entries.is_empty() {
             return;
         }

@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "demo": [
+    {
+      "symbol": "DFEST-WKND",
+      "name": "Darkhold Fest Weekend Pass",
+      "category": "FESTIVAL",
+      "face_value_minor": 10000,
+      "ceiling_bps": 12000,
+      "ceiling_minor": 12000,
+      "tick_size": 10,
+      "min_qty": 1,
+      "max_qty": 10,
+      "total_supply": 5000,
+      "liquidity": "HIGH"
+    },
+    {
+      "symbol": "MOONRISE-GA",
+      "name": "Moonrise GA Pass",
+      "category": "FESTIVAL",
+      "face_value_minor": 8000,
+      "ceiling_bps": 12000,
+      "ceiling_minor": 9600,
+      "tick_size": 10,
+      "min_qty": 1,
+      "max_qty": 10,
+      "total_supply": 4000,
+      "liquidity": "MEDIUM"
+    },
+    {
+      "symbol": "DFEST-HOODIE",
+      "name": "Darkhold Hoodie Limited",
+      "category": "MERCH",
+      "face_value_minor": 3000,
+      "ceiling_bps": 12000,
+      "ceiling_minor": 3600,
+      "tick_size": 5,
+      "min_qty": 1,
+      "max_qty": 10,
+      "total_supply": 2000,
+      "liquidity": "MEDIUM"
+    },
+    {
+      "symbol": "SIGIL-PIN",
+      "name": "Sigil Collector Pin",
+      "category": "COLLECTIBLE",
+      "face_value_minor": 500,
+      "ceiling_bps": 12000,
+      "ceiling_minor": 600,
+      "tick_size": 1,
+      "min_qty": 1,
+      "max_qty": 10,
+      "total_supply": 1000,
+      "liquidity": "THIN"
+    }
+  ],
+  "bench": [
+    {
+      "symbol": "BENCH-A",
+      "name": "Bench Asset A",
+      "category": "BENCH",
+      "face_value_minor": 10000,
+      "ceiling_bps": 20000,
+      "ceiling_minor": 20000,
+      "tick_size": 1,
+      "min_qty": 1,
+      "max_qty": 100,
+      "total_supply": 50000000,
+      "liquidity": null
+    },
+    {
+      "symbol": "BENCH-B",
+      "name": "Bench Asset B",
+      "category": "BENCH",
+      "face_value_minor": 10000,
+      "ceiling_bps": 20000,
+      "ceiling_minor": 20000,
+      "tick_size": 1,
+      "min_qty": 1,
+      "max_qty": 100,
+      "total_supply": 50000000,
+      "liquidity": null
+    },
+    {
+      "symbol": "BENCH-C",
+      "name": "Bench Asset C",
+      "category": "BENCH",
+      "face_value_minor": 10000,
+      "ceiling_bps": 20000,
+      "ceiling_minor": 20000,
+      "tick_size": 1,
+      "min_qty": 1,
+      "max_qty": 100,
+      "total_supply": 50000000,
+      "liquidity": null
+    },
+    {
+      "symbol": "BENCH-D",
+      "name": "Bench Asset D",
+      "category": "BENCH",
+      "face_value_minor": 10000,
+      "ceiling_bps": 20000,
+      "ceiling_minor": 20000,
+      "tick_size": 1,
+      "min_qty": 1,
+      "max_qty": 100,
+      "total_supply": 50000000,
+      "liquidity": null
+    }
+  ]
+}

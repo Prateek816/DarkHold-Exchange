@@ -9,12 +9,12 @@ fn entry(seq: u64) -> RingEntry {
     }
 }
 fn push(r: &EventRing, a: u64, b: u64) {
-    r.push_batch((a..=b).map(entry).collect());
+    r.push_entries((a..=b).map(entry).collect());
 }
 
 #[test]
 fn empty_ring() {
-    let r = EventRing::new(10, 0);
+    let r = EventRing::new(10);
     assert_eq!(r.start_seq(), 1);
     assert_eq!(r.len(), 0);
     assert!(matches!(r.read_after(0, 10), ReadResult::UpToDate));
@@ -22,7 +22,7 @@ fn empty_ring() {
 
 #[test]
 fn read_after_returns_later_events_in_order() {
-    let r = EventRing::new(10, 0);
+    let r = EventRing::new(10);
     push(&r, 1, 5);
     match r.read_after(2, 10) {
         ReadResult::Events(v) => {
@@ -39,7 +39,7 @@ fn read_after_returns_later_events_in_order() {
 
 #[test]
 fn eviction_and_gone_boundaries() {
-    let r = EventRing::new(3, 0);
+    let r = EventRing::new(3);
     push(&r, 1, 6); // keeps 4..6
     assert_eq!(r.len(), 3);
     assert_eq!(r.start_seq(), 4);
@@ -56,7 +56,7 @@ fn eviction_and_gone_boundaries() {
 
 #[test]
 fn empty_ring_with_history_is_gone() {
-    let r = EventRing::new(10, 5); // e.g. after a restart with nothing retained
+    let r = EventRing::with_initial_seq(10, 5); // e.g. after a restart with nothing retained
     assert_eq!(r.start_seq(), 6);
     assert!(matches!(
         r.read_after(2, 10),
@@ -67,7 +67,7 @@ fn empty_ring_with_history_is_gone() {
 
 #[tokio::test]
 async fn watch_notifies_on_push() {
-    let r = EventRing::new(10, 0);
+    let r = EventRing::new(10);
     let mut rx = r.subscribe();
     push(&r, 1, 1);
     rx.changed().await.unwrap();
@@ -76,11 +76,11 @@ async fn watch_notifies_on_push() {
 
 #[test]
 fn concurrent_reader_sees_contiguous_events() {
-    let r = Arc::new(EventRing::new(100_000, 0));
+    let r = Arc::new(EventRing::new(100_000));
     let w = r.clone();
     let writer = std::thread::spawn(move || {
         for s in 1..=20_000u64 {
-            w.push_batch(vec![entry(s)]);
+            w.push_entries(vec![entry(s)]);
         }
     });
     let mut cursor = 0u64;

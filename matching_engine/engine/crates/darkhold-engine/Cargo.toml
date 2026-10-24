@@ -1,45 +1,33 @@
 [package]
 name = "darkhold-engine"
-version.workspace = true
-edition.workspace = true
-publish.workspace = true
-
-[lib]
-name = "darkhold_engine"
-path = "src/lib.rs"
-
-[[bin]]
-name = "darkhold-engine"
-path = "src/main.rs"
+version = "0.1.0"
+edition = "2021"
 
 [dependencies]
 darkhold-core = { path = "../darkhold-core" }
-
-anyhow.workspace = true
-crc32fast.workspace = true
-crossbeam-channel.workspace = true
-futures-util.workspace = true
-hdrhistogram.workspace = true
-parking_lot.workspace = true
-serde.workspace = true
-serde_json.workspace = true
-thiserror.workspace = true
-tokio.workspace = true
-tracing.workspace = true
-tracing-subscriber = { workspace = true, features = ["env-filter", "json"] }
-uuid.workspace = true
-
-# HTTP layer (Step 6). Trim or extend to match the imports in http/*.rs.
-async-stream = "0.3"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "signal", "net"] }
 axum = "0.7"
-bytes = "1"
-tokio-stream = { version = "0.1", features = ["sync"] }
-tower = { version = "0.4", features = ["limit"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["trace"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+crossbeam-channel = "0.5"
+parking_lot = "0.12"
+uuid = { version = "1", features = ["v4"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
+anyhow = "1"
+async-stream = "0.3"
+futures-util = "0.3"
+subtle = "2"
+crc32fast = "1"
+hdrhistogram = { version = "7", default-features = false }
+thiserror = "1"
 
 [dev-dependencies]
-futures-util.workspace = true
-reqwest.workspace = true
-serde_json.workspace = true
-tempfile.workspace = true
-tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
-uuid.workspace = true
+tempfile = "3"
+serde_json = "1"
+uuid = { version = "1", features = ["v4"] }
+futures-util = "0.3"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream"] }

@@ -103,6 +103,7 @@ fn run(mut a: CoreArgs) {
             }
             let (ack, n_cmds) = process_batch(&mut a, jobs);
             shutdown_ack = ack;
+            set_statuses(&a.engine, &a.slot);
             since_check += n_cmds;
             a.metrics.outcomes_count.store(
                 a.engine.outcomes_count() as u64,
@@ -287,19 +288,26 @@ fn answer_query(e: &Engine, kind: QueryKind) -> QueryReply {
             Some(v) => QueryReply::Order(serde_json::to_value(&v).unwrap_or(Value::Null)),
             None => QueryReply::NotFound,
         },
-        QueryKind::OpenOrders { asset } => {
-            let orders = e.open_orders(asset.as_ref());
-            QueryReply::OpenOrders(json!({
-                "engine_epoch": e.epoch(),
-                "as_of_seq": e.last_seq(),
-                "orders": orders,
-            }))
-        }
+        QueryKind::OpenOrders { asset } => QueryReply::OpenOrders(
+            serde_json::to_value(e.open_orders(asset.as_ref())).unwrap_or(Value::Null),
+        ),
     }
 }
 
 /// Builds and stores a snapshot for every dirty asset (sorted by the engine).
+fn set_statuses(e: &Engine, slot: &BookSlot) {
+    for (a, st) in e.asset_statuses() {
+        if let Some(sv) = serde_json::to_value(st)
+            .ok()
+            .and_then(|v| v.as_str().map(String::from))
+        {
+            slot.set_status(&asset_name(&a), &sv);
+        }
+    }
+}
+
 pub fn publish_dirty(e: &mut Engine, slot: &BookSlot, depth: usize) {
+    set_statuses(e, slot);
     for asset in e.take_dirty_assets() {
         if let Some(v) = e.book_view(&asset, depth) {
             let val = with_ts(&v);

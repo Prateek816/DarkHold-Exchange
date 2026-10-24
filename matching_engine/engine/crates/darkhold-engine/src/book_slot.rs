@@ -11,6 +11,7 @@ struct Inner {
 
 pub struct BookSlot {
     inner: RwLock<Inner>,
+    statuses: RwLock<BTreeMap<String, String>>,
     tx: watch::Sender<u64>,
 }
 
@@ -22,8 +23,23 @@ impl BookSlot {
                 map: BTreeMap::new(),
                 global: 0,
             }),
+            statuses: RwLock::new(BTreeMap::new()),
             tx,
         }
+    }
+
+    pub fn set_status(&self, asset: &str, status: &str) {
+        self.statuses
+            .write()
+            .insert(asset.to_string(), status.to_string());
+    }
+
+    pub fn statuses(&self) -> Vec<(String, String)> {
+        self.statuses
+            .read()
+            .iter()
+            .map(|(a, s)| (a.clone(), s.clone()))
+            .collect()
     }
 
     pub fn store(&self, asset: &str, json: String) {

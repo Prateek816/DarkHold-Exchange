@@ -1,23 +1,20 @@
 [package]
 name = "darkhold-core"
-version.workspace = true
-edition.workspace = true
-publish.workspace = true
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Pure deterministic matching core for the Darkhold Exchange (no I/O, no clock, no randomness)"
 
 [dependencies]
-serde.workspace = true
-serde_json.workspace = true
-thiserror.workspace = true
-uuid.workspace = true
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["serde"] }
+thiserror = "1"
 
 [dev-dependencies]
-criterion = "0.5"
-jsonschema = { version = "0.18", default-features = false }
 proptest = "1"
+# default-features = false: schemas have no remote $ref, so no HTTP/file resolver is needed.
+jsonschema = { version = "0.18", default-features = false }
 rand = "0.8"
 rand_pcg = "0.3"
-serde_json = "1"
-
-[[bench]]
-name = "matching"
-harness = false
+criterion = "0.5"

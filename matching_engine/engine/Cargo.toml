@@ -1,0 +1,9 @@
+[workspace]
+resolver = "2"
+members = ["crates/darkhold-core", "crates/darkhold-engine"]
+# darkhold-engine (Step 6) and darkhold-bench (Step 16) are added to `members` when those crates exist.
+
+[profile.release]
+panic = "abort"
+lto = "thin"
+codegen-units = 1

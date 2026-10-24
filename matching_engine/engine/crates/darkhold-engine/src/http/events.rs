@@ -21,10 +21,10 @@ pub struct EventsQuery {
     pub epoch: Option<String>,
 }
 
-struct SubscriberGuard(Arc<std::sync::atomic::AtomicUsize>);
+struct SubscriberGuard(Arc<crate::metrics::Metrics>);
 impl Drop for SubscriberGuard {
     fn drop(&mut self) {
-        self.0.fetch_sub(1, Ordering::SeqCst);
+        self.0.sse_subscribers.fetch_sub(1, Ordering::SeqCst);
     }
 }
 
@@ -50,18 +50,18 @@ pub async fn get_events(
     if let ReadResult::Gone { start_seq } = st.ring.read_after(after, 1) {
         return Err(ApiError::gone(start_seq));
     }
-    let prev = st.subscribers.fetch_add(1, Ordering::SeqCst);
-    if prev >= st.config.sse_max_subscribers {
-        st.subscribers.fetch_sub(1, Ordering::SeqCst);
+    let prev = st.metrics.sse_subscribers.fetch_add(1, Ordering::SeqCst);
+    if prev as usize >= st.config.sse_max_subscribers {
+        st.metrics.sse_subscribers.fetch_sub(1, Ordering::SeqCst);
         return Err(ApiError::too_many_subscribers());
     }
-    let guard = SubscriberGuard(st.subscribers.clone());
+    let guard = SubscriberGuard(st.metrics.clone());
     let mut rx = st.ring.subscribe(); // subscribe before reading: no missed wakeups
     let hb_ms = st.config.sse_heartbeat_ms.max(1);
 
     let stream = async_stream::stream! {
         let _guard = guard;
-        let assets: Vec<_> = st.assets.read().iter().map(|(a, s)| json!({"asset": a, "status": s})).collect();
+        let assets: Vec<_> = st.slot.statuses().into_iter().map(|(a, s)| json!({"asset": a, "status": s})).collect();
         let hello = json!({
             "engine_epoch": &*st.epoch,
             "current_seq": st.ring.published_seq(),
@@ -72,6 +72,12 @@ pub async fn get_events(
         yield Ok::<Event, Infallible>(Event::default().event("hello").data(hello.to_string()));
 
         let mut cursor = after;
+        let mut book_rx = st.slot.subscribe();
+        let mut seen: std::collections::HashMap<String, u64> = std::collections::HashMap::new();
+        for (a, v, j) in st.slot.snapshot_all() {
+            seen.insert(a, v);
+            yield Ok(Event::default().event("book").data(j.to_string()));
+        }
         let mut hb = tokio::time::interval(Duration::from_millis(hb_ms));
         hb.tick().await; // first tick is immediate
         loop {
@@ -93,6 +99,12 @@ pub async fn get_events(
             let mut send_hb = false;
             tokio::select! {
                 r = rx.changed() => { if r.is_err() { return; } }
+                r = book_rx.changed() => {
+                    if r.is_err() { return; }
+                    for (_a, j) in st.slot.changed_since(&mut seen) {
+                        yield Ok(Event::default().event("book").data(j.to_string()));
+                    }
+                }
                 _ = hb.tick() => { send_hb = true; }
             }
             if send_hb {

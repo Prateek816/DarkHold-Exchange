@@ -18,30 +18,55 @@ fn err(status: StatusCode, code: &str, msg: impl Into<String>) -> Response {
     let body = Json(json!({"error": {"code": code, "message": msg.into(), "details": {}}}));
     let mut r = (status, body).into_response();
     if code == "ENGINE_BUSY" {
-        r.headers_mut().insert(header::RETRY_AFTER, "1".parse().unwrap());
+        r.headers_mut()
+            .insert(header::RETRY_AFTER, "1".parse().unwrap());
     }
     r
 }
 
 async fn run_query(s: &AppState, kind: QueryKind) -> Result<QueryReply, Response> {
     if !s.core_alive.load(Ordering::SeqCst) {
-        return Err(err(StatusCode::SERVICE_UNAVAILABLE, "ENGINE_UNAVAILABLE", "core thread not alive"));
+        return Err(err(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "ENGINE_UNAVAILABLE",
+            "core thread not alive",
+        ));
     }
     let (tx, rx) = oneshot::channel();
-    match s.tx.try_send(Job::Query { kind, enqueued_at: Instant::now(), reply_tx: tx }) {
+    match s.tx.try_send(Job::Query {
+        kind,
+        enqueued_at: Instant::now(),
+        reply_tx: tx,
+    }) {
         Ok(()) => {}
         Err(TrySendError::Full(_)) => {
             s.metrics.busy_count.fetch_add(1, Ordering::Relaxed);
-            return Err(err(StatusCode::SERVICE_UNAVAILABLE, "ENGINE_BUSY", "command queue full"));
+            return Err(err(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "ENGINE_BUSY",
+                "command queue full",
+            ));
         }
         Err(TrySendError::Disconnected(_)) => {
-            return Err(err(StatusCode::SERVICE_UNAVAILABLE, "ENGINE_UNAVAILABLE", "core thread not alive"));
+            return Err(err(
+                StatusCode::SERVICE_UNAVAILABLE,
+                "ENGINE_UNAVAILABLE",
+                "core thread not alive",
+            ));
         }
     }
     match tokio::time::timeout(Duration::from_millis(s.config.command_timeout_ms), rx).await {
         Ok(Ok(r)) => Ok(r),
-        Ok(Err(_)) => Err(err(StatusCode::SERVICE_UNAVAILABLE, "ENGINE_UNAVAILABLE", "core thread dropped the query")),
-        Err(_) => Err(err(StatusCode::GATEWAY_TIMEOUT, "COMMAND_TIMEOUT", "query timed out")),
+        Ok(Err(_)) => Err(err(
+            StatusCode::SERVICE_UNAVAILABLE,
+            "ENGINE_UNAVAILABLE",
+            "core thread dropped the query",
+        )),
+        Err(_) => Err(err(
+            StatusCode::GATEWAY_TIMEOUT,
+            "COMMAND_TIMEOUT",
+            "query timed out",
+        )),
     }
 }
 
@@ -68,7 +93,11 @@ pub async fn get_book(
     match run_query(&s, QueryKind::Book { asset, depth }).await {
         Ok(QueryReply::Book(v)) => Json(v).into_response(),
         Ok(QueryReply::NotFound) => err(StatusCode::NOT_FOUND, "NOT_FOUND", "unknown asset"),
-        Ok(_) => err(StatusCode::INTERNAL_SERVER_ERROR, "INTERNAL", "unexpected reply"),
+        Ok(_) => err(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "INTERNAL",
+            "unexpected reply",
+        ),
         Err(r) => r,
     }
 }
@@ -81,7 +110,11 @@ pub async fn get_order(State(s): State<AppState>, Path(id): Path<String>) -> Res
     match run_query(&s, QueryKind::Order { order_id }).await {
         Ok(QueryReply::Order(v)) => Json(v).into_response(),
         Ok(QueryReply::NotFound) => err(StatusCode::NOT_FOUND, "NOT_FOUND", "unknown order"),
-        Ok(_) => err(StatusCode::INTERNAL_SERVER_ERROR, "INTERNAL", "unexpected reply"),
+        Ok(_) => err(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "INTERNAL",
+            "unexpected reply",
+        ),
         Err(r) => r,
     }
 }
@@ -96,7 +129,11 @@ pub async fn get_open_orders(State(s): State<AppState>, Query(q): Query<OpenQ>) 
     };
     match run_query(&s, QueryKind::OpenOrders { asset }).await {
         Ok(QueryReply::OpenOrders(v)) => Json(v).into_response(),
-        Ok(_) => err(StatusCode::INTERNAL_SERVER_ERROR, "INTERNAL", "unexpected reply"),
+        Ok(_) => err(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "INTERNAL",
+            "unexpected reply",
+        ),
         Err(r) => r,
     }
 }

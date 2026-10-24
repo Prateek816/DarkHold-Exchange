@@ -1,0 +1,6 @@
+engine/target
+node_modules
+dist
+.env
+data/
+.DS_Store

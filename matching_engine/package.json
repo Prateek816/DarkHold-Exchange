@@ -1,0 +1,5 @@
+{
+  "name": "darkhold",
+  "private": true,
+  "workspaces": ["contracts"]
+}

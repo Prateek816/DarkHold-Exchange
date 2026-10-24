@@ -72,6 +72,10 @@ impl Engine {
         self.next_seq - 1
     }
 
+    pub fn outcomes_count(&self) -> usize {
+        self.outcomes.len()
+    }
+
     pub fn outcomes_len(&self) -> usize {
         self.outcomes.len()
     }
@@ -595,7 +599,7 @@ impl Engine {
         let mut r = self.reply_base(ReplyStatus::Admin(AdminReplyStatus::Ok));
         r.asset = Some(c.asset.clone());
         if let Err(code) = validate_config(&cfg) {
-            r.status = ReplyStatus::Submit(SubmitReplyStatus::Rejected);
+            r.status = ReplyStatus::Admin(AdminReplyStatus::Rejected);
             r.code = Some(code);
             return (events, r);
         }
@@ -637,7 +641,7 @@ impl Engine {
         r.asset = Some(asset.clone());
         match self.assets.get(asset).map(|b| b.config.status) {
             None => {
-                r.status = ReplyStatus::Submit(SubmitReplyStatus::Rejected);
+                r.status = ReplyStatus::Admin(AdminReplyStatus::Rejected);
                 r.code = Some(RejectCode::UnknownAsset);
             }
             Some(current) if current == target => {
@@ -1059,9 +1063,9 @@ mod tests {
         assert_eq!(
             keys,
             vec![
+                ("TEST-A".into(), 4),
                 ("TEST-A".into(), 5),
-                ("TEST-A".into(), 6),
-                ("TEST-B".into(), 4)
+                ("TEST-B".into(), 3)
             ]
         );
         assert_eq!(e.open_orders(Some(&asset("TEST-B"))).orders.len(), 1);

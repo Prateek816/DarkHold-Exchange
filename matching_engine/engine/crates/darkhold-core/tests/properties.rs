@@ -68,9 +68,15 @@ fn run(seed: u64, n: usize) {
             assert_eq!(u(ev, "seq"), prev_last + 1 + k as u64);
         }
         prev_last += evs.len() as u64;
-        assert_eq!(u(&reply, "last_seq"), prev_last);
+        // A replayed duplicate returns the original reply (stale last_seq, no events).
         if evs.is_empty() {
-            assert!(reply["seq"].is_null());
+            assert!(u(&reply, "last_seq") <= prev_last);
+        } else {
+            assert_eq!(u(&reply, "last_seq"), prev_last);
+        }
+        if evs.is_empty() {
+            // no new events: seq is null, or the original seq of a replayed duplicate
+            assert!(reply["seq"].is_null() || u(&reply, "seq") <= prev_last);
         } else if reply["status"] != "REJECTED" || reply["seq"].is_u64() {
             assert_eq!(u(&reply, "seq"), u(&evs[0], "seq"));
         }

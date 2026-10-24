@@ -345,7 +345,9 @@ export default function PortfolioPage() {
   };
 
   const copyToClipboard = (text: string) => {
-    navigator.clipboard?.writeText(text);
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text).catch(() => {});
+    }
     setCopiedTx(text);
     setTimeout(() => setCopiedTx(null), 1500);
     pushToast({
@@ -832,6 +834,7 @@ export default function PortfolioPage() {
                         <span>{selectedReceipt.tx_hash}</span>
                         <button
                           onClick={() => copyToClipboard(selectedReceipt.tx_hash)}
+                          aria-label="Copy Transaction Hash"
                           className="ml-2 text-[var(--lav)] hover:brightness-120"
                         >
                           {copiedTx === selectedReceipt.tx_hash ? <Check size={14} /> : <Copy size={14} />}

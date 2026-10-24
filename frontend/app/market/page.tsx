@@ -74,7 +74,13 @@ export default function DashboardPage() {
   const handleCopyLink = () => {
     sound.playClick();
     setCopiedLink(true);
-    navigator.clipboard?.writeText(window.location.href);
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(window.location.href).catch(() => {});
+      }
+    } catch {
+      // Ignore clipboard errors in headless browser
+    }
     pushToast({
       title: 'Link Copied',
       body: 'Market URL copied to clipboard.',

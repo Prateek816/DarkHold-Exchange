@@ -101,6 +101,39 @@ export interface UserWallet {
   total_balance: number;
 }
 
+export type LedgerEntryType =
+  | 'DEPOSIT'
+  | 'WITHDRAWAL'
+  | 'TRADE_BUY'
+  | 'TRADE_SELL'
+  | 'AUCTION_BUY'
+  | 'ESCROW_LOCK'
+  | 'ESCROW_RELEASE';
+
+export interface LedgerEntry {
+  id: string;
+  timestamp: number;
+  type: LedgerEntryType;
+  asset_id?: string;
+  asset_symbol?: string;
+  asset_name?: string;
+  side?: OrderSide;
+  price?: number; // cents
+  units?: number;
+  amount_cents: number; // cents
+  balance_after: number; // cents
+  tx_hash: string;
+  status: 'SETTLED' | 'PENDING' | 'FAILED';
+  note: string;
+  is_sim?: boolean;
+
+  // Compatibility aliases with existing LedgerStub consumers
+  trade_id?: string;
+  quantity?: number;
+  total_value?: number;
+  settled_at?: number;
+}
+
 export interface LedgerStub {
   id: string;
   trade_id: string;
@@ -114,6 +147,14 @@ export interface LedgerStub {
   settled_at: number;
   tx_hash: string;
   status: 'SETTLED' | 'PENDING' | 'FAILED';
+
+  timestamp?: number;
+  type?: LedgerEntryType;
+  units?: number;
+  amount_cents?: number;
+  balance_after?: number;
+  note?: string;
+  is_sim?: boolean;
 }
 
 export interface DutchAuction {

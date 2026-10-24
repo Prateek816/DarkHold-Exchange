@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Asset, OrderSide, OrderType, UserOrder } from '@/lib/types';
 import { useUserStore, useToastStore, useMarketStore } from '@/lib/store';
 import { fmt, mapError } from '@/lib/formatters';
+import { sound } from '@/lib/sound';
 import { MarketConfirmDialog } from './MarketConfirmDialog';
 import { AlertCircle, ShieldAlert, ArrowRight } from 'lucide-react';
 
@@ -26,6 +27,17 @@ export function OrderForm({ asset, selectedPrice }: OrderFormProps) {
   const addTrade = useMarketStore((s) => s.addTrade);
 
   const [isShaking, setIsShaking] = useState(false);
+
+  // Sync side from query parameter if present (?side=BUY or ?side=SELL)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const sideParam = params.get('side')?.toUpperCase();
+      if (sideParam === 'BUY' || sideParam === 'SELL') {
+        setSide(sideParam);
+      }
+    }
+  }, []);
 
   // Sync clicked price from OrderBookLadder or Chart
   useEffect(() => {
@@ -150,12 +162,14 @@ export function OrderForm({ asset, selectedPrice }: OrderFormProps) {
           is_sim: false,
         });
 
+        sound.playSuccess();
         pushToast({
           variant: 'success',
           title: 'Order Filled',
           body: `Market ${side} for ${quantity} unit(s) executed at ${fmt.price(asset.last_price)}. Matched, settling.`,
         });
       } else {
+        sound.playSuccess();
         pushToast({
           variant: 'success',
           title: 'Order Accepted',

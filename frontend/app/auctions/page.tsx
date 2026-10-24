@@ -10,9 +10,11 @@ import { DutchAuction } from '@/lib/types';
 import { DimTail } from '@/components/primitives/DimTail';
 import { soundFx } from '@/lib/sound';
 import ElectricBorder from '@/components/ui/ElectricBorder';
+import { Confetti } from '@/components/auctions/Confetti';
+import { CreateAuctionModal } from '@/components/auctions/CreateAuctionModal';
 import {
   Gavel, Clock, CheckCircle2, AlertCircle, ArrowDownRight,
-  Plus, ShieldCheck, Flame, Zap, ArrowRight, X, Sparkles
+  Plus, ShieldCheck, Flame, Zap, ArrowRight, X, Sparkles, Filter
 } from 'lucide-react';
 
 /* ── Stepped Decay Chart SVG with amber ceiling and muted floor ─ */
@@ -77,11 +79,11 @@ function SteppedDecayChart({
         {/* Resale Ceiling reference dashed line (Amber #FFB547) */}
         <line
           x1={padding}
-          y1={padding - 8}
+          y1={padding - 9}
           x2={width - padding}
-          y2={padding - 8}
+          y2={padding - 7}
           stroke="#FFB547"
-          strokeWidth="1.5"
+          strokeWidth="2"
           strokeDasharray="4 4"
         />
 

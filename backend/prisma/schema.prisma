@@ -1,0 +1,330 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  TRADER
+  OPERATOR
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum OrderSide {
+  BUY
+  SELL
+}
+
+enum OrderType {
+  LIMIT
+  MARKET
+}
+
+enum OrderStatus {
+  PENDING_SUBMIT
+  OPEN
+  PARTIALLY_FILLED
+  FILLED
+  CANCELED
+  REJECTED
+}
+
+enum SettlementStatus {
+  PENDING
+  COMPLETED
+}
+
+enum AuctionStatus {
+  ACTIVE
+  SOLD
+  EXPIRED
+  CANCELLED
+}
+
+enum LedgerEntryType {
+  ORDER_RESERVE
+  ORDER_RELEASE
+  ORDER_SETTLEMENT
+  AUCTION_PAYMENT
+  AUCTION_PROCEEDS
+  AUCTION_RESERVE
+  AUCTION_RELEASE
+  INITIAL_CREDIT
+  DEPOSIT
+}
+
+model User {
+  id           String      @id @default(cuid())
+  name         String
+  email        String      @unique
+  passwordHash String
+  role         UserRole    @default(TRADER)
+  status       UserStatus  @default(ACTIVE)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  sessions     Session[]
+  wallet       Wallet?
+  orders       Order[]
+  sellerAuctions Auction[] @relation("SellerAuctions")
+  wonAuctions    Auction[] @relation("WinnerAuctions")
+  buyerTrades    Trade[]   @relation("BuyerTrades")
+  sellerTrades   Trade[]   @relation("SellerTrades")
+
+  @@map("users")
+}
+
+model Session {
+  id         String    @id @default(cuid())
+  userId     String
+  token      String    @unique
+  tokenHash  String?
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("sessions")
+}
+
+model Asset {
+  id                  String   @id // e.g. "DARKHOLD-PASS-2026"
+  symbol              String   @unique // e.g. "DKH-FEST"
+  name                String
+  category            String   @default("FESTIVAL_PASS") // "FESTIVAL_PASS" | "LIMITED_MERCH"
+  description         String?
+  faceValue           BigInt   // minor units (cents)
+  ceilingPct          Int      // e.g. 110 (110%)
+  ceilingPrice        BigInt   // minor units (cents)
+  lastPrice           BigInt?
+  lastPriceTimestamp  DateTime?
+  bestBid             BigInt?
+  bestAsk             BigInt?
+  availableAskQty     Int      @default(0)
+  volume24h           Int      @default(0)
+  priceChange24hPct   Float    @default(0.0)
+  isHalted            Boolean  @default(false)
+  isThin              Boolean  @default(false)
+  simActive           Boolean  @default(true)
+  hasActiveAuction    Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  holdings            WalletHolding[]
+  orders              Order[]
+  trades              Trade[]
+  auctions            Auction[]
+
+  @@map("assets")
+}
+
+model Wallet {
+  id               String          @id @default(cuid())
+  userId           String          @unique
+  availableBalance BigInt          @default(500000) // minor units, 500000 = $5,000.00
+  reservedBalance  BigInt          @default(0)
+  totalBalance     BigInt          @default(500000)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  holdings         WalletHolding[]
+  ledgerEntries    LedgerEntry[]
+
+  @@map("wallets")
+}
+
+model WalletHolding {
+  id             String   @id @default(cuid())
+  walletId       String
+  assetId        String
+  availableUnits Int      @default(0)
+  reservedUnits  Int      @default(0)
+  totalUnits     Int      @default(0)
+  avgCost        BigInt   @default(0) // minor units (cents)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  wallet         Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  asset          Asset    @relation(fields: [assetId], references: [id], onDelete: Restrict)
+
+  @@unique([walletId, assetId])
+  @@index([walletId])
+  @@index([assetId])
+  @@map("wallet_holdings")
+}
+
+model Order {
+  id                String           @id // "ORD-..."
+  userId            String
+  assetId           String
+  side              OrderSide
+  type              OrderType
+  price             BigInt           // 0 for market
+  originalQuantity  Int
+  matchedQuantity   Int              @default(0)
+  remainingQuantity Int
+  reservedAmount    BigInt           @default(0) // minor units reserved for BUY
+  reservedUnits     Int              @default(0) // units reserved for SELL
+  status            OrderStatus      @default(OPEN)
+  settlementStatus  SettlementStatus @default(PENDING)
+  idempotencyKey    String?          @unique
+  engineSeq         BigInt?
+  engineEpoch       String?
+  cancelReason      String?
+  rejectCode        String?
+  submitAttempts    Int              @default(0)
+  submittedAt       DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  asset             Asset            @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  buyTrades         Trade[]          @relation("BuyOrderTrades")
+  sellTrades        Trade[]          @relation("SellOrderTrades")
+
+  @@index([userId])
+  @@index([assetId, status])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model Trade {
+  id             String      @id // "TRD-..." or "e-epoch:seq"
+  assetId        String
+  buyOrderId     String?
+  sellOrderId    String?
+  buyerId        String
+  sellerId       String
+  executionPrice BigInt      // minor units
+  quantity       Int
+  totalCost      BigInt      // minor units
+  isSim          Boolean     @default(false)
+  seq            BigInt?
+  engineEpoch    String?
+  ts             BigInt?
+  takerSide      OrderSide?
+  state          String      @default("SETTLED") // "PENDING_SETTLEMENT" | "SETTLED" | "SETTLEMENT_FAILED"
+  settleAttempts Int         @default(0)
+  lastError      String?
+  matchedAt      DateTime    @default(now())
+  settledAt      DateTime    @default(now())
+
+  asset          Asset       @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  buyer          User        @relation("BuyerTrades", fields: [buyerId], references: [id], onDelete: Restrict)
+  seller         User        @relation("SellerTrades", fields: [sellerId], references: [id], onDelete: Restrict)
+  buyOrder       Order?      @relation("BuyOrderTrades", fields: [buyOrderId], references: [id])
+  sellOrder      Order?      @relation("SellOrderTrades", fields: [sellOrderId], references: [id])
+
+  @@index([assetId])
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([matchedAt])
+  @@index([state])
+  @@map("trades")
+}
+
+model Auction {
+  id                String        @id // "AUC-..."
+  assetId           String
+  sellerId          String
+  quantity          Int
+  remainingQuantity Int
+  startPrice        BigInt        // minor units
+  floorPrice        BigInt
+  ceilingPrice      BigInt
+  currentPrice      BigInt
+  stepSeconds       Int           @default(15)
+  priceDecrement    BigInt        @default(50)
+  startTime         DateTime
+  endTime           DateTime
+  status            AuctionStatus @default(ACTIVE)
+  winnerId          String?
+  isSimSeller       Boolean       @default(false)
+  idempotencyKey    String?       @unique
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  asset             Asset         @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  seller            User          @relation("SellerAuctions", fields: [sellerId], references: [id], onDelete: Restrict)
+  winner            User?         @relation("WinnerAuctions", fields: [winnerId], references: [id])
+
+  @@index([assetId])
+  @@index([sellerId])
+  @@index([status])
+  @@map("auctions")
+}
+
+model LedgerEntry {
+  id            String          @id @default(cuid())
+  walletId      String
+  referenceId   String
+  entryType     LedgerEntryType
+  amount        BigInt          // positive = credit, negative = debit
+  balanceBefore BigInt
+  balanceAfter  BigInt
+  description   String
+  createdAt     DateTime        @default(now())
+
+  wallet        Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([referenceId])
+  @@index([createdAt])
+  @@map("ledger_entries")
+}
+
+model IdempotencyRecord {
+  id              String   @id @default(cuid())
+  key             String   @unique
+  resourceType    String
+  resourceId      String?
+  responsePayload String?  @db.Text
+  statusCode      Int
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime
+
+  @@index([key])
+  @@index([expiresAt])
+  @@map("idempotency_records")
+}
+
+model ConsumerOffset {
+  consumer    String   @id // "engine-main"
+  engineEpoch String
+  lastSeq     BigInt
+  updatedAt   DateTime @updatedAt
+
+  @@map("consumer_offset")
+}
+
+model CandleRecord {
+  id         String   @id @default(cuid())
+  assetId    String
+  interval   String   // "5s" | "1m"
+  openTime   BigInt
+  open       BigInt
+  high       BigInt
+  low        BigInt
+  close      BigInt
+  volume     BigInt
+  tradeCount Int
+  origin     String   @default("ENGINE") // "ENGINE" | "SEEDED_SIM"
+  createdAt  DateTime @default(now())
+
+  @@unique([assetId, interval, openTime])
+  @@index([assetId, interval, openTime])
+  @@map("candles")
+}

@@ -1,0 +1,131 @@
+{
+  "name": "S15-cancel-twice",
+  "description": "Second cancel is idempotent.",
+  "engine_epoch": "e-test0001",
+  "steps": [
+    {
+      "ts": 1000,
+      "command": {
+        "type": "ConfigureAsset",
+        "asset": "TEST-A",
+        "tick_size": 1,
+        "min_qty": 1,
+        "max_qty": 1000,
+        "collar_max_price": null,
+        "status": "ACTIVE"
+      },
+      "expect_reply": {
+        "status": "OK",
+        "seq": 1,
+        "last_seq": 1,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "asset": "TEST-A"
+      },
+      "expect_events": [
+        {
+          "type": "AssetConfigured",
+          "engine_epoch": "e-test0001",
+          "seq": 1,
+          "ts": 1000,
+          "asset": "TEST-A",
+          "tick_size": 1,
+          "min_qty": 1,
+          "max_qty": 1000,
+          "collar_max_price": null,
+          "status": "ACTIVE"
+        }
+      ]
+    },
+    {
+      "ts": 1001,
+      "command": {
+        "type": "SubmitOrder",
+        "order_id": "a0000000-0000-4000-8000-000000000001",
+        "asset": "TEST-A",
+        "user_id": "U1",
+        "side": "BUY",
+        "order_type": "LIMIT",
+        "tif": "GTC",
+        "qty": 5,
+        "price": 100
+      },
+      "expect_reply": {
+        "status": "ACCEPTED",
+        "seq": 2,
+        "last_seq": 2,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "order_id": "a0000000-0000-4000-8000-000000000001"
+      },
+      "expect_events": [
+        {
+          "type": "OrderAccepted",
+          "engine_epoch": "e-test0001",
+          "seq": 2,
+          "ts": 1001,
+          "asset": "TEST-A",
+          "order_id": "a0000000-0000-4000-8000-000000000001",
+          "user_id": "U1",
+          "side": "BUY",
+          "order_type": "LIMIT",
+          "tif": "GTC",
+          "price": 100,
+          "qty": 5
+        }
+      ]
+    },
+    {
+      "ts": 1002,
+      "command": {
+        "type": "CancelOrder",
+        "order_id": "a0000000-0000-4000-8000-000000000001",
+        "reason": "USER"
+      },
+      "expect_reply": {
+        "status": "CANCELED",
+        "seq": 3,
+        "last_seq": 3,
+        "engine_epoch": "e-test0001",
+        "duplicate": false,
+        "order_id": "a0000000-0000-4000-8000-000000000001",
+        "remaining_qty": 5
+      },
+      "expect_events": [
+        {
+          "type": "OrderCanceled",
+          "engine_epoch": "e-test0001",
+          "seq": 3,
+          "ts": 1002,
+          "asset": "TEST-A",
+          "order_id": "a0000000-0000-4000-8000-000000000001",
+          "user_id": "U1",
+          "filled_qty": 0,
+          "remaining_qty": 5,
+          "reason": "USER"
+        }
+      ]
+    },
+    {
+      "ts": 1003,
+      "command": {
+        "type": "CancelOrder",
+        "order_id": "a0000000-0000-4000-8000-000000000001",
+        "reason": "USER"
+      },
+      "expect_reply": {
+        "status": "ALREADY_CANCELED",
+        "seq": null,
+        "last_seq": 3,
+        "engine_epoch": "e-test0001",
+        "duplicate": true,
+        "order_id": "a0000000-0000-4000-8000-000000000001"
+      },
+      "expect_events": [],
+      "expect_book": {
+        "bids": [],
+        "asks": []
+      }
+    }
+  ]
+}

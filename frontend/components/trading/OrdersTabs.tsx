@@ -123,12 +123,17 @@ export function OrdersTabs({ assetId }: { assetId?: string }) {
                         </div>
                       </div>
 
-                      <button
-                        onClick={() => handleCancel(o.id)}
-                        className="px-3 py-1.5 rounded-lg border border-[rgba(255,90,95,0.3)] text-[var(--sell)] hover:bg-[rgba(255,90,95,0.1)] text-xs font-semibold transition-colors"
-                      >
-                        Cancel
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[rgba(61,220,110,0.12)] text-[var(--buy)]">
+                          OPEN
+                        </span>
+                        <button
+                          onClick={() => handleCancel(o.id)}
+                          className="px-3 py-1.5 rounded-lg border border-[rgba(255,90,95,0.3)] text-[var(--sell)] hover:bg-[rgba(255,90,95,0.1)] text-xs font-semibold transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
                   );
                 })}

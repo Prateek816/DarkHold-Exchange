@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { useMarketStore, useUserStore, useConnStore, useToastStore } from '@/lib/store';
+import { useMarketStore, useUserStore, useConnStore, useToastStore, useDemoStore } from '@/lib/store';
 import {
   MOCK_ASSETS, MOCK_ORDER_BOOKS, MOCK_TRADES, MOCK_USER_WALLET,
   MOCK_USER_HOLDINGS, MOCK_USER_ORDERS, MOCK_AUCTIONS, generateInitialCandles,
@@ -20,21 +20,28 @@ export function MockBootstrap({ children }: { children: React.ReactNode }) {
     if (seeded.current) return;
     seeded.current = true;
 
-    // Seed assets & user
-    setAssets(MOCK_ASSETS);
-    setAuctions(MOCK_AUCTIONS);
-    setUser({ id: 'usr-demo-01', email: 'demo@darkhold.io', role: 'USER' }, 'mock-token');
-    setWallet(MOCK_USER_WALLET);
-    setHoldings(MOCK_USER_HOLDINGS);
-    setOrders(MOCK_USER_ORDERS);
+    // Check if store already initialized to prevent wiping user trades on intra-app routing
+    const userState = useUserStore.getState();
+    if (!userState.isSeeded) {
+      setUser({ id: 'usr-demo-01', email: 'demo@darkhold.io', role: 'OPERATOR' }, 'mock-token');
+      setWallet(MOCK_USER_WALLET);
+      setHoldings(MOCK_USER_HOLDINGS);
+      setOrders(MOCK_USER_ORDERS);
+      useUserStore.setState({ isSeeded: true });
+    }
 
-    // Seed books, trades, candles
-    for (const asset of MOCK_ASSETS) {
-      if (MOCK_ORDER_BOOKS[asset.id]) setBook(asset.id, MOCK_ORDER_BOOKS[asset.id]);
-      if (MOCK_TRADES[asset.id]) {
-        for (const t of MOCK_TRADES[asset.id]) addTrade(t);
+    if (useMarketStore.getState().assets.length === 0) {
+      setAssets(MOCK_ASSETS);
+      setAuctions(MOCK_AUCTIONS);
+
+      // Seed books, trades, candles
+      for (const asset of MOCK_ASSETS) {
+        if (MOCK_ORDER_BOOKS[asset.id]) setBook(asset.id, MOCK_ORDER_BOOKS[asset.id]);
+        if (MOCK_TRADES[asset.id]) {
+          for (const t of MOCK_TRADES[asset.id]) addTrade(t);
+        }
+        setCandles(asset.id, '1m', generateInitialCandles(asset.id));
       }
-      setCandles(asset.id, '1m', generateInitialCandles(asset.id));
     }
 
     // Simulate connecting → live
@@ -44,8 +51,10 @@ export function MockBootstrap({ children }: { children: React.ReactNode }) {
       push({ variant: 'info', title: 'Connected', body: 'Live mock data active.' });
     }, 800);
 
-    // Simulate live price ticks
+    // Simulate live price ticks (respects Rule R4 simRunning toggle)
     const interval = setInterval(() => {
+      if (!useDemoStore.getState().simRunning) return;
+
       const { assets, markets } = useMarketStore.getState();
       for (const asset of assets) {
         const book = markets[asset.id]?.book;
@@ -67,8 +76,10 @@ export function MockBootstrap({ children }: { children: React.ReactNode }) {
       }
     }, 3000);
 
-    // Simulate auction price decay
+    // Simulate auction price decay (respects Rule R4 simRunning toggle)
     const auctionInterval = setInterval(() => {
+      if (!useDemoStore.getState().simRunning) return;
+
       const { auctions, updateAuctionPrice } = useMarketStore.getState();
       for (const a of auctions) {
         if (a.status !== 'ACTIVE') continue;

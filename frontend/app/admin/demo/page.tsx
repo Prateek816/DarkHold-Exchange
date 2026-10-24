@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppShell } from '@/components/shell/AppShell';
 import { MockBootstrap } from '@/components/shell/MockBootstrap';
 import { useDemoStore, useMarketStore, useToastStore } from '@/lib/store';
@@ -28,8 +28,13 @@ export default function DemoConsolePage() {
   const { assets, haltAsset } = useMarketStore();
   const pushToast = useToastStore((s) => s.push);
 
+  const [hasMounted, setHasMounted] = useState(false);
   const [runningRecon, setRunningRecon] = useState(false);
   const [activeReconStep, setActiveReconStep] = useState<number | null>(null);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   // 5 Scenarios as specified in prompt section 9
   const handleScenario = (name: string, description: string) => {
@@ -354,8 +359,8 @@ export default function DemoConsolePage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <span className="text-xs text-[var(--muted)] font-mono">
-                  Last checked: {fmt.time(lastReconRun)}
+                <span className="text-xs text-[var(--muted)] font-mono" suppressHydrationWarning>
+                  Last checked: {hasMounted ? fmt.time(lastReconRun) : '--:--:--'}
                 </span>
                 <button
                   onClick={handleRunRecon}

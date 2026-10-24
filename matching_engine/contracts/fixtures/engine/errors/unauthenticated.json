@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "UNAUTHENTICATED",
+    "message": "Missing or wrong X-Engine-Token",
+    "details": {}
+  }
+}

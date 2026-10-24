@@ -1,0 +1,17 @@
+{
+  "name": "darkhold-exchange",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Darkhold Exchange — Regulated Resale Exchange and Dutch Auction Platform",
+  "scripts": {
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "test:backend": "npm --prefix backend run test",
+    "db:generate": "npm --prefix backend run prisma:generate",
+    "db:migrate": "npm --prefix backend run prisma:migrate",
+    "db:seed": "npm --prefix backend run prisma:seed",
+    "db:reset": "npm --prefix backend run prisma:reset"
+  }
+}

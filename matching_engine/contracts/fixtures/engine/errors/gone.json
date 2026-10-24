@@ -1,0 +1,9 @@
+{
+  "error": {
+    "code": "GONE",
+    "message": "Resume point is older than the retained ring",
+    "details": {
+      "ring_start_seq": 500
+    }
+  }
+}

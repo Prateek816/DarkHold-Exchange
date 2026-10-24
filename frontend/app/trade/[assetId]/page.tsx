@@ -13,6 +13,8 @@ import { OrdersTabs } from '@/components/trading/OrdersTabs';
 import { HaltedBanner } from '@/components/shell/Banners';
 import ElectricBorder from '@/components/ui/ElectricBorder';
 
+import { MOCK_ASSETS } from '@/mocks/fixtures';
+
 export default function TradeTerminalPage({ params }: { params: Promise<{ assetId: string }> }) {
   const resolvedParams = use(params);
   const assetId = resolvedParams.assetId || 'dfest-wkd';
@@ -20,13 +22,13 @@ export default function TradeTerminalPage({ params }: { params: Promise<{ assetI
   const { assets, markets } = useMarketStore();
   const [selectedBookPrice, setSelectedBookPrice] = useState<number | null>(null);
 
-  const asset = assets.find((a) => a.id === assetId) || assets[0];
+  const asset = assets.find((a) => a.id === assetId) || MOCK_ASSETS.find((a) => a.id === assetId) || MOCK_ASSETS[0];
   const market = asset ? markets[asset.id] : null;
 
   if (!asset) {
     return (
       <MockBootstrap>
-        <AppShell title="Terminal">
+        <AppShell title="Trading Terminal">
           <div className="surface p-8 text-center text-sm text-[var(--text-muted)]">
             Asset not found.
           </div>
@@ -45,6 +47,15 @@ export default function TradeTerminalPage({ params }: { params: Promise<{ assetI
     <MockBootstrap>
       <AppShell title="Trading Terminal">
         <div className="space-y-4 max-w-7xl mx-auto pb-6">
+          {/* Breadcrumb & Terminal Title */}
+          <div className="flex items-center gap-2 text-xs text-[var(--muted)]">
+            <span className="font-semibold text-white">Trading Terminal</span>
+            <span>·</span>
+            <span className="text-[var(--lav)] font-mono">{asset.symbol}</span>
+            <span>·</span>
+            <span>{asset.name}</span>
+          </div>
+
           {/* Halted Banner if Asset is Halted */}
           {asset.is_halted && <HaltedBanner assetName={asset.name} />}
 

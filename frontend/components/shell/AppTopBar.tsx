@@ -3,9 +3,10 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useUserStore, useConnStore, useMarketStore, useSidebarStore } from '@/lib/store';
+import { useUserStore, useConnStore, useMarketStore, useSidebarStore, useToastStore } from '@/lib/store';
 import { fmt } from '@/lib/formatters';
 import { sound } from '@/lib/sound';
+import { usePortalTransition } from '@/components/portal/PortalTransitionProvider';
 import {
   Bell, Search, Settings, Plus, ChevronDown, Check,
   RefreshCw, LogOut, Sliders, X, ArrowUpRight, Menu, PanelLeft
@@ -21,6 +22,8 @@ export function AppTopBar({ title }: AppTopBarProps) {
   const status = useConnStore((s) => s.status);
   const { assets } = useMarketStore();
   const { isCollapsed, toggleCollapse, toggleMobile } = useSidebarStore();
+  const { portalNavigate } = usePortalTransition();
+  const pushToast = useToastStore((s) => s.push);
 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -34,6 +37,11 @@ export function AppTopBar({ title }: AppTopBarProps) {
   const handleRefresh = () => {
     setIsRefreshing(true);
     sound.playClick();
+    pushToast({
+      title: 'Refreshed',
+      body: 'Market telemetry data updated.',
+      variant: 'info',
+    });
     setTimeout(() => setIsRefreshing(false), 600);
   };
 
@@ -131,6 +139,7 @@ export function AppTopBar({ title }: AppTopBarProps) {
                   onClick={() => {
                     setUserMenuOpen(false);
                     logout();
+                    portalNavigate('/login', 'SIGNING OUT');
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-[var(--sell)] hover:bg-[rgba(255,90,95,0.12)] transition-colors"
                 >

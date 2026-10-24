@@ -4,10 +4,12 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUserStore, useToastStore } from '@/lib/store';
+import { usePortalTransition } from '@/components/portal/PortalTransitionProvider';
 import { ArrowLeft, Shield, AlertCircle, CheckCircle2, Sparkles, UserCheck } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { signInTransition } = usePortalTransition();
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,34 +33,31 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      const isOperator = email.includes('admin') || email.includes('operator');
-      const isIssuer = email.includes('issuer');
-      const role = isOperator ? 'OPERATOR' : isIssuer ? 'ISSUER' : 'USER';
+    const isOperator = email.includes('admin') || email.includes('operator');
+    const isIssuer = email.includes('issuer');
+    const role = isOperator ? 'OPERATOR' : isIssuer ? 'ISSUER' : 'USER';
 
-      setUser(
-        {
-          id: `usr-${email.split('@')[0]}`,
-          email,
-          role,
-        },
-        'token-jwt-simulated-9988'
-      );
-      setWallet({
-        available_balance: isOperator ? 500000 : 150000,
-        reserved_balance: 27800,
-        total_balance: isOperator ? 527800 : 177800,
-      });
+    setUser(
+      {
+        id: `usr-${email.split('@')[0]}`,
+        email,
+        role,
+      },
+      'token-jwt-simulated-9988'
+    );
+    setWallet({
+      available_balance: isOperator ? 500000 : 150000,
+      reserved_balance: 27800,
+      total_balance: isOperator ? 527800 : 177800,
+    });
 
-      pushToast({
-        variant: 'success',
-        title: isRegister ? 'Account Registered' : 'Signed In',
-        body: `Welcome to Darkhold Exchange. Signed in as ${role}.`,
-      });
+    pushToast({
+      variant: 'success',
+      title: isRegister ? 'Account Registered' : 'Signed In',
+      body: `Welcome to Darkhold Exchange. Signed in as ${role}.`,
+    });
 
-      router.push('/market');
-    }, 500);
+    signInTransition('/market');
   };
 
   const handleDemoPersona = (persona: {
@@ -85,7 +84,7 @@ export default function LoginPage() {
       title: `Signed in as ${persona.name}`,
       body: `Loaded ${persona.role} profile with simulated wallet.`,
     });
-    router.push('/market');
+    signInTransition('/market');
   };
 
   return (

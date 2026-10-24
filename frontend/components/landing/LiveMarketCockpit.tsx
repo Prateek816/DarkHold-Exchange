@@ -214,6 +214,11 @@ export function LiveMarketCockpit() {
               );
             })}
           </div>
+          <div className="mt-2 text-xs font-semibold text-white flex items-center gap-2">
+            <span className="text-[var(--lavender)] font-mono">{selectedAsset.symbol}</span>
+            <span className="text-[var(--text-dim)]">·</span>
+            <span>{selectedAsset.name}</span>
+          </div>
         </div>
 
         {/* View Mode Switcher + Open Full Terminal Button */}
@@ -316,17 +321,16 @@ export function LiveMarketCockpit() {
                 >
                   <ZoomIn size={13} />
                 </button>
-                {zoom !== 1.0 && (
-                  <button
-                    type="button"
-                    onClick={handleResetZoom}
-                    title="Reset Zoom"
-                    aria-label="Reset Zoom"
-                    className="p-1 rounded hover:bg-[rgba(255,255,255,0.1)] text-[var(--lavender)] hover:text-white transition-colors ml-0.5"
-                  >
-                    <RotateCcw size={11} />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={handleResetZoom}
+                  title="Reset Zoom"
+                  aria-label="Reset Zoom"
+                  className="p-1 rounded hover:bg-[rgba(255,255,255,0.1)] text-[var(--lavender)] hover:text-white transition-colors ml-0.5 flex items-center gap-1 cursor-pointer"
+                >
+                  <RotateCcw size={11} />
+                  <span className="text-[10px] font-mono">Reset</span>
+                </button>
               </div>
             </div>
           </div>
@@ -442,8 +446,13 @@ export function LiveMarketCockpit() {
         </div>
       ) : (
         /* Order Book Depth Ladder */
-        <div className="pt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Asks (Sells) */}
+        <div className="pt-5 space-y-3">
+          <div className="flex items-center justify-between text-xs font-mono text-[var(--text-dim)] px-1">
+            <span>Market Depth Visualization</span>
+            <span className="chip chip-sim text-[10px]">Depth & Liquidity</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Asks (Sells) */}
           <div className="p-4 rounded-2xl bg-[rgba(255,90,95,0.04)] border border-[rgba(255,90,95,0.15)]">
             <div className="flex items-center justify-between text-xs font-mono font-bold text-[var(--sell)] pb-2 border-b border-[rgba(255,90,95,0.1)]">
               <span>Asks (Sell Orders)</span>
@@ -489,6 +498,7 @@ export function LiveMarketCockpit() {
             </div>
           </div>
         </div>
+      </div>
       )}
 
       {/* Selected Depth Level Interactive Feedback */}

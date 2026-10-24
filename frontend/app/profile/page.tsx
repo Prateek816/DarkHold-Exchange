@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { MockBootstrap } from '@/components/shell/MockBootstrap';
 import { useUserStore, useToastStore } from '@/lib/store';
+import { usePortalTransition } from '@/components/portal/PortalTransitionProvider';
 import { fmt } from '@/lib/formatters';
 import {
   User, Shield, Sparkles, Sliders, Bell, Key, LogOut,
@@ -15,13 +16,18 @@ import {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { signOutTransition } = usePortalTransition();
   const { user, wallet, logout } = useUserStore();
   const pushToast = useToastStore((s) => s.push);
 
   const [reducedEffects, setReducedEffects] = useState(false);
   const [soundEffects, setSoundEffects] = useState(true);
   const [oneClickBidding, setOneClickBidding] = useState(true);
-  const [sessionStartTime] = useState(new Date().toLocaleTimeString());
+  const [sessionStartTime, setSessionStartTime] = useState<string>('');
+
+  useEffect(() => {
+    setSessionStartTime(new Date().toLocaleTimeString());
+  }, []);
 
   const handleSignOut = () => {
     logout();
@@ -30,7 +36,7 @@ export default function ProfilePage() {
       title: 'Signed Out',
       body: 'You have been disconnected from the simulated workplace session.',
     });
-    router.push('/login');
+    signOutTransition('/login');
   };
 
   const role = user?.role ?? 'USER';
@@ -46,7 +52,7 @@ export default function ProfilePage() {
             <div>
               <div className="flex items-center gap-2 text-xs font-mono text-[var(--muted)]">
                 <Clock size={13} className="text-[var(--lav)]" />
-                <span>Active session initialized at {sessionStartTime}</span>
+                <span suppressHydrationWarning>Active session initialized at {sessionStartTime || '--:--:--'}</span>
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--buy)]" />
               </div>
               <h1 className="text-2xl font-bold tracking-tight text-white mt-1">

@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "INTERNAL",
+    "message": "Unexpected engine error",
+    "details": {}
+  }
+}

@@ -3,7 +3,6 @@
 import React from 'react';
 import { AppSidebar } from './AppSidebar';
 import { AppTopBar } from './AppTopBar';
-import { ToastRegion } from './ToastRegion';
 import { ConnectionBanner } from './Banners';
 import { useSidebarStore } from '@/lib/store';
 
@@ -34,7 +33,6 @@ export function AppShell({ children, title }: AppShellProps) {
           </footer>
         </div>
       </div>
-      <ToastRegion />
       {/* ARIA live region for screen reader announcements */}
       <div aria-live="polite" aria-atomic="true" className="sr-only" id="sr-announcer" />
     </div>

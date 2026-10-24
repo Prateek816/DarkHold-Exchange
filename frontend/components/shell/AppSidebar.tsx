@@ -96,22 +96,24 @@ export function AppSidebar() {
           {/* Header Block */}
           <div className={`border-b border-[var(--line-soft)] transition-all ${isCollapsed ? 'p-3' : 'p-4'}`}>
             <div className="flex items-center justify-between">
-              {/* Logo / Sigil Pod */}
-              <div
-                onClick={() => !isCollapsed && setAccountMenuOpen(!accountMenuOpen)}
-                className={`flex items-center gap-2.5 rounded-xl transition-all cursor-pointer ${
+              {/* Logo / Sigil Pod (Exit to Public Portal) */}
+              <Link
+                href="/"
+                data-testid="brand-logo-link"
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center gap-2.5 rounded-xl transition-all cursor-pointer group ${
                   isCollapsed ? 'justify-center w-full' : 'p-1.5 hover:bg-[rgba(255,255,255,0.03)] flex-1'
                 }`}
-                title={isCollapsed ? 'Darkhold Exchange (Click to expand)' : 'Switch demo persona'}
+                title="Darkhold Exchange"
               >
                 {/* Original Sigil in a small rounded square */}
-                <div className="w-8 h-8 rounded-[9px] bg-gradient-to-br from-[#1E1B4B] to-[#312E81] border border-[rgba(185,167,255,0.3)] flex items-center justify-center text-[var(--lav)] font-bold shadow-md shrink-0">
+                <div className="w-8 h-8 rounded-[9px] bg-gradient-to-br from-[#1E1B4B] to-[#312E81] border border-[rgba(185,167,255,0.3)] flex items-center justify-center text-[var(--lav)] font-bold shadow-md shrink-0 group-hover:border-[var(--mint)] transition-colors">
                   <span className="font-display text-sm tracking-wider">⬡</span>
                 </div>
 
                 {!isCollapsed && (
                   <div className="flex flex-col text-left overflow-hidden">
-                    <span className="font-bold text-sm text-white leading-tight truncate">
+                    <span className="font-bold text-sm text-white leading-tight truncate group-hover:text-[var(--lav)] transition-colors">
                       Darkhold
                     </span>
                     <span className="text-[11px] text-[var(--muted)] leading-none mt-0.5 truncate">
@@ -119,7 +121,7 @@ export function AppSidebar() {
                     </span>
                   </div>
                 )}
-              </div>
+              </Link>
 
               {/* Account menu chevron (when expanded) */}
               {!isCollapsed && (
@@ -216,6 +218,7 @@ export function AppSidebar() {
                 <Link
                   key={href}
                   href={href}
+                  prefetch={true}
                   onClick={() => setMobileOpen(false)}
                   title={isCollapsed ? label : undefined}
                   className={`h-10 rounded-[10px] flex items-center transition-all text-xs font-medium relative group ${

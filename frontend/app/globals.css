@@ -1042,3 +1042,10 @@ h1, h2, h3, h4, h5, h6 {
   white-space: nowrap;
   border: 0;
 }
+
+
+/* Custom Toast Progress Animation */
+@keyframes toast-progress {
+  from { width: 100%; }
+  to { width: 0%; }
+}

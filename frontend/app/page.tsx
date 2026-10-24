@@ -208,6 +208,9 @@ export default function LandingPage() {
               <span className="font-mono text-[10px] hidden sm:inline">{soundEnabled ? 'Audio ON' : 'Audio OFF'}</span>
             </button>
 
+            <Link href="/login" className="text-xs font-semibold text-[var(--text-muted)] hover:text-white transition-colors px-3 py-1.5 rounded-full border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] cursor-pointer hidden sm:inline-flex items-center">
+              Sign In
+            </Link>
             <Link href="/login" className="btn-primary text-xs h-8 px-4 rounded-full shadow-md">
               Launch App
             </Link>

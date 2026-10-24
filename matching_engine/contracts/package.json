@@ -1,0 +1,16 @@
+{
+  "name": "@darkhold/contracts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "JSON Schemas, error codes, golden fixtures and generated types for the Darkhold Exchange",
+  "scripts": {
+    "validate": "node scripts/validate-fixtures.mjs",
+    "generate": "node scripts/generate-types.mjs"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "json-schema-to-typescript": "^15.0.2"
+  }
+}

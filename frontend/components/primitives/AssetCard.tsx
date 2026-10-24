@@ -33,7 +33,8 @@ export function AssetCard({ asset }: AssetCardProps) {
   return (
     <Link
       href={`/trade/${asset.id}`}
-      className={`card-asset ${glowClass} p-5 flex flex-col justify-between h-full group cursor-pointer block text-inherit no-underline transition-all duration-200 hover:-translate-y-0.5`}
+      data-testid="asset-card"
+      className={`card-asset card-pod ${glowClass} p-5 flex flex-col justify-between h-full group cursor-pointer block text-inherit no-underline transition-all duration-200 hover:-translate-y-0.5`}
     >
       {/* 1. Header: Tile + Category + Name + Round Arrow Button */}
       <div>
@@ -56,9 +57,14 @@ export function AssetCard({ asset }: AssetCardProps) {
             </div>
 
             <div className="min-w-0">
-              <span className="text-[11px] font-medium text-[var(--muted)] uppercase tracking-wider block">
-                {asset.category === 'PASS' ? 'Festival Pass' : 'Limited Merch'}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-medium text-[var(--muted)] uppercase tracking-wider block">
+                  {asset.category === 'PASS' ? 'Festival Passes' : 'Limited Merch'}
+                </span>
+                <span className="text-[10px] font-mono text-[var(--lav)] font-bold">
+                  {asset.symbol}
+                </span>
+              </div>
               <h4 className="text-[15px] font-semibold text-white truncate group-hover:text-[var(--lav)] transition-colors leading-tight">
                 {asset.name}
               </h4>

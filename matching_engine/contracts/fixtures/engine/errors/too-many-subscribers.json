@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "TOO_MANY_SUBSCRIBERS",
+    "message": "SSE subscriber cap reached",
+    "details": {}
+  }
+}

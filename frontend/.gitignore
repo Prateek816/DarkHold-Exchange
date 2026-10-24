@@ -1,2 +1,8 @@
 .next
 node_modules
+*.md
+.agents
+test-results
+web-archive
+tests
+playwright-report

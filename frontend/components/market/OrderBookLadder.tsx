@@ -64,6 +64,7 @@ export function OrderBookLadder({ book, ceilingPrice, onSelectPrice }: OrderBook
             return (
               <div
                 key={`ask-${level.price}`}
+                data-testid="book-price-level"
                 onClick={() => {
                   sound.playClick();
                   onSelectPrice?.(level.price);
@@ -107,6 +108,7 @@ export function OrderBookLadder({ book, ceilingPrice, onSelectPrice }: OrderBook
             return (
               <div
                 key={`bid-${level.price}`}
+                data-testid="book-price-level"
                 onClick={() => {
                   sound.playClick();
                   onSelectPrice?.(level.price);

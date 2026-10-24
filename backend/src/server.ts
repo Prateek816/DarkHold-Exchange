@@ -17,7 +17,12 @@ async function startServer() {
   try {
     const health = await engineClient.getHealth();
     console.log(`[Darkhold Exchange] Connected to external engine (epoch: ${health.engine_epoch}, seq: ${health.seq})`);
-  } catch (err) {
+  } catch (err: any) {
+    if (!env.MATCHING_SIM_ENABLED) {
+      console.error(`[Darkhold Exchange] FATAL: External matching engine at ${env.ENGINE_URL} is unreachable and MATCHING_SIM_ENABLED is false.`);
+      throw new Error(`Configured matching engine at ${env.ENGINE_URL} is unreachable: ${err?.message || err}`);
+    }
+
     let portToUse = 7000;
     try {
       const url = new URL(env.ENGINE_URL);
@@ -25,7 +30,7 @@ async function startServer() {
     } catch {}
 
     try {
-      console.log(`[Darkhold Exchange] External engine not detected, launching contract-compliant internal engine on port ${portToUse}...`);
+      console.log(`[Darkhold Exchange] External engine not detected. MATCHING_SIM_ENABLED is active; launching contract-compliant internal engine on port ${portToUse}...`);
       await matchingEngineService.start(portToUse);
       engineClient.setBaseUrl(`http://localhost:${portToUse}`);
       sseConsumer.setUrl(`http://localhost:${portToUse}`);

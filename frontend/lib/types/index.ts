@@ -61,15 +61,17 @@ export interface TradeTick {
 }
 
 export interface Candle {
-  open_time: number;
-  close_time: number;
+  open_time?: number;
+  openTime?: number;
+  close_time?: number;
+  closeTime?: number;
   open: number;
   high: number;
   low: number;
   close: number;
   volume: number;
   interval: "5s" | "1m";
-  origin: "SEEDED_SIM" | "ENGINE";
+  origin?: "SEEDED_SIM" | "ENGINE";
 }
 
 export interface Order {

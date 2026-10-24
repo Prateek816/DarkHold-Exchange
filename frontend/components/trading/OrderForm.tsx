@@ -96,16 +96,41 @@ export function OrderForm({
     setErrorMessage(null);
     setFormStep("VALIDATING");
 
-    if (parsedQty <= 0) {
+    if (!asset || !asset.id) {
+      setErrorMessage("Valid asset is required.");
+      setFormStep("EDITING");
+      return;
+    }
+
+    if (side !== "BUY" && side !== "SELL") {
+      setErrorMessage("Side must be BUY or SELL.");
+      setFormStep("EDITING");
+      return;
+    }
+
+    if (type !== "LIMIT" && type !== "MARKET") {
+      setErrorMessage("Order type must be LIMIT or MARKET.");
+      setFormStep("EDITING");
+      return;
+    }
+
+    if (isNaN(parsedQty) || parsedQty <= 0) {
       setErrorMessage("Quantity must be at least 1 unit.");
       setFormStep("EDITING");
       return;
     }
 
-    if (type === "LIMIT" && parsedPriceMinor <= 0) {
-      setErrorMessage("Price must be greater than zero.");
-      setFormStep("EDITING");
-      return;
+    if (type === "LIMIT") {
+      if (isNaN(parsedPriceMinor) || parsedPriceMinor <= 0) {
+        setErrorMessage("Price must be greater than zero.");
+        setFormStep("EDITING");
+        return;
+      }
+      if (parsedPriceMinor % 10 !== 0) {
+        setErrorMessage("Price must be aligned to tick size ($0.10).");
+        setFormStep("EDITING");
+        return;
+      }
     }
 
     if (isAboveCeiling) {
@@ -134,7 +159,9 @@ export function OrderForm({
       return;
     }
 
-    const key = idempotencyKey || "IDEMP-" + Math.random().toString(36).substring(2, 9);
+    const key =
+      idempotencyKey ||
+      `idemp-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`;
     setIdempotencyKey(key);
 
     if (type === "MARKET") {
@@ -146,7 +173,20 @@ export function OrderForm({
   };
 
   const executeSubmission = async (key: string) => {
+    if (formStep === "SUBMITTING") return;
     setFormStep("SUBMITTING");
+
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[OrderForm] Submitting order:", {
+        asset: asset.symbol,
+        assetId: asset.id,
+        side,
+        type,
+        qty: parsedQty,
+        price: type === "LIMIT" ? parsedPriceMinor : 0,
+        idempotencyKey: key,
+      });
+    }
 
     try {
       const res = await api.submitOrder({
@@ -165,16 +205,29 @@ export function OrderForm({
         message: `${side} ${parsedQty}x ${asset.symbol} submitted. Funds reserved in vault.`,
       });
 
+      // Synchronize wallet immediately to reflect reservation
+      try {
+        const freshWallet = await api.getWallet();
+        useWalletStore.getState().setWalletFromServer(freshWallet);
+      } catch (walletErr) {
+        if (process.env.NODE_ENV !== "production") {
+          console.warn("[OrderForm] Wallet refresh after submission failed:", walletErr);
+        }
+      }
+
       setTimeout(() => {
         setFormStep("EDITING");
         setIdempotencyKey("");
         onOrderSubmitted?.();
-      }, 1200);
+      }, 1000);
     } catch (err: any) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("[OrderForm] Order submission error:", err);
+      }
       const apiErr = err as ApiErrorPayload;
       const formatted = apiErr.code
         ? formatErrorMessage(apiErr.code, apiErr.context)
-        : "Failed to place order. Please retry.";
+        : (apiErr.message || "Failed to place order. Please retry.");
 
       setErrorMessage(formatted);
       setFormStep("RETRYABLE");
@@ -387,12 +440,14 @@ export function OrderForm({
           </p>
           <div className="flex justify-end gap-2 pt-1">
             <button
+              type="button"
               onClick={() => setFormStep("EDITING")}
               className="px-3 py-1 rounded-pill border border-glass-border text-xs text-text-muted hover:text-text"
             >
               Cancel
             </button>
             <button
+              type="button"
               onClick={() => executeSubmission(idempotencyKey)}
               className="px-3.5 py-1 rounded-pill bg-warning text-canvas text-xs font-bold font-mono shadow-glow-ward"
             >
@@ -405,6 +460,8 @@ export function OrderForm({
       {/* Primary CTA (Mint Gradient for Buy, Rose-Red Gradient for Sell) */}
       {formStep !== "CONFIRMING_MARKET" && (
         <button
+          type="button"
+          id="trade-submit-button"
           onClick={handleInitialSubmit}
           disabled={
             formStep === "SUBMITTING" ||

@@ -1,6 +1,7 @@
 import { prisma } from "@/config/db";
 import { env } from "@/config/env";
 import { walletsService } from "@/modules/wallets/wallets.service";
+import { toDbAssetIdentifier } from "@/utils/assetMapping";
 import {
   AssetConfiguredEvent,
   BookSnapshot,
@@ -385,13 +386,18 @@ export class SseConsumer {
           });
 
           if (!existingTrade) {
-            // Find asset
+            // Find asset (supporting engine symbols like DFEST-WKND mapped to DB asset)
+            const mapped = toDbAssetIdentifier(e.asset);
             const asset = await tx.asset.findFirst({
               where: {
-                OR: [{ symbol: e.asset }, { id: e.asset }],
+                OR: [
+                  { symbol: e.asset },
+                  { id: e.asset },
+                  ...(mapped ? [{ id: mapped.id }, { symbol: mapped.symbol }] : []),
+                ],
               },
             });
-            const assetId = asset ? asset.id : e.asset;
+            const assetId = asset ? asset.id : (mapped?.id || e.asset);
 
             await tx.trade.create({
               data: {

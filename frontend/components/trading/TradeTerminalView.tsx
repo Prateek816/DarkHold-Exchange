@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
-import { fakeWs } from "@/mocks/fake-websocket";
+import { marketDataService } from "@/lib/market-data";
 import {
   Asset,
   BookSnapshot,
@@ -100,14 +100,16 @@ export function TradeTerminalView({ assetId }: TradeTerminalViewProps) {
     const candleChannel = `candles:${assetId}:${interval}`;
     const userChannel = "user:current";
 
-    fakeWs.subscribe(bookChannel);
-    fakeWs.subscribe(tradesChannel);
-    fakeWs.subscribe(candleChannel);
-    fakeWs.subscribe(userChannel);
+    marketDataService.subscribe(bookChannel);
+    marketDataService.subscribe(tradesChannel);
+    marketDataService.subscribe(candleChannel);
+    marketDataService.subscribe(userChannel);
 
-    const removeListener = fakeWs.addListener((event, data) => {
+    const removeListener = marketDataService.addListener((event, data) => {
       if (event === "connection_change") {
         setConnectionState(data.state);
+      } else if (event === "state_change") {
+        setConnectionState(data);
       }
 
       if (event === "asset_halt_change") {
@@ -134,12 +136,25 @@ export function TradeTerminalView({ assetId }: TradeTerminalViewProps) {
         });
       }
 
-      if (event === `candle_update:${assetId}:1m`) {
+      const sym = asset?.symbol;
+      const isCandleEvent =
+        event === `candle_update:${assetId}:1m` ||
+        event === `candle_update:${assetId}:${interval}` ||
+        event === `candles:${assetId}` ||
+        (sym && (
+          event === `candle_update:${sym}:1m` ||
+          event === `candle_update:${sym}:${interval}` ||
+          event === `candles:${sym}`
+        ));
+
+      if (isCandleEvent) {
         const update = data as Candle;
+        const updateTime = update.open_time ?? update.openTime;
         setCandles((prev) => {
-          const idx = prev.findIndex(
-            (c) => c.open_time === update.open_time && c.interval === update.interval
-          );
+          const idx = prev.findIndex((c) => {
+            const cTime = c.open_time ?? c.openTime;
+            return cTime === updateTime && c.interval === update.interval;
+          });
           if (idx >= 0) {
             const next = [...prev];
             next[idx] = update;
@@ -179,10 +194,10 @@ export function TradeTerminalView({ assetId }: TradeTerminalViewProps) {
     });
 
     return () => {
-      fakeWs.unsubscribe(bookChannel);
-      fakeWs.unsubscribe(tradesChannel);
-      fakeWs.unsubscribe(candleChannel);
-      fakeWs.unsubscribe(userChannel);
+      marketDataService.unsubscribe(bookChannel);
+      marketDataService.unsubscribe(tradesChannel);
+      marketDataService.unsubscribe(candleChannel);
+      marketDataService.unsubscribe(userChannel);
       removeListener();
     };
   }, [assetId, interval, addToast, setConnectionState]);
@@ -262,7 +277,13 @@ export function TradeTerminalView({ assetId }: TradeTerminalViewProps) {
           <OrderForm
             asset={asset}
             prefilledPrice={prefilledPrice}
-            onOrderSubmitted={() => refetchOrders()}
+            onOrderSubmitted={async () => {
+              refetchOrders();
+              try {
+                const freshWallet = await api.getWallet();
+                setWalletFromServer(freshWallet);
+              } catch {}
+            }}
           />
 
           <OrderBookLadder

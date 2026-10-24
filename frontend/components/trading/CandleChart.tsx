@@ -149,24 +149,53 @@ export function CandleChart({
   useEffect(() => {
     if (!candleSeriesRef.current || !volumeSeriesRef.current || candles.length === 0) return;
 
-    const sorted = [...candles].sort((a, b) => a.open_time - b.open_time);
+    const getTimeInSeconds = (c: Candle): number => {
+      const raw = c.open_time ?? c.openTime ?? 0;
+      // If raw is in milliseconds (> 10 digits / > 1e11), convert to seconds
+      return raw > 1e11 ? Math.floor(raw / 1000) : Math.floor(raw);
+    };
 
-    const candleData: CandlestickData[] = sorted.map((c) => ({
-      time: c.open_time as Time,
-      open: c.open,
-      high: c.high,
-      low: c.low,
-      close: c.close,
+    const validCandles = candles.filter((c) => {
+      const t = getTimeInSeconds(c);
+      return !isNaN(t) && t > 0;
+    });
+
+    if (validCandles.length === 0) return;
+
+    const sorted = [...validCandles].sort((a, b) => getTimeInSeconds(a) - getTimeInSeconds(b));
+
+    // Deduplicate by time for lightweight-charts
+    const uniqueByTime: Candle[] = [];
+    for (const c of sorted) {
+      const t = getTimeInSeconds(c);
+      if (uniqueByTime.length === 0 || getTimeInSeconds(uniqueByTime[uniqueByTime.length - 1]) !== t) {
+        uniqueByTime.push(c);
+      } else {
+        uniqueByTime[uniqueByTime.length - 1] = c;
+      }
+    }
+
+    const candleData: CandlestickData[] = uniqueByTime.map((c) => ({
+      time: getTimeInSeconds(c) as Time,
+      open: Number(c.open),
+      high: Number(c.high),
+      low: Number(c.low),
+      close: Number(c.close),
     }));
 
-    const volumeData: HistogramData[] = sorted.map((c) => ({
-      time: c.open_time as Time,
-      value: c.volume,
-      color: c.close >= c.open ? "rgba(34, 197, 94, 0.32)" : "rgba(240, 80, 110, 0.32)",
+    const volumeData: HistogramData[] = uniqueByTime.map((c) => ({
+      time: getTimeInSeconds(c) as Time,
+      value: Number(c.volume),
+      color: Number(c.close) >= Number(c.open) ? "rgba(34, 197, 94, 0.32)" : "rgba(240, 80, 110, 0.32)",
     }));
 
-    candleSeriesRef.current.setData(candleData);
-    volumeSeriesRef.current.setData(volumeData);
+    try {
+      candleSeriesRef.current.setData(candleData);
+      volumeSeriesRef.current.setData(volumeData);
+      chartRef.current?.timeScale().fitContent();
+    } catch (err) {
+      console.error("Failed to set chart candle data:", err);
+    }
   }, [candles]);
 
   return (

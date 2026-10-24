@@ -5,6 +5,7 @@ import { engineClient } from "@/engine/engineClient";
 import { sseConsumer } from "@/engine/sseConsumer";
 import { walletsService } from "@/modules/wallets/wallets.service";
 import { serializeOrder } from "@/utils/serialization";
+import { toEngineSymbol, toDbAssetIdentifier } from "@/utils/assetMapping";
 import {
   UnauthenticatedError,
   AppError,
@@ -39,27 +40,19 @@ export class OrdersController {
         }
       }
 
-      // 2. Resolve Asset (supports both DB symbols like DKH-FEST and sim symbols like DFEST-WKND)
+      // 2. Resolve Asset (supports DB IDs like DARKHOLD-PASS-2026, DB symbols like DKH-FEST, and engine symbols like DFEST-WKND)
       const assetIdentifier = req.body.asset || req.body.assetId || req.body.symbol;
       if (!assetIdentifier) {
         throw new ValidationError("asset", "Asset identifier (symbol or ID) is required");
       }
 
-      const symbolAliases: Record<string, string> = {
-        "DFEST-WKND": "DKH-FEST",
-        "MOONRISE-GA": "MNR-GA",
-        "DFEST-HOODIE": "DKH-HOOD",
-        "SIGIL-PIN": "SGL-PIN",
-      };
-      const resolvedIdentifier = symbolAliases[assetIdentifier] || assetIdentifier;
-
+      const mapped = toDbAssetIdentifier(assetIdentifier);
       const asset = await prisma.asset.findFirst({
         where: {
           OR: [
             { id: assetIdentifier },
             { symbol: assetIdentifier },
-            { id: resolvedIdentifier },
-            { symbol: resolvedIdentifier },
+            ...(mapped ? [{ id: mapped.id }, { symbol: mapped.symbol }] : []),
           ],
         },
       });
@@ -156,10 +149,11 @@ export class OrdersController {
 
       // 6. Dispatch to Matching Engine
       try {
+        const engineSymbol = toEngineSymbol(asset.symbol) || toEngineSymbol(asset.id) || asset.symbol;
         const reply = await engineClient.sendCommand({
           type: "SubmitOrder",
           order_id: orderId,
-          asset: asset.symbol,
+          asset: engineSymbol,
           user_id: req.user.id,
           side: side as any,
           order_type: type as any,

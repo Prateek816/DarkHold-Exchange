@@ -15,7 +15,7 @@ import {
 import { fakeServer } from "@/mocks/fake-server";
 import { ApiErrorPayload } from "./errors";
 
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK !== "false";
+const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
   (typeof window === "undefined"
@@ -45,6 +45,9 @@ export class ApiClient {
   }
 
   public getAuthToken(): string | null {
+    if (!this.authToken && typeof window !== "undefined") {
+      this.authToken = localStorage.getItem("dkh_auth_token");
+    }
     return this.authToken;
   }
 
@@ -54,8 +57,12 @@ export class ApiClient {
       ...(options.headers as Record<string, string>),
     };
 
-    if (this.authToken && !headers["Authorization"] && !headers["authorization"]) {
-      headers["Authorization"] = `Bearer ${this.authToken}`;
+    const token =
+      this.authToken ||
+      (typeof window !== "undefined" ? localStorage.getItem("dkh_auth_token") : null);
+
+    if (token && !headers["Authorization"] && !headers["authorization"]) {
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     try {
@@ -68,7 +75,16 @@ export class ApiClient {
       if (!res.ok) {
         let errorPayload: ApiErrorPayload;
         try {
-          errorPayload = await res.json();
+          const json = await res.json();
+          errorPayload = {
+            code: json.code || (json.error && json.error.code) || "INTERNAL_ERROR",
+            message:
+              json.message ||
+              (json.error && json.error.message) ||
+              `Request failed with status ${res.status}: ${res.statusText}`,
+            context: json.context || (json.error && json.error.context),
+            requestId: json.requestId || `REQ-ERR-${Date.now().toString(36)}`,
+          };
         } catch {
           errorPayload = {
             code: "INTERNAL_ERROR",
@@ -84,10 +100,15 @@ export class ApiClient {
       if (err.code && err.requestId) {
         throw err;
       }
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("[ApiClient] Request error:", err);
+      }
       // Connection failure to real API
       throw {
         code: "ENGINE_UNAVAILABLE",
-        message: "Cannot connect to exchange backend server. Please verify the service is running.",
+        message:
+          err.message ||
+          "Cannot connect to exchange backend server. Please verify the service is running.",
         requestId: `REQ-CONN-${Date.now().toString(36)}`,
       } as ApiErrorPayload;
     }
@@ -180,7 +201,10 @@ export class ApiClient {
         "Content-Type": "application/json",
         "Idempotency-Key": params.idempotencyKey,
       },
-      body: JSON.stringify(params),
+      body: JSON.stringify({
+        ...params,
+        asset: params.assetId,
+      }),
     });
     return { data: res.data || res };
   }

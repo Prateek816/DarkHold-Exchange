@@ -83,6 +83,7 @@ class RealMarketDataService implements IMarketDataService {
       this.ws.onopen = () => {
         this.state = "LIVE";
         this.emit("state_change", "LIVE");
+        this.emit("connection_change", { state: "LIVE" });
         // Resubscribe all channels on connect/reconnect
         this.subscribedChannels.forEach((ch) => {
           this.ws?.send(JSON.stringify({ type: "subscribe", channel: ch }));
@@ -113,12 +114,14 @@ class RealMarketDataService implements IMarketDataService {
       this.ws.onclose = () => {
         this.state = "RECONNECTING";
         this.emit("state_change", "RECONNECTING");
+        this.emit("connection_change", { state: "RECONNECTING" });
         this.scheduleReconnect();
       };
 
       this.ws.onerror = () => {
         this.state = "DISCONNECTED";
         this.emit("state_change", "DISCONNECTED");
+        this.emit("connection_change", { state: "DISCONNECTED" });
       };
     } catch {
       this.state = "DISCONNECTED";

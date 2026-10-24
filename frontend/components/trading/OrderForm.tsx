@@ -1,447 +1,363 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { Asset, OrderSide, OrderType } from "@/lib/types";
-import { formatCurrency, formatQuantity } from "@/lib/format";
-import { TheWard } from "@/components/ui/TheWard";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { SegmentedTabs } from "@/components/ui/SegmentedTabs";
-import { api } from "@/lib/api-client";
-import { useWalletStore } from "@/lib/stores/walletStore";
-import { useUiStore } from "@/lib/stores/uiStore";
-import { formatErrorMessage, ApiErrorPayload } from "@/lib/errors";
-import { Lock, ShieldAlert, AlertCircle, Check, Loader2, Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
+import React, { useState, useEffect } from 'react';
+import { Asset, OrderSide, OrderType, UserOrder } from '@/lib/types';
+import { useUserStore, useToastStore, useMarketStore } from '@/lib/store';
+import { fmt, mapError } from '@/lib/formatters';
+import { MarketConfirmDialog } from './MarketConfirmDialog';
+import { AlertCircle, ShieldAlert, ArrowRight } from 'lucide-react';
 
 interface OrderFormProps {
   asset: Asset;
-  prefilledPrice?: number | null;
-  onOrderSubmitted?: () => void;
-  className?: string;
+  selectedPrice?: number | null;
 }
 
-type FormStep =
-  | "EDITING"
-  | "VALIDATING"
-  | "CONFIRMING_MARKET"
-  | "SUBMITTING"
-  | "ACCEPTED"
-  | "RETRYABLE";
-
-export function OrderForm({
-  asset,
-  prefilledPrice,
-  onOrderSubmitted,
-  className,
-}: OrderFormProps) {
-  const { availableCredits, holdings } = useWalletStore();
-  const { addToast } = useUiStore();
-
-  const [side, setSide] = useState<OrderSide>("BUY");
-  const [type, setType] = useState<OrderType>("LIMIT");
+export function OrderForm({ asset, selectedPrice }: OrderFormProps) {
+  const [side, setSide] = useState<OrderSide>('BUY');
+  const [type, setType] = useState<OrderType>('LIMIT');
   const [priceInput, setPriceInput] = useState<string>((asset.last_price / 100).toFixed(2));
-  const [qtyInput, setQtyInput] = useState<string>("1");
-  const [formStep, setFormStep] = useState<FormStep>("EDITING");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [idempotencyKey, setIdempotencyKey] = useState<string>("");
+  const [quantity, setQuantity] = useState<number>(1);
+  const [submitting, setSubmitting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [inlineError, setInlineError] = useState<string | null>(null);
 
+  const { wallet, holdings, upsertOrder, setWallet } = useUserStore();
+  const pushToast = useToastStore((s) => s.push);
+  const addTrade = useMarketStore((s) => s.addTrade);
+
+  const [isShaking, setIsShaking] = useState(false);
+
+  // Sync clicked price from OrderBookLadder or Chart
   useEffect(() => {
-    if (prefilledPrice) {
-      setPriceInput((prefilledPrice / 100).toFixed(2));
-      setIdempotencyKey("");
-      setErrorMessage(null);
-      setFormStep("EDITING");
+    if (selectedPrice) {
+      const p = Math.min(selectedPrice, asset.ceiling_price);
+      setPriceInput((p / 100).toFixed(2));
+      setType('LIMIT');
     }
-  }, [prefilledPrice]);
+  }, [selectedPrice, asset.ceiling_price]);
 
+  const priceCents = Math.round(parseFloat(priceInput || '0') * 100);
   const userHolding = holdings.find((h) => h.asset_id === asset.id);
   const availableUnits = userHolding?.available_units ?? 0;
+  const availableBalance = wallet?.available_balance ?? 0;
 
-  const parsedPriceMinor = Math.round(parseFloat(priceInput || "0") * 100);
-  const parsedQty = parseInt(qtyInput || "0", 10);
-  const isLocked = formStep === "SUBMITTING" || formStep === "ACCEPTED";
+  // Validation
+  const isCeilingExceeded = type === 'LIMIT' && priceCents > asset.ceiling_price;
+  const estTotal = type === 'LIMIT' ? priceCents * quantity : asset.last_price * quantity;
+  const hasInsufficientFunds = side === 'BUY' && estTotal > availableBalance;
+  const hasInsufficientUnits = side === 'SELL' && quantity > availableUnits;
 
-  // The Ward caps every resale price, on either side of the book.
-  const isAboveCeiling = type === "LIMIT" && parsedPriceMinor > asset.ceiling_price;
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setInlineError(null);
 
-  const marketReference =
-    side === "BUY"
-      ? asset.best_ask ?? asset.ceiling_price
-      : asset.best_bid ?? asset.last_price;
+    if (asset.is_halted) {
+      setInlineError('Trading is halted for this asset.');
+      return;
+    }
 
-  const estimatedCost =
-    type === "LIMIT" ? parsedPriceMinor * parsedQty : marketReference * parsedQty;
+    if (quantity <= 0) {
+      setInlineError('Quantity must be greater than zero.');
+      return;
+    }
 
-  /** Any edit starts a new order attempt, so a previous idempotency key must not be reused. */
-  const markTicketEdited = () => {
-    setErrorMessage(null);
-    setFormStep("EDITING");
-    setIdempotencyKey("");
-  };
-
-  const handleMaxClick = () => {
-    if (isLocked) return;
-    if (side === "BUY") {
-      const unitPrice =
-        type === "LIMIT" && parsedPriceMinor > 0 ? parsedPriceMinor : marketReference;
-      const maxUnits = Math.floor(availableCredits / Math.max(unitPrice, 1));
-      setQtyInput(Math.max(1, maxUnits).toString());
+    if (side === 'BUY') {
+      if (hasInsufficientFunds) {
+        setInlineError(
+          mapError('INSUFFICIENT_FUNDS', {
+            needed: fmt.price(estTotal),
+            available: fmt.price(availableBalance),
+          })
+        );
+        return;
+      }
+      if (isCeilingExceeded) {
+        setIsShaking(true);
+        setTimeout(() => setIsShaking(false), 400);
+        setInlineError(
+          `Resale cap for this asset is ${fmt.price(asset.ceiling_price)} (120% of face value ${fmt.price(
+            asset.face_value
+          )}). Lower your price.`
+        );
+        return;
+      }
     } else {
-      setQtyInput(Math.max(1, availableUnits).toString());
+      if (availableUnits <= 0) {
+        setInlineError('You hold none of this asset.');
+        return;
+      }
+      if (hasInsufficientUnits) {
+        setInlineError(
+          mapError('INSUFFICIENT_HOLDINGS', { available: `${availableUnits}` })
+        );
+        return;
+      }
     }
-    markTicketEdited();
+
+    if (type === 'MARKET') {
+      setShowConfirm(true);
+      return;
+    }
+
+    executeOrder();
   };
 
-  const handleInitialSubmit = () => {
-    setErrorMessage(null);
-    setFormStep("VALIDATING");
+  const executeOrder = () => {
+    setSubmitting(true);
+    setShowConfirm(false);
 
-    if (parsedQty <= 0) {
-      setErrorMessage("Quantity must be at least 1 unit.");
-      setFormStep("EDITING");
-      return;
-    }
+    // Simulate network latency and server 202 acceptance
+    setTimeout(() => {
+      setSubmitting(false);
 
-    if (type === "LIMIT" && parsedPriceMinor <= 0) {
-      setErrorMessage("Price must be greater than zero.");
-      setFormStep("EDITING");
-      return;
-    }
-
-    if (isAboveCeiling) {
-      setErrorMessage(
-        `Resale cap is ${formatCurrency(asset.ceiling_price)} (${asset.ceiling_pct}% of face value ${formatCurrency(
-          asset.face_value
-        )}). Lower your price.`
-      );
-      setFormStep("EDITING");
-      return;
-    }
-
-    if (side === "BUY" && estimatedCost > availableCredits) {
-      setErrorMessage(
-        `Insufficient funds. You need ${formatCurrency(estimatedCost)} but have ${formatCurrency(
-          availableCredits
-        )} available.`
-      );
-      setFormStep("EDITING");
-      return;
-    }
-
-    if (side === "SELL" && parsedQty > availableUnits) {
-      setErrorMessage(`Insufficient holdings. You have ${formatQuantity(availableUnits)} units available.`);
-      setFormStep("EDITING");
-      return;
-    }
-
-    const key = idempotencyKey || "IDEMP-" + Math.random().toString(36).substring(2, 9);
-    setIdempotencyKey(key);
-
-    if (type === "MARKET") {
-      setFormStep("CONFIRMING_MARKET");
-      return;
-    }
-
-    executeSubmission(key);
-  };
-
-  const executeSubmission = async (key: string) => {
-    setFormStep("SUBMITTING");
-
-    try {
-      const res = await api.submitOrder({
-        idempotencyKey: key,
-        assetId: asset.id,
+      const orderId = `ord-${Date.now().toString(36)}`;
+      const newOrder: UserOrder = {
+        id: orderId,
+        asset_id: asset.id,
+        asset_symbol: asset.symbol,
+        asset_name: asset.name,
         side,
         type,
-        price: type === "LIMIT" ? parsedPriceMinor : 0,
-        qty: parsedQty,
-      });
+        price: type === 'LIMIT' ? priceCents : asset.last_price,
+        quantity,
+        filled_quantity: type === 'MARKET' ? quantity : 0,
+        status: type === 'MARKET' ? 'FILLED' : 'OPEN',
+        created_at: Date.now(),
+        updated_at: Date.now(),
+        reserved_amount: estTotal,
+      };
 
-      setFormStep("ACCEPTED");
-      addToast({
-        type: "success",
-        title: "Order Accepted by Engine",
-        message: `${side} ${parsedQty}x ${asset.symbol} submitted. Funds reserved in vault.`,
-      });
+      upsertOrder(newOrder);
 
-      setTimeout(() => {
-        setFormStep("EDITING");
-        setIdempotencyKey("");
-        onOrderSubmitted?.();
-      }, 1200);
-    } catch (err: any) {
-      const apiErr = err as ApiErrorPayload;
-      const formatted = apiErr.code
-        ? formatErrorMessage(apiErr.code, apiErr.context)
-        : "Failed to place order. Please retry.";
+      // Deduct balance or reserve
+      if (side === 'BUY' && wallet) {
+        setWallet({
+          ...wallet,
+          available_balance: wallet.available_balance - estTotal,
+          reserved_balance: wallet.reserved_balance + (type === 'LIMIT' ? estTotal : 0),
+        });
+      }
 
-      setErrorMessage(formatted);
-      setFormStep("RETRYABLE");
+      // If Market order, simulate match fill tick
+      if (type === 'MARKET') {
+        addTrade({
+          id: `tr-${Date.now()}`,
+          asset_id: asset.id,
+          price: asset.last_price,
+          quantity,
+          side,
+          timestamp: Date.now(),
+          is_sim: false,
+        });
 
-      addToast({
-        type: "error",
-        title: "Order Rejected",
-        message: formatted,
-        requestId: apiErr.requestId,
-      });
-    }
+        pushToast({
+          variant: 'success',
+          title: 'Order Filled',
+          body: `Market ${side} for ${quantity} unit(s) executed at ${fmt.price(asset.last_price)}. Matched, settling.`,
+        });
+      } else {
+        pushToast({
+          variant: 'success',
+          title: 'Order Accepted',
+          body: `Limit ${side} resting on book for ${quantity} @ ${fmt.price(priceCents)}.`,
+        });
+      }
+    }, 400);
   };
 
   return (
-    <GlassCard glowEdge={side === "BUY" ? "teal" : "sell"} className={cn("flex flex-col gap-4 p-5", className)}>
-      <div className="flex items-center justify-between gap-2">
-        <div>
-          <span className="eyebrow">Trade ticket</span>
-          <h3 className="pt-0.5 font-display text-[15px] font-semibold tracking-tight text-text">
-            Place order
-          </h3>
-        </div>
-        <span className="rounded-full border border-glass-border bg-white/[0.03] px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.12em] text-text-dim">
-          {asset.symbol}
-        </span>
-      </div>
-
-      {/* Side Switcher (Buy / Sell) */}
-      <div className={cn("w-full", isLocked && "pointer-events-none opacity-60")}>
-        <SegmentedTabs
-          tabs={[
-            { id: "BUY", label: `Buy ${asset.symbol}` },
-            { id: "SELL", label: `Sell ${asset.symbol}` },
-          ]}
-          activeId={side}
-          onChange={(s) => {
-            if (isLocked) return;
-            setSide(s as OrderSide);
-            markTicketEdited();
-          }}
-          variant="buy-sell"
-          className="w-full justify-stretch"
-          layoutId="trade-side-pill"
-        />
-      </div>
-
-      {/* Order Type Toggle (Limit / Market) & Available Balance */}
-      <div className="flex items-center justify-between border-b border-glass-border pb-3">
-        <div className="flex items-center gap-1.5 rounded-full border border-glass-border bg-white/[0.03] p-0.5">
+    <div className="surface p-5 rounded-3xl flex flex-col justify-between w-full">
+      <div>
+        {/* Buy / Sell Tabs */}
+        <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-[rgba(255,255,255,0.03)] border border-[var(--border)] mb-4">
           <button
-            onClick={() => {
-              if (isLocked) return;
-              setType("LIMIT");
-              markTicketEdited();
-            }}
-            disabled={isLocked}
-            className={cn(
-              "rounded-full px-3 py-1 font-mono text-[10px] font-medium transition-all disabled:opacity-50",
-              type === "LIMIT"
-                ? "border border-brand-500/40 bg-white/[0.08] font-bold text-text"
-                : "text-text-muted hover:text-text"
-            )}
+            type="button"
+            onClick={() => { setSide('BUY'); setInlineError(null); }}
+            className={`py-2 rounded-lg text-xs font-bold transition-all ${
+              side === 'BUY'
+                ? 'bg-[var(--buy)] text-black shadow-buy'
+                : 'text-[var(--text-muted)] hover:text-white'
+            }`}
           >
-            Limit
+            Buy {asset.symbol}
           </button>
           <button
-            onClick={() => {
-              if (isLocked) return;
-              setType("MARKET");
-              markTicketEdited();
-            }}
-            disabled={isLocked}
-            className={cn(
-              "rounded-full px-3 py-1 font-mono text-[10px] font-medium transition-all disabled:opacity-50",
-              type === "MARKET"
-                ? "border border-brand-500/40 bg-white/[0.08] font-bold text-text"
-                : "text-text-muted hover:text-text"
-            )}
+            type="button"
+            onClick={() => { setSide('SELL'); setInlineError(null); }}
+            className={`py-2 rounded-lg text-xs font-bold transition-all ${
+              side === 'SELL'
+                ? 'bg-[var(--sell)] text-white shadow-sell'
+                : 'text-[var(--text-muted)] hover:text-white'
+            }`}
           >
-            Market
+            Sell {asset.symbol}
           </button>
         </div>
 
-        {/* Balance & Max Chip */}
-        <div className="flex items-center gap-1.5 font-mono text-[10px] text-text-muted">
-          <span>{side === "BUY" ? "Avail" : "Units"}</span>
-          <span className="font-bold tabular-nums text-text">
-            {side === "BUY" ? formatCurrency(availableCredits) : formatQuantity(availableUnits)}
-          </span>
-          <button
-            onClick={handleMaxClick}
-            disabled={isLocked}
-            className="ml-1 rounded-full border border-brand-500/30 bg-brand-500/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-brand-400 transition-colors hover:bg-brand-500/20 disabled:opacity-50"
-          >
-            Max
-          </button>
+        {/* Limit / Market Switcher */}
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-xs font-semibold text-white">Order Type</span>
+          <div className="seg-control">
+            <button
+              type="button"
+              onClick={() => setType('LIMIT')}
+              className={`seg-tab ${type === 'LIMIT' ? 'active' : ''}`}
+            >
+              Limit
+            </button>
+            <button
+              type="button"
+              onClick={() => setType('MARKET')}
+              className={`seg-tab ${type === 'MARKET' ? 'active' : ''}`}
+            >
+              Market
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Input Fields */}
-      <div className="space-y-3">
-        {type === "LIMIT" ? (
-          <div className="space-y-1">
-            <div className="flex justify-between text-[11px] text-text-dim">
-              <span>Limit Price (USD)</span>
-              <span className="text-ward font-medium">Cap: {formatCurrency(asset.ceiling_price)}</span>
-            </div>
-            <div className="relative">
-              <span className="absolute left-3.5 top-2.5 text-text-dim">$</span>
+        {/* Inline Error Message */}
+        {inlineError && (
+          <div className="p-3 mb-4 rounded-lg bg-[rgba(255,90,95,0.1)] border border-[rgba(255,90,95,0.3)] text-xs text-[var(--sell)] flex items-start gap-2">
+            <AlertCircle size={15} className="shrink-0 mt-0.5" />
+            <span>{inlineError}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Price Input (for Limit) with Ticked Slider stopping at Cap */}
+          {type === 'LIMIT' ? (
+            <div className={isShaking ? 'animate-shake' : ''}>
+              <div className="flex justify-between items-center mb-1">
+                <label className="input-label mb-0">Limit Price ($)</label>
+                <span className="text-[10px] font-mono text-[var(--cap)] font-bold">
+                  Cap: {fmt.price(asset.ceiling_price)}
+                </span>
+              </div>
               <input
                 type="number"
-                step="0.50"
+                step="0.01"
+                min="0.01"
+                required
                 value={priceInput}
-                disabled={isLocked}
                 onChange={(e) => {
                   setPriceInput(e.target.value);
-                  markTicketEdited();
+                  setInlineError(null);
                 }}
-                className={cn(
-                  "w-full h-11 bg-white/[0.03] border rounded-[14px] pl-8 pr-3 text-text text-sm font-mono transition-all disabled:opacity-60",
-                  "focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:border-transparent",
-                  isAboveCeiling
-                    ? "border-ward bg-ward/10 animate-ward-shake"
-                    : "border-glass-border"
-                )}
-                placeholder="0.00"
+                className={`input font-mono tabular text-sm w-full ${isCeilingExceeded ? 'border-[var(--cap)]' : ''}`}
               />
+              
+              {/* Ticked Price Slider stopping at Ceiling */}
+              <div className="mt-2">
+                <input
+                  type="range"
+                  min={Math.round(asset.face_value * 0.8) / 100}
+                  max={asset.ceiling_price / 100}
+                  step={0.5}
+                  value={Math.min(parseFloat(priceInput || '0'), asset.ceiling_price / 100)}
+                  onChange={(e) => setPriceInput(parseFloat(e.target.value).toFixed(2))}
+                  className="w-full accent-[var(--lav)] cursor-pointer h-1.5 bg-[var(--inset)] rounded-lg appearance-none"
+                />
+                <div className="flex justify-between text-[9px] font-mono text-[var(--muted)] mt-1">
+                  <span>${(Math.round(asset.face_value * 0.8) / 100).toFixed(0)}</span>
+                  <span className="text-white">Selected: ${parseFloat(priceInput || '0').toFixed(2)}</span>
+                  <span className="text-[var(--cap)]">Max Cap: ${(asset.ceiling_price / 100).toFixed(2)}</span>
+                </div>
+              </div>
+
+              {isCeilingExceeded && (
+                <span className="text-[11px] text-[var(--cap)] mt-1.5 flex items-center gap-1 font-mono font-medium">
+                  <ShieldAlert size={12} className="shrink-0" />
+                  Resale cap for this asset is {fmt.price(asset.ceiling_price)} (120% of face value {fmt.price(asset.face_value)}). Lower your price.
+                </span>
+              )}
             </div>
-          </div>
-        ) : (
-          <div className="p-3 rounded-[14px] bg-white/[0.025] border border-glass-border text-[11px] text-text-muted space-y-1">
-            <div className="flex justify-between">
-              <span>Execution Mode:</span>
-              <span className="text-text font-semibold">Best Available Market Fill</span>
-            </div>
-            <p className="text-[10px] text-text-dim">
-              Buys are protected and strictly capped at The Ward ceiling ({formatCurrency(asset.ceiling_price)}).
-            </p>
-          </div>
-        )}
-
-        {/* The Ward Banner if above ceiling */}
-        {isAboveCeiling && (
-          <TheWard
-            ceilingPrice={asset.ceiling_price}
-            faceValue={asset.face_value}
-            ceilingPct={asset.ceiling_pct}
-            isTriggered={true}
-            variant="banner"
-          />
-        )}
-
-        {/* Quantity Input */}
-        <div className="space-y-1">
-          <div className="flex justify-between text-[11px] text-text-dim">
-            <span>Quantity (Units)</span>
-            <span>Tick: 1 unit</span>
-          </div>
-          <input
-            type="number"
-            min="1"
-            step="1"
-            value={qtyInput}
-            disabled={isLocked}
-            onChange={(e) => {
-              setQtyInput(e.target.value);
-              markTicketEdited();
-            }}
-            className="h-11 w-full rounded-[12px] border border-glass-border bg-white/[0.03] px-3.5 font-mono text-sm text-text transition-all focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-60"
-            placeholder="1"
-          />
-        </div>
-      </div>
-
-      {/* Financial Summary & Vault Reservation Notice */}
-      <div className="p-3 rounded-[14px] bg-white/[0.02] border border-glass-border space-y-1 text-[11px]">
-        <div className="flex justify-between text-text-muted">
-          <span>{side === "BUY" ? "Estimated Total:" : "Estimated Proceeds:"}</span>
-          <span className="font-mono text-xs font-bold tabular-nums text-text">{formatCurrency(estimatedCost)}</span>
-        </div>
-        <div className="flex items-center gap-1.5 text-[10px] text-text-dim pt-0.5">
-          <Lock className="w-2.5 h-2.5 text-warning shrink-0" />
-          <span>
-            {side === "BUY"
-              ? "Funds locked in Vault reservation upon acceptance until settlement."
-              : "Units locked in Vault reservation upon acceptance until settlement."}
-          </span>
-        </div>
-      </div>
-
-      {/* Error Announcement */}
-      {errorMessage && (
-        <div className="p-3 rounded-[14px] bg-sell/15 border border-sell/40 text-[11px] text-text flex items-start gap-2">
-          <AlertCircle className="w-3.5 h-3.5 text-sell shrink-0 mt-0.5" />
-          <span>{errorMessage}</span>
-        </div>
-      )}
-
-      {/* Market Order Confirmation Modal */}
-      {formStep === "CONFIRMING_MARKET" && (
-        <div className="p-3.5 rounded-[14px] bg-white/[0.05] border border-warning space-y-2">
-          <div className="flex items-center gap-1.5 text-warning text-xs font-semibold">
-            <ShieldAlert className="w-4 h-4" />
-            <span>Confirm Market Order</span>
-          </div>
-          <p className="text-[11px] text-text-muted font-sans">
-            Worst acceptable cost will reserve up to{" "}
-            <strong className="text-text">{formatCurrency(estimatedCost)}</strong>.
-            Matches instantly against top book levels.
-          </p>
-          <div className="flex justify-end gap-2 pt-1">
-            <button
-              onClick={() => setFormStep("EDITING")}
-              className="px-3 py-1 rounded-pill border border-glass-border text-xs text-text-muted hover:text-text"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => executeSubmission(idempotencyKey)}
-              className="px-3.5 py-1 rounded-pill bg-warning text-canvas text-xs font-bold font-mono shadow-glow-ward"
-            >
-              Confirm & Submit
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Primary CTA (Mint Gradient for Buy, Rose-Red Gradient for Sell) */}
-      {formStep !== "CONFIRMING_MARKET" && (
-        <button
-          onClick={handleInitialSubmit}
-          disabled={
-            formStep === "SUBMITTING" ||
-            formStep === "ACCEPTED" ||
-            asset.is_halted ||
-            isAboveCeiling
-          }
-          className={cn(
-            "flex h-11 w-full select-none items-center justify-center gap-2 rounded-[12px] text-[11.5px] font-bold uppercase tracking-[0.08em] transition-all duration-200",
-            asset.is_halted
-              ? "cursor-not-allowed border border-glass-border bg-white/[0.05] text-text-dim"
-              : side === "BUY"
-              ? "bg-gradient-to-r from-brand-400 to-brand-500 text-canvas shadow-glow-teal hover:-translate-y-px disabled:opacity-50"
-              : "bg-gradient-to-r from-sell-text to-sell text-white shadow-[0_0_20px_rgba(240,80,110,0.35)] hover:-translate-y-px disabled:opacity-50"
-          )}
-        >
-          {formStep === "SUBMITTING" ? (
-            <>
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              <span>Submitting to Engine...</span>
-            </>
-          ) : formStep === "ACCEPTED" ? (
-            <>
-              <Check className="w-3.5 h-3.5" />
-              <span>Accepted (202)</span>
-            </>
-          ) : formStep === "RETRYABLE" ? (
-            <span>Retry Submission</span>
-          ) : asset.is_halted ? (
-            <span>Trading Halted</span>
           ) : (
-            <span>
-              {side} {parsedQty} {asset.symbol}
-            </span>
+            <div className="surface-2 p-3 rounded-xl border border-[var(--border)] text-xs">
+              <span className="text-[var(--text-dim)] block mb-1">Execution Price</span>
+              <span className="font-bold text-white">Best Available Market Liquidity</span>
+            </div>
           )}
-        </button>
-      )}
-    </GlassCard>
+
+          {/* Quantity Input */}
+          <div>
+            <div className="flex justify-between items-center mb-1">
+              <label className="input-label mb-0">Quantity</label>
+              <div className="flex items-center gap-1 text-[11px] text-[var(--text-dim)]">
+                {side === 'BUY' ? (
+                  <>
+                    <span>Avail:</span>
+                    <span className="font-mono text-white">{fmt.price(availableBalance)}</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Holdings:</span>
+                    <span className="font-mono text-white">{availableUnits} units</span>
+                  </>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (side === 'BUY') {
+                      const maxQ = Math.max(1, Math.min(asset.holding_cap, Math.floor(availableBalance / (priceCents || asset.last_price))));
+                      setQuantity(maxQ);
+                    } else {
+                      setQuantity(Math.max(1, availableUnits));
+                    }
+                  }}
+                  className="ml-1 px-1.5 py-0.5 rounded text-[10px] bg-[rgba(255,255,255,0.08)] text-[var(--lav)] font-bold hover:bg-[rgba(255,255,255,0.15)]"
+                >
+                  MAX
+                </button>
+              </div>
+            </div>
+            <input
+              type="number"
+              min="1"
+              max={side === 'BUY' ? asset.holding_cap : availableUnits || 1}
+              value={quantity}
+              onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+              className="input font-mono tabular text-sm w-full"
+            />
+          </div>
+
+          {/* Order Summary */}
+          <div className="pt-2 border-t border-[var(--border)] text-xs space-y-1.5 font-mono">
+            <div className="flex justify-between text-[var(--text-dim)]">
+              <span>Est. Total:</span>
+              <span className="text-white font-bold">{fmt.price(estTotal)}</span>
+            </div>
+            <div className="flex justify-between text-[var(--text-dim)] text-[11px]">
+              <span>Settlement:</span>
+              <span className="text-[var(--buy)] font-medium">Immediate Reserve</span>
+            </div>
+          </div>
+
+          {/* Lavender Submit Button (Section 5) */}
+          <button
+            type="submit"
+            disabled={submitting || asset.is_halted}
+            className="btn-primary w-full shadow-lg shadow-[rgba(185,167,255,0.2)] text-sm font-bold tracking-wide"
+          >
+            {submitting ? 'Submitting to Engine…' : `${side} ${quantity} ${asset.symbol}`}
+          </button>
+        </form>
+      </div>
+
+      <div className="mt-4 pt-3 border-t border-[var(--border)] text-[10px] text-[var(--text-dim)] text-center">
+        Double-entry ledger verified · Anti-scalping enforced
+      </div>
+
+      {/* Market Confirmation Dialog */}
+      <MarketConfirmDialog
+        open={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={executeOrder}
+        asset={asset}
+        side={side}
+        quantity={quantity}
+        worstPrice={asset.ceiling_price}
+        estimatedCost={estTotal}
+      />
+    </div>
   );
 }

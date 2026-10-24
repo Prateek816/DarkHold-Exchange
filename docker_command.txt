@@ -1,0 +1,5 @@
+docker build -t darkhold .
+docker run -d --name darkhold -p 3000:3000 -p 4000:4000 \
+  -v darkhold-pg:/var/lib/postgresql/data \
+  -v darkhold-engine:/data/engine darkhold
+docker logs -f darkhold

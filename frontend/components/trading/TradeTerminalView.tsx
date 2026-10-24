@@ -35,6 +35,7 @@ import { OrderForm } from "@/components/trading/OrderForm";
 import { BottomTabs } from "@/components/trading/BottomTabs";
 import { useUiStore } from "@/lib/stores/uiStore";
 import { useWalletStore } from "@/lib/stores/walletStore";
+import { useAuthStore } from "@/lib/stores/authStore";
 import { GlobalBanners } from "@/components/shell/GlobalBanners";
 import { Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -46,6 +47,7 @@ interface TradeTerminalViewProps {
 export function TradeTerminalView({ assetId }: TradeTerminalViewProps) {
   const { connectionState, setConnectionState, addToast } = useUiStore();
   const { setWalletFromServer } = useWalletStore();
+  const { user } = useAuthStore();
 
   const [interval, setIntervalState] = useState<"5s" | "1m">("1m");
   const [prefilledPrice, setPrefilledPrice] = useState<number | null>(null);
@@ -98,7 +100,7 @@ export function TradeTerminalView({ assetId }: TradeTerminalViewProps) {
     const bookChannel = `book:${assetId}`;
     const tradesChannel = `trades:${assetId}`;
     const candleChannel = `candles:${assetId}:${interval}`;
-    const userChannel = "user:current";
+    const userChannel = user?.id ? `user:${user.id}` : "user:current";
 
     marketDataService.subscribe(bookChannel);
     marketDataService.subscribe(tradesChannel);
@@ -127,7 +129,9 @@ export function TradeTerminalView({ assetId }: TradeTerminalViewProps) {
       if (event === `trade_tick:${assetId}`) {
         const tick = data as TradeTick;
         setTrades((prev) => {
-          if (prev.some((t) => t.seq === tick.seq)) return prev;
+          if (prev.some((t) => t.seq === tick.seq || (t.trade_id && tick.trade_id && t.trade_id === tick.trade_id))) {
+            return prev;
+          }
           if (prev.length > 0) {
             setLastPriceFlash(tick.price >= prev[0].price ? "up" : "down");
             setTimeout(() => setLastPriceFlash(null), 200);
@@ -174,6 +178,8 @@ export function TradeTerminalView({ assetId }: TradeTerminalViewProps) {
             return ord;
           })
         );
+        refetchOrders();
+        api.getWallet().then((w) => setWalletFromServer(w)).catch(() => {});
       }
 
       if (event === "settlement_completed") {
@@ -190,6 +196,8 @@ export function TradeTerminalView({ assetId }: TradeTerminalViewProps) {
             return ord;
           })
         );
+        refetchOrders();
+        api.getWallet().then((w) => setWalletFromServer(w)).catch(() => {});
       }
     });
 
@@ -200,7 +208,7 @@ export function TradeTerminalView({ assetId }: TradeTerminalViewProps) {
       marketDataService.unsubscribe(userChannel);
       removeListener();
     };
-  }, [assetId, interval, addToast, setConnectionState]);
+  }, [assetId, interval, user?.id, addToast, setConnectionState, refetchOrders, setWalletFromServer]);
 
   if (assetLoading || !asset) {
     return (
@@ -268,7 +276,10 @@ export function TradeTerminalView({ assetId }: TradeTerminalViewProps) {
           <BottomTabs
             orders={orders}
             receipts={receipts}
-            onOrderCanceled={() => refetchOrders()}
+            onOrderCanceled={() => {
+              refetchOrders();
+              api.getWallet().then((w) => setWalletFromServer(w)).catch(() => {});
+            }}
           />
         </div>
 

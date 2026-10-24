@@ -116,20 +116,69 @@ export class SettlementWorker {
       });
 
       // Update order settlement statuses if completely filled
-      if (trade.buyOrder && trade.buyOrder.matchedQuantity >= trade.buyOrder.originalQuantity) {
-        await tx.order.update({
-          where: { id: trade.buyOrder.id },
-          data: { settlementStatus: "COMPLETED" },
-        });
+      if (trade.buyOrderId) {
+        const buyOrder = await tx.order.findUnique({ where: { id: trade.buyOrderId } });
+        if (buyOrder && (buyOrder.matchedQuantity >= buyOrder.originalQuantity || buyOrder.remainingQuantity <= 0)) {
+          await tx.order.update({
+            where: { id: buyOrder.id },
+            data: { settlementStatus: "COMPLETED", status: "FILLED" },
+          });
+        }
       }
 
-      if (trade.sellOrder && trade.sellOrder.matchedQuantity >= trade.sellOrder.originalQuantity) {
-        await tx.order.update({
-          where: { id: trade.sellOrder.id },
-          data: { settlementStatus: "COMPLETED" },
-        });
+      if (trade.sellOrderId) {
+        const sellOrder = await tx.order.findUnique({ where: { id: trade.sellOrderId } });
+        if (sellOrder && (sellOrder.matchedQuantity >= sellOrder.originalQuantity || sellOrder.remainingQuantity <= 0)) {
+          await tx.order.update({
+            where: { id: sellOrder.id },
+            data: { settlementStatus: "COMPLETED", status: "FILLED" },
+          });
+        }
       }
-    });
+    }, { maxWait: 15000, timeout: 30000 });
+
+    // Notify users over wsGateway about settlement completion
+    try {
+      const settledTrade = await prisma.trade.findUnique({
+        where: { id: tradeId },
+      });
+      if (settledTrade) {
+        const { wsGateway } = await import("@/market/wsGateway");
+        const ledgerTxId = `LTX-${settledTrade.id.replace("TRD-", "")}`;
+
+        if (settledTrade.buyOrderId && !settledTrade.buyerId.startsWith("sim_")) {
+          wsGateway.notifyUser(settledTrade.buyerId, {
+            type: "SettlementCompleted",
+            channel: `user:${settledTrade.buyerId}`,
+            data: {
+              order_id: settledTrade.buyOrderId,
+              trade_id: settledTrade.id,
+              settlement_status: "COMPLETED",
+              status: "FILLED",
+              ledger_tx_id: ledgerTxId,
+            },
+            ts: Date.now(),
+          });
+        }
+
+        if (settledTrade.sellOrderId && !settledTrade.sellerId.startsWith("sim_")) {
+          wsGateway.notifyUser(settledTrade.sellerId, {
+            type: "SettlementCompleted",
+            channel: `user:${settledTrade.sellerId}`,
+            data: {
+              order_id: settledTrade.sellOrderId,
+              trade_id: settledTrade.id,
+              settlement_status: "COMPLETED",
+              status: "FILLED",
+              ledger_tx_id: ledgerTxId,
+            },
+            ts: Date.now(),
+          });
+        }
+      }
+    } catch (wsErr) {
+      // Non-fatal broadcast error
+    }
   }
 }
 

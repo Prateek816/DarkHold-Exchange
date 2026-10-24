@@ -45,10 +45,10 @@ export class WalletsController {
           counterparty_id: isBuyer ? t.sellerId : t.buyerId,
           counterparty_is_sim: t.isSim,
           matched_at: t.matchedAt.getTime(),
-          settled_at: t.settledAt.getTime(),
+          settled_at: t.settledAt ? t.settledAt.getTime() : null,
           balance_before: Number(wallet.availableBalance) + (isBuyer ? total : -total),
           balance_after: Number(wallet.availableBalance),
-          settlement_status: "COMPLETED" as const,
+          settlement_status: t.state === "SETTLED" ? ("COMPLETED" as const) : ("PENDING" as const),
         };
       });
 

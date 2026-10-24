@@ -4,9 +4,10 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
-import { fakeWs } from "@/mocks/fake-websocket";
+import { marketDataService } from "@/lib/market-data";
 import { useWalletStore } from "@/lib/stores/walletStore";
 import { useUiStore } from "@/lib/stores/uiStore";
+import { useAuthStore } from "@/lib/stores/authStore";
 import { OdometerPrice } from "@/components/auctions/OdometerPrice";
 import { DecayCurveChart } from "@/components/auctions/DecayCurveChart";
 import { SimBadge } from "@/components/ui/SimBadge";
@@ -22,6 +23,7 @@ interface AuctionDetailViewProps {
 
 export function AuctionDetailView({ auctionId }: AuctionDetailViewProps) {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const { availableCredits, setWalletFromServer } = useWalletStore();
   const { connectionState, addToast } = useUiStore();
   const isDisconnected = connectionState === "DISCONNECTED" || connectionState === "RECONNECTING";
@@ -45,29 +47,54 @@ export function AuctionDetailView({ auctionId }: AuctionDetailViewProps) {
   useEffect(() => {
     if (auction) {
       setLivePrice(auction.current_price);
-      if (auction.status === "SOLD" && auction.winning_buyer_id === "trader_01") {
+      if (
+        auction.status === "SOLD" &&
+        (auction.winning_buyer_id === user?.id || auction.winning_buyer_id === "trader_01")
+      ) {
         setIsWon(true);
       }
     }
-  }, [auction]);
+  }, [auction, user?.id]);
 
   useEffect(() => {
     const channel = `auction:${auctionId}`;
-    fakeWs.subscribe(channel);
+    marketDataService.subscribe(channel);
 
-    const removeListener = fakeWs.addListener((event, data) => {
-      if (event === `auction_price_update:${auctionId}`) {
+    const removeListener = marketDataService.addListener((event, data) => {
+      if (event === `auction_price_update:${auctionId}` || event === `auction:${auctionId}`) {
         if (!isWonRef.current && auction?.status === "ACTIVE") {
-          setLivePrice(data.current_price);
+          if (data && data.current_price !== undefined) {
+            setLivePrice(data.current_price);
+          }
+          if (data && data.status && data.status !== "ACTIVE") {
+            refetch();
+            queryClient.invalidateQueries({ queryKey: ["auctions"] });
+          }
         }
       }
     });
 
+    // Reliable REST polling fallback using existing auction detail endpoint
+    const pollInterval = setInterval(() => {
+      if (!isWonRef.current && auction?.status === "ACTIVE") {
+        api.getAuction(auctionId).then((updated) => {
+          if (updated && !isWonRef.current) {
+            setLivePrice(updated.current_price);
+            if (updated.status !== "ACTIVE") {
+              refetch();
+              queryClient.invalidateQueries({ queryKey: ["auctions"] });
+            }
+          }
+        }).catch(() => {});
+      }
+    }, 3000);
+
     return () => {
-      fakeWs.unsubscribe(channel);
+      marketDataService.unsubscribe(channel);
       removeListener();
+      clearInterval(pollInterval);
     };
-  }, [auctionId, auction?.status]);
+  }, [auctionId, auction?.status, refetch, queryClient]);
 
   if (isLoading || !auction) {
     return (
@@ -103,16 +130,18 @@ export function AuctionDetailView({ auctionId }: AuctionDetailViewProps) {
       setWalletFromServer(freshWallet);
       await refetch();
       queryClient.invalidateQueries({ queryKey: ["auctions"] });
+      queryClient.invalidateQueries({ queryKey: ["auction", auctionId] });
       queryClient.invalidateQueries({ queryKey: ["receipts"] });
       queryClient.invalidateQueries({ queryKey: ["wallet"] });
 
       setIsWon(true);
-      setLivePrice(res.auction.current_price);
+      const finalPrice = res.auction?.current_price ?? (res as any).accepted_price_minor ?? livePrice;
+      setLivePrice(finalPrice);
       addToast({
         type: "success",
         title: "Auction won",
-        message: `Acquired ${res.auction.qty}x ${res.auction.asset_name} at ${formatCurrency(
-          res.auction.current_price
+        message: `Acquired ${res.auction?.qty ?? auction.qty}x ${res.auction?.asset_name ?? auction.asset_name} at ${formatCurrency(
+          finalPrice
         )}. Settled into vault inventory.`,
       });
     } catch (err: any) {

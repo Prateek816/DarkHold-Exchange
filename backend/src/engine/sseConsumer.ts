@@ -397,14 +397,52 @@ export class SseConsumer {
                 ],
               },
             });
-            const assetId = asset ? asset.id : (mapped?.id || e.asset);
+            if (!asset) {
+              // Asset is an unregistered synthetic test asset; skip DB trade persistence
+              break;
+            }
+            const assetId = asset.id;
+
+            // Ensure buyer and seller user records exist for foreign key integrity
+            let buyer = await tx.user.findUnique({ where: { id: e.buy_user_id } });
+            if (!buyer) {
+              buyer = await tx.user.create({
+                data: {
+                  id: e.buy_user_id,
+                  email: `${e.buy_user_id.toLowerCase().replace(/[^a-z0-9_-]/g, "")}@darkhold.local`,
+                  name: e.buy_user_id,
+                  role: "TRADER",
+                  status: "ACTIVE",
+                },
+              });
+            }
+
+            let seller = await tx.user.findUnique({ where: { id: e.sell_user_id } });
+            if (!seller) {
+              seller = await tx.user.create({
+                data: {
+                  id: e.sell_user_id,
+                  email: `${e.sell_user_id.toLowerCase().replace(/[^a-z0-9_-]/g, "")}@darkhold.local`,
+                  name: e.sell_user_id,
+                  role: "TRADER",
+                  status: "ACTIVE",
+                },
+              });
+            }
+
+            const buyOrder = e.buy_order_id
+              ? await tx.order.findUnique({ where: { id: e.buy_order_id } })
+              : null;
+            const sellOrder = e.sell_order_id
+              ? await tx.order.findUnique({ where: { id: e.sell_order_id } })
+              : null;
 
             await tx.trade.create({
               data: {
                 id: e.trade_id,
                 assetId,
-                buyOrderId: e.buy_order_id,
-                sellOrderId: e.sell_order_id,
+                buyOrderId: buyOrder ? e.buy_order_id : null,
+                sellOrderId: sellOrder ? e.sell_order_id : null,
                 buyerId: e.buy_user_id,
                 sellerId: e.sell_user_id,
                 executionPrice: BigInt(e.price),
@@ -421,21 +459,25 @@ export class SseConsumer {
             });
 
             // Update matched quantities on both orders
-            await tx.order.updateMany({
-              where: { id: e.buy_order_id },
-              data: {
-                matchedQuantity: { increment: e.qty },
-                remainingQuantity: { decrement: e.qty },
-              },
-            });
+            if (buyOrder) {
+              await tx.order.updateMany({
+                where: { id: e.buy_order_id },
+                data: {
+                  matchedQuantity: { increment: e.qty },
+                  remainingQuantity: { decrement: e.qty },
+                },
+              });
+            }
 
-            await tx.order.updateMany({
-              where: { id: e.sell_order_id },
-              data: {
-                matchedQuantity: { increment: e.qty },
-                remainingQuantity: { decrement: e.qty },
-              },
-            });
+            if (sellOrder) {
+              await tx.order.updateMany({
+                where: { id: e.sell_order_id },
+                data: {
+                  matchedQuantity: { increment: e.qty },
+                  remainingQuantity: { decrement: e.qty },
+                },
+              });
+            }
           }
           break;
         }

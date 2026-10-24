@@ -5,7 +5,8 @@ import { prisma } from "@/config/db";
 import { sseConsumer } from "@/engine/sseConsumer";
 import { engineClient } from "@/engine/engineClient";
 import { candleService } from "./candleService";
-import { BookSnapshot, EngineEvent, TradeExecutedEvent } from "@/engine/types";
+import { BookSnapshot, EngineEvent, TradeExecutedEvent, OrderAcceptedEvent, OrderRejectedEvent, OrderPartiallyFilledEvent, OrderFilledEvent, OrderCanceledEvent } from "@/engine/types";
+import { resolveAssetIdentifiers } from "@/utils/assetMapping";
 
 interface ExtendedWebSocket extends WebSocket {
   isAlive: boolean;
@@ -40,9 +41,18 @@ export class WebSocketGateway {
       ws.subscriptions = new Set();
       ws.userId = null;
 
-      // Extract optional token from query parameter ?token=...
+      // Extract optional token from query parameter ?token=... or Cookie
       const parsedUrl = url.parse(request.url || "", true);
-      const token = (parsedUrl.query.token as string) || null;
+      let token = (parsedUrl.query.token as string) || null;
+      if (!token && request.headers.cookie) {
+        const cookies = request.headers.cookie.split(";").reduce((acc: Record<string, string>, c) => {
+          const [k, v] = c.trim().split("=");
+          if (k && v) acc[k] = decodeURIComponent(v);
+          return acc;
+        }, {});
+        token = cookies["dkh_auth_token"] || null;
+      }
+
       if (token) {
         this.authenticateSocket(ws, token);
       }
@@ -93,41 +103,139 @@ export class WebSocketGateway {
     // 1. Book frames from engine
     sseConsumer.onBook((snapshot) => {
       this.cachedBooks.set(snapshot.asset, snapshot);
-      this.broadcastToChannel(`book:${snapshot.asset}`, {
+      const { id, symbol, engineSymbol } = resolveAssetIdentifiers(snapshot.asset);
+      const payloadData = {
+        ...snapshot,
+        asset: symbol,
+        symbol,
+        asset_id: id,
+      };
+
+      const payload = {
         type: "BookSnapshot",
-        channel: `book:${snapshot.asset}`,
-        data: snapshot,
+        channel: `book:${symbol}`,
+        data: payloadData,
         ts: Date.now(),
-      });
+      };
+
+      this.broadcastToChannel(`book:${engineSymbol}`, { ...payload, channel: `book:${engineSymbol}` });
+      this.broadcastToChannel(`book:${symbol}`, payload);
+      if (id !== symbol) {
+        this.broadcastToChannel(`book:${id}`, { ...payload, channel: `book:${id}` });
+      }
     });
 
-    // 2. Events from engine (TradeExecuted)
+    // 2. Events from engine (TradeExecuted, OrderAccepted, OrderRejected, etc.)
     sseConsumer.onEvent((event: EngineEvent) => {
-      if (event.type === "TradeExecuted") {
-        const te = event as TradeExecutedEvent;
-        this.broadcastToChannel(`trades:${te.asset}`, {
-          type: "TradeTick",
-          channel: `trades:${te.asset}`,
+      if (event.type === "OrderAccepted") {
+        const e = event as OrderAcceptedEvent;
+        this.notifyUser(e.user_id, {
+          type: "OrderUpdate",
+          channel: `user:${e.user_id}`,
           data: {
-            asset: te.asset,
-            trade_id: te.trade_id,
-            price: te.price,
-            qty: te.qty,
-            ts: te.ts,
-            taker_side: te.taker_side,
-            seq: te.seq,
-            buyer_is_simulated: te.buy_user_id.startsWith("sim_"),
-            seller_is_simulated: te.sell_user_id.startsWith("sim_"),
+            order_id: e.order_id,
+            status: "OPEN",
+            price: e.price,
+            qty: e.qty,
+            side: e.side,
           },
           ts: Date.now(),
         });
+      } else if (event.type === "OrderPartiallyFilled") {
+        const e = event as OrderPartiallyFilledEvent;
+        this.notifyUser(e.user_id, {
+          type: "OrderUpdate",
+          channel: `user:${e.user_id}`,
+          data: {
+            order_id: e.order_id,
+            status: "PARTIALLY_FILLED",
+            matched_qty: e.filled_qty,
+            remaining_qty: e.remaining_qty,
+          },
+          ts: Date.now(),
+        });
+      } else if (event.type === "OrderFilled") {
+        const e = event as OrderFilledEvent;
+        this.notifyUser(e.user_id, {
+          type: "OrderUpdate",
+          channel: `user:${e.user_id}`,
+          data: {
+            order_id: e.order_id,
+            status: "FILLED",
+            matched_qty: e.filled_qty,
+            remaining_qty: 0,
+          },
+          ts: Date.now(),
+        });
+      } else if (event.type === "OrderCanceled") {
+        const e = event as OrderCanceledEvent;
+        this.notifyUser(e.user_id, {
+          type: "OrderUpdate",
+          channel: `user:${e.user_id}`,
+          data: {
+            order_id: e.order_id,
+            status: "CANCELED",
+            cancel_reason: e.reason,
+            matched_qty: e.filled_qty,
+            remaining_qty: e.remaining_qty,
+          },
+          ts: Date.now(),
+        });
+      } else if (event.type === "OrderRejected") {
+        const e = event as OrderRejectedEvent;
+        this.notifyUser(e.user_id, {
+          type: "OrderUpdate",
+          channel: `user:${e.user_id}`,
+          data: {
+            order_id: e.order_id,
+            status: "REJECTED",
+            reject_code: e.code,
+          },
+          ts: Date.now(),
+        });
+      } else if (event.type === "TradeExecuted") {
+        const te = event as TradeExecutedEvent;
+        const { id, symbol, engineSymbol } = resolveAssetIdentifiers(te.asset);
+
+        const tickData = {
+          asset: symbol,
+          symbol,
+          asset_id: id,
+          trade_id: te.trade_id,
+          id: te.trade_id,
+          price: te.price,
+          qty: te.qty,
+          ts: te.ts,
+          timestamp: te.ts,
+          taker_side: te.taker_side,
+          aggressor_side: te.taker_side,
+          seq: te.seq,
+          is_sim: te.buy_user_id.startsWith("sim_") || te.sell_user_id.startsWith("sim_"),
+          buyer_is_simulated: te.buy_user_id.startsWith("sim_"),
+          seller_is_simulated: te.sell_user_id.startsWith("sim_"),
+        };
+
+        const tickPayload = {
+          type: "TradeTick",
+          channel: `trades:${symbol}`,
+          data: tickData,
+          ts: Date.now(),
+        };
+
+        this.broadcastToChannel(`trades:${engineSymbol}`, { ...tickPayload, channel: `trades:${engineSymbol}` });
+        this.broadcastToChannel(`trades:${symbol}`, tickPayload);
+        if (id !== symbol) {
+          this.broadcastToChannel(`trades:${id}`, { ...tickPayload, channel: `trades:${id}` });
+        }
 
         // Market stats tick
         this.broadcastToChannel("market", {
           type: "MarketStats",
           channel: "market",
           data: {
-            asset: te.asset,
+            asset: symbol,
+            symbol,
+            asset_id: id,
             last_price: te.price,
             last_ts: te.ts,
             last_seq: te.seq,
@@ -136,12 +244,13 @@ export class WebSocketGateway {
         });
 
         // Private updates to buyer and seller
-        this.broadcastToChannel(`user:${te.buy_user_id}`, {
+        this.notifyUser(te.buy_user_id, {
           type: "OrderUpdate",
           channel: `user:${te.buy_user_id}`,
           data: {
             order_id: te.buy_order_id,
-            symbol: te.asset,
+            symbol,
+            asset_id: id,
             side: "BUY",
             matched_qty: te.qty,
             remaining_qty: te.buy_remaining,
@@ -150,12 +259,13 @@ export class WebSocketGateway {
           ts: Date.now(),
         });
 
-        this.broadcastToChannel(`user:${te.sell_user_id}`, {
+        this.notifyUser(te.sell_user_id, {
           type: "OrderUpdate",
           channel: `user:${te.sell_user_id}`,
           data: {
             order_id: te.sell_order_id,
-            symbol: te.asset,
+            symbol,
+            asset_id: id,
             side: "SELL",
             matched_qty: te.qty,
             remaining_qty: te.sell_remaining,
@@ -168,15 +278,30 @@ export class WebSocketGateway {
 
     // 3. Candle updates
     candleService.onCandleUpdate((asset, candle) => {
-      this.broadcastToChannel(`candles:${asset}:${candle.interval}`, {
+      const { id, symbol, engineSymbol } = resolveAssetIdentifiers(asset);
+      const candlePayload = {
         type: "CandleUpdate",
-        channel: `candles:${asset}:${candle.interval}`,
+        channel: `candles:${symbol}:${candle.interval}`,
         data: {
-          asset,
+          asset: symbol,
+          symbol,
+          asset_id: id,
           candle,
         },
         ts: Date.now(),
+      };
+
+      this.broadcastToChannel(`candles:${engineSymbol}:${candle.interval}`, {
+        ...candlePayload,
+        channel: `candles:${engineSymbol}:${candle.interval}`,
       });
+      this.broadcastToChannel(`candles:${symbol}:${candle.interval}`, candlePayload);
+      if (id !== symbol) {
+        this.broadcastToChannel(`candles:${id}:${candle.interval}`, {
+          ...candlePayload,
+          channel: `candles:${id}:${candle.interval}`,
+        });
+      }
     });
   }
 
@@ -187,7 +312,7 @@ export class WebSocketGateway {
         include: { user: true },
       });
 
-      if (session && !session.revokedAt && session.expiresAt > new Date()) {
+      if (session && !session.revokedAt && session.expiresAt > new Date() && session.user.status === "ACTIVE") {
         ws.userId = session.userId;
         ws.send(
           JSON.stringify({
@@ -195,9 +320,24 @@ export class WebSocketGateway {
             userId: session.userId,
           })
         );
+      } else {
+        ws.send(
+          JSON.stringify({
+            type: "error",
+            code: "UNAUTHENTICATED",
+            message: "Invalid or expired session token",
+          })
+        );
       }
     } catch (err) {
       console.error("[WebSocketGateway] Auth error:", err);
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          code: "UNAUTHENTICATED",
+          message: "Authentication failed",
+        })
+      );
     }
   }
 
@@ -231,8 +371,22 @@ export class WebSocketGateway {
 
       // Check permission for private user channels
       if (channel.startsWith("user:")) {
-        const targetUserId = channel.replace("user:", "");
-        if (!ws.userId || ws.userId !== targetUserId) {
+        const rawTargetId = channel.replace("user:", "");
+        if (rawTargetId === "current") {
+          if (!ws.userId) {
+            ws.send(
+              JSON.stringify({
+                type: "error",
+                code: "FORBIDDEN",
+                message: "Cannot subscribe to private channel without authentication",
+                subscription: channel,
+              })
+            );
+            return;
+          }
+          ws.subscriptions.add(`user:${ws.userId}`);
+          ws.subscriptions.add("user:current");
+        } else if (!ws.userId || ws.userId !== rawTargetId) {
           ws.send(
             JSON.stringify({
               type: "error",
@@ -242,10 +396,32 @@ export class WebSocketGateway {
             })
           );
           return;
+        } else {
+          ws.subscriptions.add(channel);
         }
+      } else if (channel.startsWith("book:")) {
+        const asset = channel.replace("book:", "");
+        const { id, symbol, engineSymbol } = resolveAssetIdentifiers(asset);
+        ws.subscriptions.add(`book:${id}`);
+        ws.subscriptions.add(`book:${symbol}`);
+        ws.subscriptions.add(`book:${engineSymbol}`);
+      } else if (channel.startsWith("trades:")) {
+        const asset = channel.replace("trades:", "");
+        const { id, symbol, engineSymbol } = resolveAssetIdentifiers(asset);
+        ws.subscriptions.add(`trades:${id}`);
+        ws.subscriptions.add(`trades:${symbol}`);
+        ws.subscriptions.add(`trades:${engineSymbol}`);
+      } else if (channel.startsWith("candles:")) {
+        const parts = channel.replace("candles:", "").split(":");
+        const asset = parts[0];
+        const interval = parts[1] || "1m";
+        const { id, symbol, engineSymbol } = resolveAssetIdentifiers(asset);
+        ws.subscriptions.add(`candles:${id}:${interval}`);
+        ws.subscriptions.add(`candles:${symbol}:${interval}`);
+        ws.subscriptions.add(`candles:${engineSymbol}:${interval}`);
+      } else {
+        ws.subscriptions.add(channel);
       }
-
-      ws.subscriptions.add(channel);
 
       // Contract rule: Acks MUST NOT carry a top-level channel field
       ws.send(
@@ -258,19 +434,26 @@ export class WebSocketGateway {
       // Immediate Snapshot Delivery for book subscriptions
       if (channel.startsWith("book:")) {
         const asset = channel.replace("book:", "");
-        let snapshot = this.cachedBooks.get(asset);
+        const { id, symbol, engineSymbol } = resolveAssetIdentifiers(asset);
+        let snapshot = this.cachedBooks.get(engineSymbol) || this.cachedBooks.get(symbol) || this.cachedBooks.get(asset);
         if (!snapshot) {
           try {
-            snapshot = await engineClient.getBook(asset, 15);
-            this.cachedBooks.set(asset, snapshot);
+            snapshot = await engineClient.getBook(engineSymbol, 15);
+            this.cachedBooks.set(engineSymbol, snapshot);
           } catch {}
         }
         if (snapshot) {
+          const payloadData = {
+            ...snapshot,
+            asset: symbol,
+            symbol,
+            asset_id: id,
+          };
           ws.send(
             JSON.stringify({
               type: "BookSnapshot",
               channel,
-              data: snapshot,
+              data: payloadData,
               ts: Date.now(),
             })
           );

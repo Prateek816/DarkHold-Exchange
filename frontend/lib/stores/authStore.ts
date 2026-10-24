@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { AuthUser } from "@/lib/types";
 import { api } from "@/lib/api-client";
+import { marketDataService } from "@/lib/market-data";
 import { useWalletStore } from "./walletStore";
 
 interface AuthState {
@@ -30,6 +31,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
     if (token) {
       api.setAuthToken(token);
+      marketDataService.authenticate?.(token);
     }
     set({
       user,
@@ -46,6 +48,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       localStorage.removeItem("dkh_auth_user");
     }
     api.setAuthToken(null);
+    marketDataService.clearAuth?.();
     set({
       user: null,
       token: null,
@@ -74,6 +77,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoading: false,
           isInitialized: true,
         });
+
+        const token = get().token || api.getAuthToken();
+        if (token) {
+          marketDataService.authenticate?.(token);
+        }
 
         // Sync wallet from backend
         try {

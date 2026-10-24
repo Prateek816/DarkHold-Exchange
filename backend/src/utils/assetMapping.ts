@@ -58,3 +58,38 @@ export function toDbAssetIdentifier(identifier: string): { symbol: string; id: s
   const upper = identifier.toUpperCase();
   return ENGINE_TO_DB_MAP[upper] || ENGINE_TO_DB_MAP[identifier] || null;
 }
+
+/**
+ * Resolves any valid asset identifier (ID, DB symbol, or Engine symbol) into all 3 forms:
+ * { id, symbol, engineSymbol }
+ */
+export function resolveAssetIdentifiers(identifier: string): { id: string; symbol: string; engineSymbol: string } {
+  if (!identifier) {
+    return { id: identifier, symbol: identifier, engineSymbol: identifier };
+  }
+  const upper = identifier.toUpperCase();
+  const dbFromEngine = ENGINE_TO_DB_MAP[upper] || null;
+  if (dbFromEngine) {
+    return {
+      id: dbFromEngine.id,
+      symbol: dbFromEngine.symbol,
+      engineSymbol: upper,
+    };
+  }
+
+  const engineSym = DB_TO_ENGINE_SYMBOL[upper] || null;
+  if (engineSym && ENGINE_TO_DB_MAP[engineSym]) {
+    const mapped = ENGINE_TO_DB_MAP[engineSym];
+    return {
+      id: mapped.id,
+      symbol: mapped.symbol,
+      engineSymbol: engineSym,
+    };
+  }
+
+  return {
+    id: identifier,
+    symbol: identifier,
+    engineSymbol: engineSym || identifier,
+  };
+}

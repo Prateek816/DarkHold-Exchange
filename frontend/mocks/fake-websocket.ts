@@ -64,6 +64,14 @@ class FakeWebSocketService {
     this.subscribedChannels.delete(channel);
   }
 
+  public authenticate(token: string) {
+    // Mock authentication no-op
+  }
+
+  public clearAuth() {
+    // Mock clearAuth no-op
+  }
+
   public setConnectionState(newState: ConnectionState) {
     this.state = newState;
     this.emit("connection_change", { state: newState });

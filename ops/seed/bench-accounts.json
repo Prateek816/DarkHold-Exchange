@@ -1,0 +1,2606 @@
+{
+  "schema_version": 1,
+  "password": "darkhold-sim-dev",
+  "accounts": [
+    {
+      "key": "bench-0001",
+      "email": "bench-0001@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0002",
+      "email": "bench-0002@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0003",
+      "email": "bench-0003@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0004",
+      "email": "bench-0004@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0005",
+      "email": "bench-0005@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0006",
+      "email": "bench-0006@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0007",
+      "email": "bench-0007@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0008",
+      "email": "bench-0008@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0009",
+      "email": "bench-0009@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0010",
+      "email": "bench-0010@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0011",
+      "email": "bench-0011@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0012",
+      "email": "bench-0012@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0013",
+      "email": "bench-0013@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0014",
+      "email": "bench-0014@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0015",
+      "email": "bench-0015@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0016",
+      "email": "bench-0016@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0017",
+      "email": "bench-0017@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0018",
+      "email": "bench-0018@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0019",
+      "email": "bench-0019@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0020",
+      "email": "bench-0020@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0021",
+      "email": "bench-0021@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0022",
+      "email": "bench-0022@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0023",
+      "email": "bench-0023@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0024",
+      "email": "bench-0024@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0025",
+      "email": "bench-0025@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0026",
+      "email": "bench-0026@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0027",
+      "email": "bench-0027@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0028",
+      "email": "bench-0028@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0029",
+      "email": "bench-0029@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0030",
+      "email": "bench-0030@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0031",
+      "email": "bench-0031@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0032",
+      "email": "bench-0032@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0033",
+      "email": "bench-0033@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0034",
+      "email": "bench-0034@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0035",
+      "email": "bench-0035@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0036",
+      "email": "bench-0036@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0037",
+      "email": "bench-0037@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0038",
+      "email": "bench-0038@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0039",
+      "email": "bench-0039@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0040",
+      "email": "bench-0040@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0041",
+      "email": "bench-0041@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0042",
+      "email": "bench-0042@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0043",
+      "email": "bench-0043@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0044",
+      "email": "bench-0044@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0045",
+      "email": "bench-0045@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0046",
+      "email": "bench-0046@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0047",
+      "email": "bench-0047@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0048",
+      "email": "bench-0048@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0049",
+      "email": "bench-0049@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0050",
+      "email": "bench-0050@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0051",
+      "email": "bench-0051@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0052",
+      "email": "bench-0052@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0053",
+      "email": "bench-0053@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0054",
+      "email": "bench-0054@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0055",
+      "email": "bench-0055@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0056",
+      "email": "bench-0056@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0057",
+      "email": "bench-0057@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0058",
+      "email": "bench-0058@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0059",
+      "email": "bench-0059@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0060",
+      "email": "bench-0060@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0061",
+      "email": "bench-0061@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0062",
+      "email": "bench-0062@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0063",
+      "email": "bench-0063@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0064",
+      "email": "bench-0064@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0065",
+      "email": "bench-0065@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0066",
+      "email": "bench-0066@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0067",
+      "email": "bench-0067@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0068",
+      "email": "bench-0068@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0069",
+      "email": "bench-0069@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0070",
+      "email": "bench-0070@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0071",
+      "email": "bench-0071@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0072",
+      "email": "bench-0072@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0073",
+      "email": "bench-0073@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0074",
+      "email": "bench-0074@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0075",
+      "email": "bench-0075@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0076",
+      "email": "bench-0076@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0077",
+      "email": "bench-0077@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0078",
+      "email": "bench-0078@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0079",
+      "email": "bench-0079@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0080",
+      "email": "bench-0080@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0081",
+      "email": "bench-0081@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0082",
+      "email": "bench-0082@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0083",
+      "email": "bench-0083@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0084",
+      "email": "bench-0084@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0085",
+      "email": "bench-0085@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0086",
+      "email": "bench-0086@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0087",
+      "email": "bench-0087@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0088",
+      "email": "bench-0088@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0089",
+      "email": "bench-0089@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0090",
+      "email": "bench-0090@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0091",
+      "email": "bench-0091@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0092",
+      "email": "bench-0092@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0093",
+      "email": "bench-0093@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0094",
+      "email": "bench-0094@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0095",
+      "email": "bench-0095@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0096",
+      "email": "bench-0096@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0097",
+      "email": "bench-0097@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0098",
+      "email": "bench-0098@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0099",
+      "email": "bench-0099@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0100",
+      "email": "bench-0100@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0101",
+      "email": "bench-0101@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0102",
+      "email": "bench-0102@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0103",
+      "email": "bench-0103@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0104",
+      "email": "bench-0104@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0105",
+      "email": "bench-0105@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0106",
+      "email": "bench-0106@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0107",
+      "email": "bench-0107@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0108",
+      "email": "bench-0108@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0109",
+      "email": "bench-0109@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0110",
+      "email": "bench-0110@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0111",
+      "email": "bench-0111@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0112",
+      "email": "bench-0112@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0113",
+      "email": "bench-0113@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0114",
+      "email": "bench-0114@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0115",
+      "email": "bench-0115@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0116",
+      "email": "bench-0116@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0117",
+      "email": "bench-0117@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0118",
+      "email": "bench-0118@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0119",
+      "email": "bench-0119@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0120",
+      "email": "bench-0120@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0121",
+      "email": "bench-0121@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0122",
+      "email": "bench-0122@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0123",
+      "email": "bench-0123@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0124",
+      "email": "bench-0124@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0125",
+      "email": "bench-0125@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0126",
+      "email": "bench-0126@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0127",
+      "email": "bench-0127@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0128",
+      "email": "bench-0128@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0129",
+      "email": "bench-0129@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0130",
+      "email": "bench-0130@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0131",
+      "email": "bench-0131@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0132",
+      "email": "bench-0132@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0133",
+      "email": "bench-0133@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0134",
+      "email": "bench-0134@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0135",
+      "email": "bench-0135@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0136",
+      "email": "bench-0136@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0137",
+      "email": "bench-0137@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0138",
+      "email": "bench-0138@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0139",
+      "email": "bench-0139@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0140",
+      "email": "bench-0140@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0141",
+      "email": "bench-0141@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0142",
+      "email": "bench-0142@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0143",
+      "email": "bench-0143@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0144",
+      "email": "bench-0144@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0145",
+      "email": "bench-0145@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0146",
+      "email": "bench-0146@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0147",
+      "email": "bench-0147@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0148",
+      "email": "bench-0148@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0149",
+      "email": "bench-0149@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0150",
+      "email": "bench-0150@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0151",
+      "email": "bench-0151@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0152",
+      "email": "bench-0152@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0153",
+      "email": "bench-0153@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0154",
+      "email": "bench-0154@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0155",
+      "email": "bench-0155@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0156",
+      "email": "bench-0156@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0157",
+      "email": "bench-0157@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0158",
+      "email": "bench-0158@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0159",
+      "email": "bench-0159@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0160",
+      "email": "bench-0160@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0161",
+      "email": "bench-0161@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0162",
+      "email": "bench-0162@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0163",
+      "email": "bench-0163@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0164",
+      "email": "bench-0164@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0165",
+      "email": "bench-0165@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0166",
+      "email": "bench-0166@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0167",
+      "email": "bench-0167@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0168",
+      "email": "bench-0168@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0169",
+      "email": "bench-0169@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0170",
+      "email": "bench-0170@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0171",
+      "email": "bench-0171@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0172",
+      "email": "bench-0172@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0173",
+      "email": "bench-0173@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0174",
+      "email": "bench-0174@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0175",
+      "email": "bench-0175@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0176",
+      "email": "bench-0176@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0177",
+      "email": "bench-0177@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0178",
+      "email": "bench-0178@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0179",
+      "email": "bench-0179@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0180",
+      "email": "bench-0180@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0181",
+      "email": "bench-0181@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0182",
+      "email": "bench-0182@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0183",
+      "email": "bench-0183@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0184",
+      "email": "bench-0184@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0185",
+      "email": "bench-0185@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0186",
+      "email": "bench-0186@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0187",
+      "email": "bench-0187@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0188",
+      "email": "bench-0188@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0189",
+      "email": "bench-0189@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0190",
+      "email": "bench-0190@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0191",
+      "email": "bench-0191@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0192",
+      "email": "bench-0192@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0193",
+      "email": "bench-0193@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0194",
+      "email": "bench-0194@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0195",
+      "email": "bench-0195@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0196",
+      "email": "bench-0196@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0197",
+      "email": "bench-0197@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0198",
+      "email": "bench-0198@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0199",
+      "email": "bench-0199@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    },
+    {
+      "key": "bench-0200",
+      "email": "bench-0200@sim.darkhold.local",
+      "role": "bench",
+      "is_simulated": true,
+      "starter_credits": 1000000000,
+      "initial_units": {
+        "BENCH-A": 100000,
+        "BENCH-B": 100000,
+        "BENCH-C": 100000,
+        "BENCH-D": 100000
+      }
+    }
+  ]
+}

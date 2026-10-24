@@ -1,0 +1,585 @@
+{
+  "schema_version": 1,
+  "password": "darkhold-sim-dev",
+  "accounts": [
+    {
+      "key": "issuer",
+      "email": "issuer@sim.darkhold.local",
+      "role": "issuer",
+      "is_simulated": true,
+      "starter_credits": 0,
+      "initial_units": {
+        "DFEST-WKND": 4000,
+        "MOONRISE-GA": 3060,
+        "DFEST-HOODIE": 1060,
+        "SIGIL-PIN": 60
+      }
+    },
+    {
+      "key": "mm-01",
+      "email": "mm-01@sim.darkhold.local",
+      "role": "market_maker",
+      "is_simulated": true,
+      "starter_credits": 20000000,
+      "initial_units": {
+        "DFEST-WKND": 100,
+        "DFEST-HOODIE": 100
+      },
+      "quotes": [
+        "DFEST-WKND",
+        "DFEST-HOODIE"
+      ]
+    },
+    {
+      "key": "mm-02",
+      "email": "mm-02@sim.darkhold.local",
+      "role": "market_maker",
+      "is_simulated": true,
+      "starter_credits": 20000000,
+      "initial_units": {
+        "DFEST-WKND": 100,
+        "SIGIL-PIN": 100
+      },
+      "quotes": [
+        "DFEST-WKND",
+        "SIGIL-PIN"
+      ]
+    },
+    {
+      "key": "mm-03",
+      "email": "mm-03@sim.darkhold.local",
+      "role": "market_maker",
+      "is_simulated": true,
+      "starter_credits": 20000000,
+      "initial_units": {
+        "DFEST-WKND": 100,
+        "DFEST-HOODIE": 100
+      },
+      "quotes": [
+        "DFEST-WKND",
+        "DFEST-HOODIE"
+      ]
+    },
+    {
+      "key": "mm-04",
+      "email": "mm-04@sim.darkhold.local",
+      "role": "market_maker",
+      "is_simulated": true,
+      "starter_credits": 20000000,
+      "initial_units": {
+        "MOONRISE-GA": 100,
+        "SIGIL-PIN": 100
+      },
+      "quotes": [
+        "MOONRISE-GA",
+        "SIGIL-PIN"
+      ]
+    },
+    {
+      "key": "mm-05",
+      "email": "mm-05@sim.darkhold.local",
+      "role": "market_maker",
+      "is_simulated": true,
+      "starter_credits": 20000000,
+      "initial_units": {
+        "MOONRISE-GA": 100,
+        "DFEST-HOODIE": 100
+      },
+      "quotes": [
+        "MOONRISE-GA",
+        "DFEST-HOODIE"
+      ]
+    },
+    {
+      "key": "mm-06",
+      "email": "mm-06@sim.darkhold.local",
+      "role": "market_maker",
+      "is_simulated": true,
+      "starter_credits": 20000000,
+      "initial_units": {
+        "MOONRISE-GA": 100,
+        "SIGIL-PIN": 100
+      },
+      "quotes": [
+        "MOONRISE-GA",
+        "SIGIL-PIN"
+      ]
+    },
+    {
+      "key": "noise-01",
+      "email": "noise-01@sim.darkhold.local",
+      "role": "noise",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 20,
+        "MOONRISE-GA": 20,
+        "DFEST-HOODIE": 20,
+        "SIGIL-PIN": 20
+      }
+    },
+    {
+      "key": "noise-02",
+      "email": "noise-02@sim.darkhold.local",
+      "role": "noise",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 20,
+        "MOONRISE-GA": 20,
+        "DFEST-HOODIE": 20,
+        "SIGIL-PIN": 20
+      }
+    },
+    {
+      "key": "noise-03",
+      "email": "noise-03@sim.darkhold.local",
+      "role": "noise",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 20,
+        "MOONRISE-GA": 20,
+        "DFEST-HOODIE": 20,
+        "SIGIL-PIN": 20
+      }
+    },
+    {
+      "key": "noise-04",
+      "email": "noise-04@sim.darkhold.local",
+      "role": "noise",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 20,
+        "MOONRISE-GA": 20,
+        "DFEST-HOODIE": 20,
+        "SIGIL-PIN": 20
+      }
+    },
+    {
+      "key": "noise-05",
+      "email": "noise-05@sim.darkhold.local",
+      "role": "noise",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 20,
+        "MOONRISE-GA": 20,
+        "DFEST-HOODIE": 20,
+        "SIGIL-PIN": 20
+      }
+    },
+    {
+      "key": "noise-06",
+      "email": "noise-06@sim.darkhold.local",
+      "role": "noise",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 20,
+        "MOONRISE-GA": 20,
+        "DFEST-HOODIE": 20,
+        "SIGIL-PIN": 20
+      }
+    },
+    {
+      "key": "noise-07",
+      "email": "noise-07@sim.darkhold.local",
+      "role": "noise",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 20,
+        "MOONRISE-GA": 20,
+        "DFEST-HOODIE": 20,
+        "SIGIL-PIN": 20
+      }
+    },
+    {
+      "key": "noise-08",
+      "email": "noise-08@sim.darkhold.local",
+      "role": "noise",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 20,
+        "MOONRISE-GA": 20,
+        "DFEST-HOODIE": 20,
+        "SIGIL-PIN": 20
+      }
+    },
+    {
+      "key": "noise-09",
+      "email": "noise-09@sim.darkhold.local",
+      "role": "noise",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 20,
+        "MOONRISE-GA": 20,
+        "DFEST-HOODIE": 20,
+        "SIGIL-PIN": 20
+      }
+    },
+    {
+      "key": "noise-10",
+      "email": "noise-10@sim.darkhold.local",
+      "role": "noise",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 20,
+        "MOONRISE-GA": 20,
+        "DFEST-HOODIE": 20,
+        "SIGIL-PIN": 20
+      }
+    },
+    {
+      "key": "noise-11",
+      "email": "noise-11@sim.darkhold.local",
+      "role": "noise",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 20,
+        "MOONRISE-GA": 20,
+        "DFEST-HOODIE": 20,
+        "SIGIL-PIN": 20
+      }
+    },
+    {
+      "key": "noise-12",
+      "email": "noise-12@sim.darkhold.local",
+      "role": "noise",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 20,
+        "MOONRISE-GA": 20,
+        "DFEST-HOODIE": 20,
+        "SIGIL-PIN": 20
+      }
+    },
+    {
+      "key": "noise-13",
+      "email": "noise-13@sim.darkhold.local",
+      "role": "noise",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 20,
+        "MOONRISE-GA": 20,
+        "DFEST-HOODIE": 20,
+        "SIGIL-PIN": 20
+      }
+    },
+    {
+      "key": "noise-14",
+      "email": "noise-14@sim.darkhold.local",
+      "role": "noise",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 20,
+        "MOONRISE-GA": 20,
+        "DFEST-HOODIE": 20,
+        "SIGIL-PIN": 20
+      }
+    },
+    {
+      "key": "noise-15",
+      "email": "noise-15@sim.darkhold.local",
+      "role": "noise",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 20,
+        "MOONRISE-GA": 20,
+        "DFEST-HOODIE": 20,
+        "SIGIL-PIN": 20
+      }
+    },
+    {
+      "key": "noise-16",
+      "email": "noise-16@sim.darkhold.local",
+      "role": "noise",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 20,
+        "MOONRISE-GA": 20,
+        "DFEST-HOODIE": 20,
+        "SIGIL-PIN": 20
+      }
+    },
+    {
+      "key": "noise-17",
+      "email": "noise-17@sim.darkhold.local",
+      "role": "noise",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 20,
+        "MOONRISE-GA": 20,
+        "DFEST-HOODIE": 20,
+        "SIGIL-PIN": 20
+      }
+    },
+    {
+      "key": "noise-18",
+      "email": "noise-18@sim.darkhold.local",
+      "role": "noise",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 20,
+        "MOONRISE-GA": 20,
+        "DFEST-HOODIE": 20,
+        "SIGIL-PIN": 20
+      }
+    },
+    {
+      "key": "noise-19",
+      "email": "noise-19@sim.darkhold.local",
+      "role": "noise",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 20,
+        "MOONRISE-GA": 20,
+        "DFEST-HOODIE": 20,
+        "SIGIL-PIN": 20
+      }
+    },
+    {
+      "key": "noise-20",
+      "email": "noise-20@sim.darkhold.local",
+      "role": "noise",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 20,
+        "MOONRISE-GA": 20,
+        "DFEST-HOODIE": 20,
+        "SIGIL-PIN": 20
+      }
+    },
+    {
+      "key": "mom-01",
+      "email": "mom-01@sim.darkhold.local",
+      "role": "momentum",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 10,
+        "MOONRISE-GA": 10,
+        "DFEST-HOODIE": 10,
+        "SIGIL-PIN": 10
+      }
+    },
+    {
+      "key": "mom-02",
+      "email": "mom-02@sim.darkhold.local",
+      "role": "momentum",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 10,
+        "MOONRISE-GA": 10,
+        "DFEST-HOODIE": 10,
+        "SIGIL-PIN": 10
+      }
+    },
+    {
+      "key": "mom-03",
+      "email": "mom-03@sim.darkhold.local",
+      "role": "momentum",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 10,
+        "MOONRISE-GA": 10,
+        "DFEST-HOODIE": 10,
+        "SIGIL-PIN": 10
+      }
+    },
+    {
+      "key": "mom-04",
+      "email": "mom-04@sim.darkhold.local",
+      "role": "momentum",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 10,
+        "MOONRISE-GA": 10,
+        "DFEST-HOODIE": 10,
+        "SIGIL-PIN": 10
+      }
+    },
+    {
+      "key": "mom-05",
+      "email": "mom-05@sim.darkhold.local",
+      "role": "momentum",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 10,
+        "MOONRISE-GA": 10,
+        "DFEST-HOODIE": 10,
+        "SIGIL-PIN": 10
+      }
+    },
+    {
+      "key": "mom-06",
+      "email": "mom-06@sim.darkhold.local",
+      "role": "momentum",
+      "is_simulated": true,
+      "starter_credits": 2000000,
+      "initial_units": {
+        "DFEST-WKND": 10,
+        "MOONRISE-GA": 10,
+        "DFEST-HOODIE": 10,
+        "SIGIL-PIN": 10
+      }
+    },
+    {
+      "key": "pt-01",
+      "email": "pt-01@sim.darkhold.local",
+      "role": "profit_taker",
+      "is_simulated": true,
+      "starter_credits": 1000000,
+      "initial_units": {
+        "DFEST-WKND": 30,
+        "MOONRISE-GA": 30,
+        "DFEST-HOODIE": 30,
+        "SIGIL-PIN": 30
+      }
+    },
+    {
+      "key": "pt-02",
+      "email": "pt-02@sim.darkhold.local",
+      "role": "profit_taker",
+      "is_simulated": true,
+      "starter_credits": 1000000,
+      "initial_units": {
+        "DFEST-WKND": 30,
+        "MOONRISE-GA": 30,
+        "DFEST-HOODIE": 30,
+        "SIGIL-PIN": 30
+      }
+    },
+    {
+      "key": "pt-03",
+      "email": "pt-03@sim.darkhold.local",
+      "role": "profit_taker",
+      "is_simulated": true,
+      "starter_credits": 1000000,
+      "initial_units": {
+        "DFEST-WKND": 30,
+        "MOONRISE-GA": 30,
+        "DFEST-HOODIE": 30,
+        "SIGIL-PIN": 30
+      }
+    },
+    {
+      "key": "pt-04",
+      "email": "pt-04@sim.darkhold.local",
+      "role": "profit_taker",
+      "is_simulated": true,
+      "starter_credits": 1000000,
+      "initial_units": {
+        "DFEST-WKND": 30,
+        "MOONRISE-GA": 30,
+        "DFEST-HOODIE": 30,
+        "SIGIL-PIN": 30
+      }
+    },
+    {
+      "key": "pt-05",
+      "email": "pt-05@sim.darkhold.local",
+      "role": "profit_taker",
+      "is_simulated": true,
+      "starter_credits": 1000000,
+      "initial_units": {
+        "DFEST-WKND": 30,
+        "MOONRISE-GA": 30,
+        "DFEST-HOODIE": 30,
+        "SIGIL-PIN": 30
+      }
+    },
+    {
+      "key": "pt-06",
+      "email": "pt-06@sim.darkhold.local",
+      "role": "profit_taker",
+      "is_simulated": true,
+      "starter_credits": 1000000,
+      "initial_units": {
+        "DFEST-WKND": 30,
+        "MOONRISE-GA": 30,
+        "DFEST-HOODIE": 30,
+        "SIGIL-PIN": 30
+      }
+    },
+    {
+      "key": "pump-1",
+      "email": "pump-1@sim.darkhold.local",
+      "role": "pump",
+      "is_simulated": true,
+      "starter_credits": 5000000,
+      "initial_units": {}
+    },
+    {
+      "key": "pump-2",
+      "email": "pump-2@sim.darkhold.local",
+      "role": "pump",
+      "is_simulated": true,
+      "starter_credits": 5000000,
+      "initial_units": {}
+    },
+    {
+      "key": "pump-3",
+      "email": "pump-3@sim.darkhold.local",
+      "role": "pump",
+      "is_simulated": true,
+      "starter_credits": 5000000,
+      "initial_units": {}
+    },
+    {
+      "key": "scalper-1",
+      "email": "scalper-1@sim.darkhold.local",
+      "role": "scalper",
+      "is_simulated": true,
+      "starter_credits": 1000000,
+      "initial_units": {
+        "DFEST-WKND": 10
+      }
+    },
+    {
+      "key": "demo-seller",
+      "email": "demo-seller@sim.darkhold.local",
+      "role": "judge_seller",
+      "is_simulated": false,
+      "starter_credits": 100000,
+      "initial_units": {
+        "DFEST-WKND": 50
+      }
+    },
+    {
+      "key": "demo-buyer",
+      "email": "demo-buyer@sim.darkhold.local",
+      "role": "judge_buyer",
+      "is_simulated": false,
+      "starter_credits": 5000000,
+      "initial_units": {}
+    },
+    {
+      "key": "operator",
+      "email": "operator@sim.darkhold.local",
+      "role": "admin",
+      "is_simulated": false,
+      "starter_credits": 0,
+      "initial_units": {}
+    }
+  ]
+}

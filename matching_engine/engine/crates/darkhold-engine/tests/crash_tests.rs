@@ -74,7 +74,7 @@ fn gen_stream(seed: u64, n: usize) -> Vec<Value> {
 // ---------------------------------------------------------------------------
 
 fn build_model(epoch: &str, cmds: &[Value]) -> Engine {
-    let mut e = Engine::new(epoch.into());
+    let mut e = Engine::new(epoch.to_string());
     for (i, c) in cmds.iter().enumerate() {
         let cmd: Command = serde_json::from_value(c.clone()).expect("model parse");
         let _ = e.process(cmd, 1_000 + i as u64);

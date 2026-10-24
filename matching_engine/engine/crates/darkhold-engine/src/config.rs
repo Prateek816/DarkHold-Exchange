@@ -85,7 +85,7 @@ impl Config {
             sse_heartbeat_ms: num(&get, "SSE_HEARTBEAT_MS", 15_000u64)?,
             sse_max_subscribers: num(&get, "SSE_MAX_SUBSCRIBERS", 8usize)?,
             max_body_bytes: num(&get, "MAX_BODY_BYTES", 16_384usize)?,
-            paranoid: get("PARANOID").map_or(false, |v| v == "1"),
+            paranoid: get("PARANOID").is_some_and(|v| v == "1"),
             log_level: get("LOG_LEVEL").unwrap_or_else(|| "info".into()),
             log_format,
         };

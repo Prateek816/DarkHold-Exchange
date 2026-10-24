@@ -1,21 +1,5 @@
 {
-  "name": "darkhold-matching-engine",
+  "name": "darkhold",
   "private": true,
-  "version": "0.1.0",
-  "engines": {
-    "node": ">=20"
-  },
-  "workspaces": [
-    "contracts",
-    "packages/*",
-    "sim",
-    "tools/*"
-  ],
-  "scripts": {
-    "build": "npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
-    "validate": "npm run validate -w contracts",
-    "generate": "npm run generate -w contracts"
-  }
+  "workspaces": ["contracts"]
 }

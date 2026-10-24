@@ -22,7 +22,7 @@ fn install_panic_hook() {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // 1. config (fails fast when ENGINE_TOKEN is missing)
-    let cfg = Config::from_env()?;
+    let cfg = Config::from_env().map_err(anyhow::Error::msg)?;
     // 2. tracing
     let filter = tracing_subscriber::EnvFilter::new(&cfg.log_level);
     if cfg.log_format == "json" {
@@ -39,7 +39,7 @@ async fn main() -> anyhow::Result<()> {
     install_panic_hook();
 
     // 3. recovery
-    let rec = recovery::recover(&cfg.wal_dir, cfg.ring_capacity)?;
+    let rec = recovery::recover(std::path::Path::new(&cfg.wal_dir), cfg.ring_capacity)?;
     tracing::info!(
         records = rec.stats.records_replayed,
         events = rec.stats.events_regenerated,
@@ -86,8 +86,8 @@ async fn main() -> anyhow::Result<()> {
         core_alive,
         epoch,
     };
-    let listener = tokio::net::TcpListener::bind(&cfg.engine_bind).await?;
-    tracing::info!(bind = %cfg.engine_bind, "engine listening");
+    let listener = tokio::net::TcpListener::bind(&cfg.bind).await?;
+    tracing::info!(bind = %cfg.bind, "engine listening");
     let server = axum::serve(listener, http::router(state));
     tokio::select! {
         r = server => { r?; }

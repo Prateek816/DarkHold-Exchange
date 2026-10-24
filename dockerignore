@@ -1,0 +1,13 @@
+**/node_modules
+**/target
+**/.next
+**/dist
+**/.git
+**/.agents
+**/.DS_Store
+backend/.env
+backend/.env.*
+!backend/.env.example
+docs
+Dockerfile
+docker-entrypoint.sh

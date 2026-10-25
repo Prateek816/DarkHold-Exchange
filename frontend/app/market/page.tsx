@@ -1,248 +1,583 @@
-"use client";
+'use client';
 
-import React, { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api-client";
-import { AssetCard } from "@/components/market/AssetCard";
-import { VolumeHeatmap } from "@/components/market/VolumeHeatmap";
-import { LineArtEmptyState } from "@/components/ui/LineArtEmptyState";
-import { Skeleton } from "@/components/ui/Skeleton";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { Reveal } from "@/components/ui/Reveal";
-import { SegmentedTabs } from "@/components/ui/SegmentedTabs";
-import { useUiStore } from "@/lib/stores/uiStore";
-import { formatCurrency, formatPercent } from "@/lib/format";
+import React, { useState, useMemo } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { AppShell } from '@/components/shell/AppShell';
+import { MockBootstrap } from '@/components/shell/MockBootstrap';
+import { useMarketStore, useUserStore, useToastStore } from '@/lib/store';
+import { fmt } from '@/lib/formatters';
+import { sound } from '@/lib/sound';
+import { AssetCard } from '@/components/primitives/AssetCard';
+import { AuctionPromoCard } from '@/components/primitives/AuctionPromoCard';
+import { DimTail, UnitSuffix } from '@/components/primitives/DimTail';
+import { TickedSlider } from '@/components/primitives/TickedSlider';
+import { AccordionRow } from '@/components/primitives/AccordionRow';
+import ElectricBorder from '@/components/ui/ElectricBorder';
 import {
-  Layers,
-  ArrowUpDown,
-  RefreshCw,
-  AlertOctagon,
-  WifiOff,
-  Flame,
-  ChevronDown,
-  ShieldCheck,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+  Clock, ArrowUpRight, Copy, Share2, LineChart, Plus,
+  RefreshCw, SlidersHorizontal, ShieldCheck, Check, Layers
+} from 'lucide-react';
 
-export default function MarketplacePage() {
-  const { connectionState } = useUiStore();
-  const isDisconnected = connectionState === "DISCONNECTED" || connectionState === "RECONNECTING";
+export default function DashboardPage() {
+  const router = useRouter();
+  const { assets, auctions, markets } = useMarketStore();
+  const { wallet } = useUserStore();
+  const pushToast = useToastStore((s) => s.push);
 
-  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
-  const [sortBy, setSortBy] = useState<"CHANGE" | "VOLUME" | "PRICE" | "NAME">("CHANGE");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  // Filters for Top Assets
+  const [timeRange, setTimeRange] = useState<'24H' | '6H' | '1H'>('24H');
+  const [category, setCategory] = useState<'ALL' | 'PASS' | 'MERCH'>('ALL');
+  const [sortOrder, setSortOrder] = useState<'DESC' | 'ASC'>('DESC');
 
-  const {
-    data: assets = [],
-    isLoading,
-    isError,
-    refetch,
-    isFetching,
-  } = useQuery({
-    queryKey: ["assets"],
-    queryFn: () => api.getAssets(),
-    refetchInterval: isDisconnected ? 10000 : 30000,
-  });
+  // Hero Card History Slider State (minutes: 5m to 360m / 6h)
+  const [historyWindowMins, setHistoryWindowMins] = useState(360);
+  const [copiedLink, setCopiedLink] = useState(false);
 
-  const filteredAssets = assets.filter((asset) => {
-    if (selectedCategory === "ALL") return true;
-    return asset.category === selectedCategory;
-  });
+  // Filtered and Sorted Assets for the top 3 cards
+  const displayedAssets = useMemo(() => {
+    let list = [...assets];
+    if (category !== 'ALL') {
+      list = list.filter((a) => a.category === category);
+    }
+    list.sort((a, b) => {
+      return sortOrder === 'DESC'
+        ? b.last_price - a.last_price
+        : a.last_price - b.last_price;
+    });
+    return list.slice(0, 3);
+  }, [assets, category, sortOrder]);
 
-  const sortedAssets = [...filteredAssets].sort((a, b) => {
-    let comparison = 0;
-    if (sortBy === "CHANGE") comparison = a.price_change_24h_pct - b.price_change_24h_pct;
-    else if (sortBy === "VOLUME") comparison = a.volume_24h - b.volume_24h;
-    else if (sortBy === "PRICE") comparison = a.last_price - b.last_price;
-    else if (sortBy === "NAME") comparison = a.name.localeCompare(b.name);
-    return sortOrder === "desc" ? -comparison : comparison;
-  });
+  // Primary Selected Asset for the "Your orders and positions" hero card
+  const heroAsset = assets[0] || {
+    id: 'dfest-wkd',
+    symbol: 'DFEST-WKD',
+    name: 'Darkhold Fest Weekend Pass',
+    category: 'PASS',
+    face_value: 35000,
+    ceiling_price: 42000,
+    last_price: 34800,
+    change_24h: 4.2,
+    best_bid: 34700,
+    best_ask: 34900,
+    volume_24h: 1420,
+    has_sim: true,
+  };
 
-  const stats = useMemo(() => {
-    const totalVolume = assets.reduce((sum, a) => sum + a.volume_24h, 0);
-    const topMover = [...assets].sort(
-      (a, b) => b.price_change_24h_pct - a.price_change_24h_pct
-    )[0];
-    return { totalVolume, topMover };
-  }, [assets]);
+  const heroPriceDollars = (heroAsset.last_price / 100).toFixed(2);
+  const spreadCents = heroAsset.best_ask - heroAsset.best_bid;
+  const spreadPct = ((spreadCents / (heroAsset.last_price || 1)) * 100).toFixed(2);
+  const headroomDollars = ((heroAsset.ceiling_price - heroAsset.last_price) / 100).toFixed(2);
+  const vsFacePct = Math.round((heroAsset.last_price / heroAsset.face_value) * 100);
+  const vsCeilingPct = Math.round((heroAsset.last_price / heroAsset.ceiling_price) * 100);
 
-  const categories = [
-    { id: "ALL", label: "All relics" },
-    { id: "FESTIVAL_PASS", label: "Festival passes" },
-    { id: "LIMITED_MERCH", label: "Limited merch" },
-  ];
+  const handleCopyLink = () => {
+    sound.playClick();
+    setCopiedLink(true);
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(window.location.href).catch(() => {});
+      }
+    } catch {
+      // Ignore clipboard errors in headless browser
+    }
+    pushToast({
+      title: 'Link Copied',
+      body: 'Market URL copied to clipboard.',
+      variant: 'info',
+    });
+    setTimeout(() => setCopiedLink(false), 1500);
+  };
+
+  const handleShare = () => {
+    sound.playClick();
+    pushToast({
+      title: 'Market Share',
+      body: `Shared ${heroAsset.name} quote.`,
+      variant: 'info',
+    });
+  };
+
+  const formatSliderTime = (mins: number) => {
+    if (mins >= 60) return `${Math.round(mins / 60)}h`;
+    return `${mins}m`;
+  };
 
   return (
-    <div className="page-shell">
-      <PageHeader
-        eyebrow="Exchange · Marketplace"
-        title="Marketplace"
-        description="Fair-price simulated order books, enforced by The Ward price ceiling."
-        badge={
-          isDisconnected ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.12em] text-warning">
-              <WifiOff className="h-3 w-3" />
-              REST poll · 10s
-            </span>
-          ) : undefined
-        }
-        actions={
-          <button
-            onClick={() => refetch()}
-            disabled={isFetching}
-            className="flex items-center gap-2 rounded-full border border-glass-border bg-white/[0.035] px-4 py-2 font-mono text-[11px] text-text-muted shadow-glass-sm transition-all hover:border-glass-border-strong hover:bg-white/[0.07] hover:text-text disabled:opacity-50"
-            title="Refresh assets"
-          >
-            <RefreshCw className={cn("h-3.5 w-3.5 text-brand-400", isFetching && "animate-spin")} />
-            <span>{isFetching ? "Syncing…" : "Sync"}</span>
-          </button>
-        }
-      />
+    <MockBootstrap>
+      <AppShell title="Dashboard">
+        <div className="space-y-6 max-w-7xl mx-auto pb-12">
+          {/* ═══════════════════════════════════════════════════════════
+              SECTION 1: TOP ASSETS & AUCTION PROMO (Matching ref-app.png)
+          ═══════════════════════════════════════════════════════════ */}
+          <div>
+            {/* Top Subtitle & Header Strip */}
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-4">
+              <div>
+                <div className="flex items-center gap-2 text-xs text-[var(--muted)] mb-1">
+                  <Clock size={13} className="text-[var(--lav)]" />
+                  <span>Most traded in the last 24 hours</span>
+                  <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-[var(--raised)] text-white">
+                    3 assets
+                  </span>
+                </div>
+                <h2 className="font-display font-bold text-2xl text-white tracking-tight">
+                  Top assets
+                </h2>
+              </div>
 
-      {/* Market summary strip */}
-      <Reveal>
-        <div className="grid grid-cols-2 divide-y divide-white/[0.07] overflow-hidden rounded-[16px] border border-glass-border bg-white/[0.02] backdrop-blur-md sm:grid-cols-4 sm:divide-y-0 sm:divide-x">
-          {[
-            {
-              icon: Layers,
-              label: "Listed relics",
-              value: String(assets.length || "—"),
-              tone: "text-brand-400",
-            },
-            {
-              icon: Flame,
-              label: "24h volume",
-              value: stats.totalVolume ? formatCurrency(stats.totalVolume, { showCents: false }) : "—",
-              tone: "text-warning",
-            },
-            {
-              icon: ArrowUpDown,
-              label: "Top mover",
-              value: stats.topMover
-                ? `${stats.topMover.symbol} ${formatPercent(stats.topMover.price_change_24h_pct)}`
-                : "—",
-              tone: "text-buy-text",
-            },
-            {
-              icon: ShieldCheck,
-              label: "Ward status",
-              value: "Enforced",
-              tone: "text-violet-300",
-            },
-          ].map((item) => (
-            <div key={item.label} className="flex items-center gap-3 px-4 py-3.5">
-              <item.icon className={cn("h-4 w-4 shrink-0", item.tone)} strokeWidth={1.8} />
-              <div className="min-w-0">
-                <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-text-dim">
-                  {item.label}
-                </p>
-                <p className="truncate pt-0.5 font-display text-[13px] font-semibold tracking-tight text-text tabular-nums">
-                  {item.value}
-                </p>
+              {/* Working Filter Pills */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Time Range Pill */}
+                <div className="bg-[var(--raised)] border border-[var(--line)] rounded-[8px] p-0.5 flex text-xs">
+                  {(['24H', '6H', '1H'] as const).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => {
+                        sound.playClick();
+                        setTimeRange(t);
+                      }}
+                      className={`px-2.5 py-1 rounded-[6px] font-semibold transition-all ${
+                        timeRange === t ? 'bg-[#222234] text-white shadow-sm' : 'text-[var(--muted)] hover:text-white'
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Category Dropdown Pill */}
+                <select
+                  value={category}
+                  onChange={(e) => {
+                    sound.playClick();
+                    setCategory(e.target.value as any);
+                  }}
+                  className="bg-[var(--raised)] border border-[var(--line)] rounded-[8px] px-3 py-1.5 text-xs text-white font-medium outline-none cursor-pointer"
+                >
+                  <option value="ALL">All Categories</option>
+                  <option value="PASS">Festival Passes</option>
+                  <option value="MERCH">Limited Merch</option>
+                </select>
+
+                {/* Sort Order Pill */}
+                <button
+                  onClick={() => {
+                    sound.playClick();
+                    setSortOrder(sortOrder === 'DESC' ? 'ASC' : 'DESC');
+                  }}
+                  className="bg-[var(--raised)] border border-[var(--line)] rounded-[8px] px-3 py-1.5 text-xs text-white font-medium hover:border-[rgba(255,255,255,0.2)] transition-colors"
+                >
+                  {sortOrder === 'DESC' ? 'Desc ▾' : 'Asc ▴'}
+                </button>
               </div>
             </div>
-          ))}
-        </div>
-      </Reveal>
 
-      {!isLoading && assets.length > 0 && <VolumeHeatmap assets={assets} />}
+            {/* Top Grid: 3 Asset Cards (68%) + Auction Promo Card (30%) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              {/* 3 Asset Cards (8 cols) */}
+              <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {displayedAssets.map((asset) => (
+                  <AssetCard key={asset.id} asset={asset} />
+                ))}
+              </div>
 
-      {/* Filter / sort */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <SegmentedTabs
-          tabs={categories}
-          activeId={selectedCategory}
-          onChange={setSelectedCategory}
-          size="sm"
-          className="no-scrollbar max-w-full overflow-x-auto"
-          layoutId="market-category-pill"
-        />
-
-        <div className="flex items-center gap-2">
-          <span className="hidden font-mono text-[9px] uppercase tracking-[0.12em] text-text-dim sm:block">
-            Sort
-          </span>
-          <div className="relative">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              aria-label="Sort assets"
-              className="cursor-pointer appearance-none rounded-full border border-glass-border bg-white/[0.035] py-1.5 pl-3.5 pr-8 font-mono text-[11px] text-text transition-colors hover:bg-white/[0.06] focus-visible:ring-2 focus-visible:ring-brand-500"
-            >
-              <option value="CHANGE" className="bg-canvas-elevated text-text">24h Change</option>
-              <option value="VOLUME" className="bg-canvas-elevated text-text">24h Volume</option>
-              <option value="PRICE" className="bg-canvas-elevated text-text">Last Price</option>
-              <option value="NAME" className="bg-canvas-elevated text-text">Asset Name</option>
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-2.5 top-2.5 h-3.5 w-3.5 text-text-muted" />
+              {/* Auction Promo Card (4 cols) */}
+              <div className="lg:col-span-4 min-h-[300px]">
+                <AuctionPromoCard auctions={auctions} />
+              </div>
+            </div>
           </div>
 
-          <button
-            onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-glass-border bg-white/[0.035] text-text-muted transition-colors hover:bg-white/[0.07] hover:text-text"
-            title={`Toggle sort order (${sortOrder.toUpperCase()})`}
+          {/* ═══════════════════════════════════════════════════════════
+              SECTION 2: LARGE HERO CARD — "YOUR ORDERS AND POSITIONS"
+              (Exact layout, 72px price with DimTail, and TickedSlider)
+          ═══════════════════════════════════════════════════════════ */}
+          <ElectricBorder
+            borderRadius={24}
+            color="#B9A7FF"
+            glowColor="#7B2FF7"
+            speed={0.4}
+            chaos={0.12}
+            spread={0.2}
+            thickness={1.0}
+            strands={2}
+            glow={0.25}
+            intensity={0.45}
+            arcs={0}
+            flicker={0.1}
+            active={true}
+            interactive={true}
+            className="w-full"
           >
-            <ArrowUpDown className={cn("h-3.5 w-3.5", sortOrder === "asc" && "rotate-180")} />
-          </button>
-        </div>
-      </div>
+            <div className="surface p-6 rounded-3xl relative overflow-hidden w-full">
+            {/* Card Header Strip: Title + 4 Icon Buttons */}
+            <div className="flex items-center justify-between pb-4 border-b border-[var(--line-soft)] mb-5">
+              <span className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider">
+                Your orders and positions
+              </span>
 
-      {/* Loading */}
-      {isLoading && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {[1, 2, 3, 4].map((n) => (
-            <Skeleton key={n} className="h-[318px] w-full rounded-card" />
-          ))}
-        </div>
-      )}
+              {/* 4 Working Small Icon Buttons (Chart, New Order, Refresh, Filter) */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => router.push(`/trade/${heroAsset.id}`)}
+                  title="Open Chart View"
+                  className="round-icon-btn"
+                >
+                  <LineChart size={14} />
+                </button>
+                <button
+                  onClick={() => router.push(`/trade/${heroAsset.id}`)}
+                  title="Create Order"
+                  className="round-icon-btn"
+                >
+                  <Plus size={14} />
+                </button>
+                <button
+                  onClick={() => {
+                    sound.playClick();
+                    pushToast({ title: 'Refreshed', body: 'Live quote re-polled.', variant: 'info' });
+                  }}
+                  title="Refresh Positions"
+                  className="round-icon-btn"
+                >
+                  <RefreshCw size={14} />
+                </button>
+                <button
+                  onClick={() => {
+                    sound.playClick();
+                    pushToast({ title: 'Filter', body: 'Filters updated.', variant: 'info' });
+                  }}
+                  title="Filter Orders"
+                  className="round-icon-btn"
+                >
+                  <SlidersHorizontal size={14} />
+                </button>
+              </div>
+            </div>
 
-      {/* Error */}
-      {isError && (
-        <div
-          role="alert"
-          className="space-y-4 rounded-card border border-sell/40 bg-sell/[0.05] p-8 text-center"
-        >
-          <AlertOctagon className="mx-auto h-8 w-8 text-sell" />
-          <h3 className="text-sm font-semibold text-text">Failed to load marketplace assets</h3>
-          <p className="font-mono text-xs text-text-muted">
-            The exchange registry is temporarily unreachable. Reference: REQ-ERR-4912
-          </p>
-          <button
-            onClick={() => refetch()}
-            className="rounded-full bg-sell px-5 py-2 text-xs font-semibold text-white shadow-[0_0_15px_rgba(240,80,110,0.3)] transition-all hover:bg-sell/90"
-          >
-            Retry connection
-          </button>
-        </div>
-      )}
+            {/* Split Row: Left Hero Price & Controls | Right History Waveform Slider */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+              {/* Left Column (7 cols): Hero Asset Details & 72px Price */}
+              <div className="lg:col-span-7">
+                {/* Subtitle with Clock */}
+                <div className="flex items-center gap-1.5 text-xs text-[var(--muted)] mb-1.5">
+                  <Clock size={12} className="text-[var(--lav)]" />
+                  <span>Last trade 12 seconds ago</span>
+                </div>
 
-      {/* Empty */}
-      {!isLoading && !isError && sortedAssets.length === 0 && (
-        <LineArtEmptyState
-          type="NO_ASSETS"
-          title="No assets listed yet"
-          description="There are currently no trading instruments matching the selected filter criteria."
-          action={
-            <button
-              onClick={() => setSelectedCategory("ALL")}
-              className="rounded-full border border-glass-border bg-white/[0.04] px-4 py-1.5 text-xs text-text transition-colors hover:bg-white/[0.08]"
-            >
-              Reset filters
-            </button>
-          }
-        />
-      )}
+                {/* Asset Title Strip (34px/500) + Tiles & Icon Buttons */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F8B700] to-[#D97706] flex items-center justify-center font-bold text-sm text-[#17122E] shadow-md shrink-0">
+                    {heroAsset.symbol[0]}
+                  </div>
 
-      {/* Asset grid */}
-      {!isLoading && !isError && sortedAssets.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {sortedAssets.map((asset, i) => (
-            <Reveal key={asset.id} delay={Math.min(i * 0.045, 0.27)} y={14}>
-              <AssetCard asset={asset} />
-            </Reveal>
-          ))}
+                  <h3 className="font-display font-medium text-2xl md:text-3xl text-white tracking-tight">
+                    {heroAsset.name}
+                  </h3>
+
+                  <div className="flex items-center gap-1 ml-2">
+                    <button
+                      onClick={handleCopyLink}
+                      title="Copy asset link"
+                      className="round-icon-btn"
+                    >
+                      {copiedLink ? <Check size={13} className="text-[var(--buy)]" /> : <Copy size={13} />}
+                    </button>
+                    <button
+                      onClick={handleShare}
+                      title="Share quote"
+                      className="round-icon-btn"
+                    >
+                      <Share2 size={13} />
+                    </button>
+                    <Link
+                      href={`/trade/${heroAsset.id}`}
+                      className="btn-secondary h-8 px-3 text-xs ml-1 flex items-center gap-1"
+                    >
+                      <span>Open terminal</span>
+                      <ArrowUpRight size={13} />
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Hero Number Display: 72px Price with DimTail */}
+                <div className="mt-4">
+                  <span className="text-xs text-[var(--muted)] block font-medium">
+                    Last price, credits
+                  </span>
+                  <div className="flex items-baseline gap-2 mt-1">
+                    <span className="text-xs text-[var(--muted)] font-mono">$</span>
+                    <span className="font-display font-normal text-5xl md:text-6xl text-white tracking-tight">
+                      <DimTail value={heroPriceDollars} dimDigits={2} />
+                    </span>
+                    <UnitSuffix suffix="USD" />
+                  </div>
+                </div>
+
+                {/* Buy (Lavender) & Sell (Secondary) Action Buttons */}
+                <div className="flex items-center gap-3 mt-5">
+                  <Link
+                    href={`/trade/${heroAsset.id}?side=BUY`}
+                    className="btn-primary px-7 shadow-lg shadow-[rgba(185,167,255,0.25)] flex items-center gap-1.5"
+                  >
+                    <span>Buy</span>
+                    <ArrowUpRight size={14} />
+                  </Link>
+
+                  <Link
+                    href={`/trade/${heroAsset.id}?side=SELL`}
+                    className="btn-secondary px-7 flex items-center gap-1.5"
+                  >
+                    <span>Sell</span>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Right Column (5 cols): History Window Panel with Ticked Waveform Slider */}
+              <div className="lg:col-span-5 bg-[var(--raised)] border border-[var(--line-soft)] p-4 rounded-xl">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-white">History window</span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[var(--inset)] text-[var(--lav)] border border-[var(--line-soft)]">
+                      {formatSliderTime(historyWindowMins)}
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-mono text-[var(--muted)]">5m – 6h</span>
+                </div>
+
+                <p className="text-[11px] text-[var(--muted)] mb-3 leading-relaxed">
+                  Adjust the chart sampling resolution across mock rehearsal and live WebSocket streams.
+                </p>
+
+                {/* Custom Ticked Waveform Slider */}
+                <TickedSlider
+                  min={5}
+                  max={360}
+                  step={5}
+                  value={historyWindowMins}
+                  onChange={(v) => setHistoryWindowMins(v)}
+                  formatValue={(v) => formatSliderTime(v)}
+                  ticksCount={36}
+                />
+              </div>
+            </div>
+
+            {/* ═══════════════════════════════════════════════════════════
+                FOUR ACCORDION ROWS (Expandable in place with hairline dividers)
+            ═══════════════════════════════════════════════════════════ */}
+            <div className="mt-8 pt-4 border-t border-[var(--line-soft)] space-y-1">
+              {/* 1. Market Spread */}
+              <AccordionRow
+                title="Market"
+                subtitle={`Spread: ${fmt.price(spreadCents)} (${spreadPct}%) · Best Bid ${fmt.price(heroAsset.best_bid)} · Best Ask ${fmt.price(heroAsset.best_ask)}`}
+                rightBadge={
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[var(--raised)] text-[var(--buy)]">
+                    NORMAL SPREAD
+                  </span>
+                }
+              >
+                <div className="p-3 bg-[var(--inset)] rounded-xl border border-[var(--line-soft)] grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
+                  <div>
+                    <span className="text-[var(--muted)] block text-[10px]">Best Bid</span>
+                    <span className="text-[var(--buy)] font-bold">{fmt.price(heroAsset.best_bid)}</span>
+                  </div>
+                  <div>
+                    <span className="text-[var(--muted)] block text-[10px]">Best Ask</span>
+                    <span className="text-[var(--sell)] font-bold">{fmt.price(heroAsset.best_ask)}</span>
+                  </div>
+                  <div>
+                    <span className="text-[var(--muted)] block text-[10px]">Spread Efficiency</span>
+                    <span className="text-white font-medium">{spreadPct}% (Tight Liquidity)</span>
+                  </div>
+                </div>
+              </AccordionRow>
+
+              {/* 2. Order Book Mini Depth Chart */}
+              <AccordionRow
+                title="Order book"
+                subtitle="Live Level 2 aggregated liquidity snapshot with anti-scalping ceiling marks"
+                rightBadge={
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[var(--raised)] text-white">
+                    15 LEVELS
+                  </span>
+                }
+              >
+                <div className="p-3 bg-[var(--inset)] rounded-xl border border-[var(--line-soft)]">
+                  <div className="flex items-center justify-between text-[11px] font-mono text-[var(--muted)] mb-2">
+                    <span>Bids (Cumulative 48 units)</span>
+                    <span className="text-[var(--cap)]">Ceiling: {fmt.price(heroAsset.ceiling_price)}</span>
+                    <span>Asks (Cumulative 32 units)</span>
+                  </div>
+                  {/* Mini Visual Stepped Bar */}
+                  <div className="h-6 w-full flex rounded-lg overflow-hidden border border-[var(--line-soft)]">
+                    <div className="bg-[var(--buy-dim)] border-r border-[var(--buy)] w-[60%] flex items-center px-2 text-[10px] text-[var(--buy)] font-mono">
+                      60% Bids
+                    </div>
+                    <div className="bg-[var(--sell-dim)] w-[40%] flex items-center justify-end px-2 text-[10px] text-[var(--sell)] font-mono">
+                      40% Asks
+                    </div>
+                  </div>
+                </div>
+              </AccordionRow>
+
+              {/* 3. Settlement Activity */}
+              <AccordionRow
+                title="Settlement"
+                subtitle="Double-entry ledger invariant checks (R1–R8) and settlement queue latency"
+                rightBadge={
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[var(--buy-dim)] text-[var(--buy)]">
+                    PASSING (0 LAG)
+                  </span>
+                }
+              >
+                <div className="p-3 bg-[var(--inset)] rounded-xl border border-[var(--line-soft)] grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
+                  <div>
+                    <span className="text-[var(--muted)] block text-[10px]">Pending Settlements</span>
+                    <span className="text-white font-bold">0 Transactions</span>
+                  </div>
+                  <div>
+                    <span className="text-[var(--muted)] block text-[10px]">Average Settlement Lag</span>
+                    <span className="text-[var(--buy)] font-bold">42ms (Instant Reserve)</span>
+                  </div>
+                  <div>
+                    <span className="text-[var(--muted)] block text-[10px]">Ledger Invariant</span>
+                    <span className="text-white font-medium">R1–R8 Balanced</span>
+                  </div>
+                </div>
+              </AccordionRow>
+
+              {/* 4. Resale Price Ceiling Safeguard */}
+              <AccordionRow
+                title="Ceiling"
+                subtitle={`Face value ${fmt.price(heroAsset.face_value)} · Resale cap ${fmt.price(heroAsset.ceiling_price)} (120%) · Headroom $${headroomDollars}`}
+                rightBadge={
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-[rgba(255,181,71,0.15)] text-[var(--cap)]">
+                    SHIELDED
+                  </span>
+                }
+              >
+                <div className="p-3 bg-[var(--inset)] rounded-xl border border-[var(--line-soft)] text-xs font-mono flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div>
+                    <span className="text-[var(--cap)] font-bold flex items-center gap-1.5">
+                      <ShieldCheck size={14} />
+                      Anti-Scalp Protection Active
+                    </span>
+                    <p className="text-[11px] text-[var(--muted)] mt-0.5">
+                      Orders exceeding 120% of face value ({fmt.price(heroAsset.ceiling_price)}) are automatically rejected.
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-white font-bold text-sm">${headroomDollars}</span>
+                    <span className="text-[10px] text-[var(--muted)] block">Buffer to price cap</span>
+                  </div>
+                </div>
+              </AccordionRow>
+            </div>
+          </div>
+        </ElectricBorder>
+
+          {/* ═══════════════════════════════════════════════════════════
+              SECTION 3: FOUR STAT CARDS (Prompt Section 7)
+          ═══════════════════════════════════════════════════════════ */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Stat Card 1: Volume (24H) */}
+            <div className="surface p-5 rounded-2xl flex flex-col justify-between">
+              <div className="flex items-center justify-between text-xs text-[var(--muted)]">
+                <span className="font-medium">Volume</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-[var(--raised)] text-white">
+                  24H
+                </span>
+              </div>
+              <div className="my-2">
+                <span className="font-display text-2xl font-normal text-white">
+                  {heroAsset.volume_24h.toLocaleString()}
+                </span>
+                <UnitSuffix suffix="units" />
+              </div>
+              <span className="text-[11px] text-[var(--dim)]">Continuous SIM bot liquidity</span>
+            </div>
+
+            {/* Stat Card 2: Price (24H) with Delta */}
+            <div className="surface p-5 rounded-2xl flex flex-col justify-between">
+              <div className="flex items-center justify-between text-xs text-[var(--muted)]">
+                <span className="font-medium">Price (24H)</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-[var(--raised)] text-white">
+                  24H
+                </span>
+              </div>
+              <div className="my-2 flex items-baseline justify-between">
+                <div className="font-display text-2xl font-normal text-white">
+                  ${heroPriceDollars}
+                </div>
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[var(--buy-dim)] text-[var(--buy)]">
+                  +{heroAsset.change_24h}%
+                </span>
+              </div>
+              <span className="text-[11px] text-[var(--dim)]">Stochastic simulated drift</span>
+            </div>
+
+            {/* Stat Card 3: Spread */}
+            <div className="surface p-5 rounded-2xl flex flex-col justify-between">
+              <div className="flex items-center justify-between text-xs text-[var(--muted)]">
+                <span className="font-medium">Spread</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-[var(--raised)] text-white">
+                  24H
+                </span>
+              </div>
+              <div className="my-2">
+                <span className="font-display text-2xl font-normal text-white">
+                  {fmt.price(spreadCents)}
+                </span>
+                <UnitSuffix suffix={`(${spreadPct}%)`} />
+              </div>
+              <span className="text-[11px] text-[var(--dim)]">Order book depth efficiency</span>
+            </div>
+
+            {/* Stat Card 4: Valuation Ratios with Dual Comparison Slider Lines */}
+            <div className="surface p-5 rounded-2xl flex flex-col justify-between">
+              <div className="flex items-center justify-between text-xs text-[var(--muted)]">
+                <span className="font-medium">Valuation Ratios</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-[var(--raised)] text-white">
+                  24H
+                </span>
+              </div>
+
+              <div className="my-2 space-y-2">
+                {/* Last price vs face value */}
+                <div>
+                  <div className="flex justify-between text-[10px] font-mono text-[var(--muted)] mb-1">
+                    <span>vs Face Value</span>
+                    <span className="text-white font-semibold">{vsFacePct}%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-[var(--inset)] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[var(--lav)] rounded-full"
+                      style={{ width: `${Math.min(100, vsFacePct)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Last price vs ceiling */}
+                <div>
+                  <div className="flex justify-between text-[10px] font-mono text-[var(--muted)] mb-1">
+                    <span>vs Resale Ceiling</span>
+                    <span className="text-[var(--cap)] font-semibold">{vsCeilingPct}%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-[var(--inset)] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[var(--cap)] rounded-full"
+                      style={{ width: `${Math.min(100, vsCeilingPct)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <span className="text-[10px] text-[var(--cap)] font-mono">120% algorithmic ceiling</span>
+            </div>
+          </div>
         </div>
-      )}
-    </div>
+      </AppShell>
+    </MockBootstrap>
   );
 }

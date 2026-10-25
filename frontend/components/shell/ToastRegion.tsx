@@ -1,148 +1,181 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, AlertOctagon, Info, AlertTriangle, X, Copy, Check } from "lucide-react";
-import { IconTile } from "@/components/ui/IconTile";
-import { cn } from "@/lib/utils";
+import React, { useEffect } from 'react';
+import Link from 'next/link';
+import { motion, AnimatePresence } from 'motion/react';
+import { useToastStore, type ToastItem } from '@/lib/store';
+import { sound } from '@/lib/sound';
+import {
+  CheckCircle2, AlertOctagon, AlertTriangle, Sparkles, X,
+  ArrowUpRight, ShieldCheck, Zap
+} from 'lucide-react';
 
-export interface ToastMessage {
-  id: string;
-  type: "success" | "error" | "warning" | "info";
-  title?: string;
-  message: string;
-  requestId?: string;
-  countdownSeconds?: number;
+const VARIANT_CONFIG = {
+  success: {
+    icon: <CheckCircle2 size={16} className="text-[#3DDC6E]" />,
+    iconBg: 'bg-[rgba(61,220,110,0.14)]',
+    border: 'border-[rgba(61,220,110,0.32)]',
+    glow: 'shadow-[0_0_24px_-2px_rgba(61,220,110,0.22),0_12px_32px_rgba(0,0,0,0.8)]',
+    barColor: '#3DDC6E',
+    badge: 'CONFIRMED',
+    badgeStyle: 'bg-[rgba(61,220,110,0.12)] text-[#3DDC6E] border-[rgba(61,220,110,0.25)]',
+  },
+  error: {
+    icon: <AlertOctagon size={16} className="text-[#FF5A5F]" />,
+    iconBg: 'bg-[rgba(255,90,95,0.14)]',
+    border: 'border-[rgba(255,90,95,0.35)]',
+    glow: 'shadow-[0_0_24px_-2px_rgba(255,90,95,0.25),0_12px_32px_rgba(0,0,0,0.8)]',
+    barColor: '#FF5A5F',
+    badge: 'REJECTED',
+    badgeStyle: 'bg-[rgba(255,90,95,0.12)] text-[#FF5A5F] border-[rgba(255,90,95,0.25)]',
+  },
+  warn: {
+    icon: <AlertTriangle size={16} className="text-[#FFB547]" />,
+    iconBg: 'bg-[rgba(255,181,71,0.14)]',
+    border: 'border-[rgba(255,181,71,0.35)]',
+    glow: 'shadow-[0_0_24px_-2px_rgba(255,181,71,0.22),0_12px_32px_rgba(0,0,0,0.8)]',
+    barColor: '#FFB547',
+    badge: 'CIRCUIT BREAKER',
+    badgeStyle: 'bg-[rgba(255,181,71,0.12)] text-[#FFB547] border-[rgba(255,181,71,0.25)]',
+  },
+  info: {
+    icon: <Sparkles size={16} className="text-[var(--lav)]" />,
+    iconBg: 'bg-[rgba(185,167,255,0.14)]',
+    border: 'border-[rgba(185,167,255,0.32)]',
+    glow: 'shadow-[0_0_24px_-2px_rgba(123,47,247,0.25),0_12px_32px_rgba(0,0,0,0.8)]',
+    barColor: '#B9A7FF',
+    badge: 'DISPATCH',
+    badgeStyle: 'bg-[rgba(185,167,255,0.12)] text-[var(--lav)] border-[rgba(185,167,255,0.25)]',
+  },
+};
+
+function ToastCard({ t }: { t: ToastItem }) {
+  const dismiss = useToastStore((s) => s.dismiss);
+  const config = VARIANT_CONFIG[t.variant] || VARIANT_CONFIG.info;
+  const durationMs = t.autoDismissMs ?? 4000;
+
+  useEffect(() => {
+    // Play subtle audio cue on toast notification
+    if (t.variant === 'success') {
+      sound.playChime(660);
+    } else if (t.variant === 'error' || t.variant === 'warn') {
+      sound.playChime(320);
+    } else {
+      sound.playClick();
+    }
+  }, [t.variant]);
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 16, scale: 0.94 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9, y: -10, transition: { duration: 0.2 } }}
+      transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+      role="status"
+      aria-live="polite"
+      data-testid="toast"
+      className={`toast relative w-[360px] max-w-[calc(100vw-36px)] rounded-2xl bg-[linear-gradient(165deg,rgba(18,15,28,0.96)_0%,rgba(10,8,18,0.98)_100%)] border ${config.border} ${config.glow} backdrop-blur-xl p-3.5 overflow-hidden select-none`}
+    >
+      {/* Top Header Row */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-2.5 min-w-0">
+          {/* Glowing Icon Square */}
+          <div className={`w-8 h-8 rounded-xl ${config.iconBg} border border-[rgba(255,255,255,0.08)] flex items-center justify-center shrink-0 shadow-sm mt-0.5`}>
+            {config.icon}
+          </div>
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className={`px-1.5 py-0.2 rounded text-[9px] font-mono font-bold tracking-wider uppercase border ${config.badgeStyle}`}>
+                {config.badge}
+              </span>
+              <span className="text-[10px] font-mono text-[var(--muted)]">Just now</span>
+            </div>
+            <h4 className="font-display font-semibold text-xs text-white leading-snug truncate">
+              {t.title}
+            </h4>
+            {t.body && (
+              <p className="text-[11px] text-[var(--muted)] mt-0.5 leading-relaxed font-sans">
+                {t.body}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Dismiss Button */}
+        <button
+          type="button"
+          onClick={() => {
+            sound.playClick();
+            dismiss(t.id);
+          }}
+          className="w-6 h-6 rounded-lg flex items-center justify-center text-[var(--muted)] hover:text-white hover:bg-[rgba(255,255,255,0.08)] transition-colors cursor-pointer shrink-0 mt-0.5"
+          aria-label="Dismiss notification"
+        >
+          <X size={13} />
+        </button>
+      </div>
+
+      {/* Action Button (Optional) */}
+      {t.action && (
+        <div className="mt-2.5 pt-2 border-t border-[rgba(255,255,255,0.06)] flex justify-end">
+          {t.action.href ? (
+            <Link
+              href={t.action.href}
+              onClick={() => dismiss(t.id)}
+              className="text-[11px] font-mono font-bold text-[var(--lav)] hover:underline flex items-center gap-1"
+            >
+              <span>{t.action.label}</span>
+              <ArrowUpRight size={12} />
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                t.action?.onClick?.();
+                dismiss(t.id);
+              }}
+              className="text-[11px] font-mono font-bold text-[var(--lav)] hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <span>{t.action.label}</span>
+              <ArrowUpRight size={12} />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Depleting Progress Timer Bar */}
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[rgba(255,255,255,0.06)] overflow-hidden">
+        <div
+          className="h-full origin-left"
+          style={{
+            backgroundColor: config.barColor,
+            boxShadow: `0 0 8px ${config.barColor}`,
+            animation: `toast-progress ${durationMs}ms linear forwards`,
+          }}
+        />
+      </div>
+    </motion.div>
+  );
 }
 
-interface ToastRegionProps {
-  toasts: ToastMessage[];
-  onDismiss: (id: string) => void;
-}
-
-export function ToastRegion({ toasts, onDismiss }: ToastRegionProps) {
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  const copyRequestId = (reqId: string) => {
-    navigator.clipboard?.writeText(reqId);
-    setCopiedId(reqId);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
+export function ToastRegion() {
+  const toasts = useToastStore((s) => s.toasts);
 
   return (
     <div
+      className="fixed bottom-24 right-6 z-[9999] flex flex-col gap-2.5 pointer-events-none"
+      aria-label="System Notifications"
       role="region"
-      aria-live="polite"
-      aria-label="Notifications"
-      className="pointer-events-none fixed right-3 top-3 z-[70] flex w-full max-w-sm flex-col gap-2.5 sm:right-5 sm:top-5"
     >
-      <AnimatePresence initial={false}>
-        {toasts.map((toast) => {
-          let icon = CheckCircle2;
-          let variant: "teal" | "sell" | "amber" | "neutral" = "teal";
-          let borderClass = "border-brand-500/30";
-          let accent = "bg-brand-400";
-          let glow = "shadow-[0_0_26px_rgba(25,203,176,0.16)]";
-
-          if (toast.type === "error") {
-            icon = AlertOctagon;
-            variant = "sell";
-            borderClass = "border-sell/40";
-            accent = "bg-sell";
-            glow = "shadow-[0_0_26px_rgba(240,80,110,0.18)]";
-          } else if (toast.type === "warning") {
-            icon = AlertTriangle;
-            variant = "amber";
-            borderClass = "border-warning/40";
-            accent = "bg-warning";
-            glow = "shadow-[0_0_26px_rgba(245,181,68,0.16)]";
-          } else if (toast.type === "info") {
-            icon = Info;
-            variant = "teal";
-            borderClass = "border-brand-500/30";
-            accent = "bg-brand-400";
-          }
-
-          const lifetime = toast.countdownSeconds ?? 6;
-
-          return (
-            <motion.div
-              key={toast.id}
-              layout
-              initial={{ opacity: 0, y: -14, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 40, scale: 0.97, transition: { duration: 0.2 } }}
-              transition={{ type: "spring", stiffness: 380, damping: 30 }}
-              role="status"
-              className={cn(
-                "pointer-events-auto relative overflow-hidden rounded-panel border bg-canvas-elevated/95 p-4 backdrop-blur-[20px]",
-                "shadow-glass-sm",
-                borderClass,
-                glow
-              )}
-            >
-              {/* Left accent rail */}
-              <span className={cn("absolute inset-y-3 left-0 w-[2px] rounded-r-full", accent)} />
-
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <IconTile icon={icon} variant={variant} size="sm" />
-                  <div className="min-w-0 space-y-1">
-                    {toast.title && (
-                      <p className="font-display text-[12.5px] font-semibold leading-snug text-text">
-                        {toast.title}
-                      </p>
-                    )}
-                    <p className="text-[12px] leading-relaxed text-text-muted">{toast.message}</p>
-
-                    {toast.requestId && (
-                      <div className="flex items-center gap-1.5 pt-1 font-mono text-[10px] text-text-dim">
-                        <span className="truncate">Ref: {toast.requestId}</span>
-                        <button
-                          onClick={() => copyRequestId(toast.requestId!)}
-                          className="rounded-[6px] p-0.5 transition-colors hover:text-text"
-                          title="Copy request ID"
-                          aria-label="Copy request ID"
-                        >
-                          {copiedId === toast.requestId ? (
-                            <Check className="h-3 w-3 text-brand-400" />
-                          ) : (
-                            <Copy className="h-3 w-3" />
-                          )}
-                        </button>
-                      </div>
-                    )}
-
-                    {toast.countdownSeconds !== undefined && toast.countdownSeconds > 0 && (
-                      <p className="pt-0.5 font-mono text-[10px] text-warning">
-                        Unlocks in {toast.countdownSeconds}s…
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => onDismiss(toast.id)}
-                  className="rounded-[7px] p-1 text-text-dim transition-colors hover:bg-white/[0.06] hover:text-text"
-                  aria-label="Dismiss notification"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-
-              {/* Lifetime progress */}
-              <div className="mt-3 h-[2px] w-full overflow-hidden rounded-full bg-white/[0.05]">
-                <motion.div
-                  initial={{ width: "100%" }}
-                  animate={{ width: "0%" }}
-                  transition={{ duration: lifetime, ease: "linear" }}
-                  className={cn("h-full rounded-full", accent)}
-                />
-              </div>
-            </motion.div>
-          );
-        })}
-      </AnimatePresence>
+      <div className="flex flex-col gap-2.5 pointer-events-auto">
+        <AnimatePresence mode="popLayout">
+          {toasts.map((t) => (
+            <ToastCard key={t.id} t={t} />
+          ))}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

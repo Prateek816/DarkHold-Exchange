@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zapline // Trade Smarter, Faster, Safer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap" rel="stylesheet">
+  <style>
+    /* -------------------------------------------------------------
+       RESET & ROOT VARIABLES
+    -------------------------------------------------------------- */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #000000;
+      --text: #f7f7f8;
+      --muted: #8b8988;
+      --dim: #545250;
+      --violet: #9312ff;
+      --violet-light: #a020ff;
+      --violet-dark: #7a1cf8;
+      --violet-glow: rgba(147, 18, 255, 0.45);
+      --violet-border: rgba(147, 18, 255, 0.35);
+      --card-bg: rgba(13, 11, 18, 0.78);
+      --card-inner: rgba(22, 18, 32, 0.65);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --green: #45b558;
+      --red: #f03b2a;
+      --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-display: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-ui);
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* -------------------------------------------------------------
+       VIEWPORT STAGE & SCALING (1672 x 941 DESIGN FRAME)
+    -------------------------------------------------------------- */
+    #viewport-container {
+      position: relative;
+      width: 100vw;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      background: #000000;
+      overflow: hidden;
+    }
+
+    /* Fixed design stage that scales seamlessly */
+    #stage {
+      position: relative;
+      width: 1672px;
+      height: 941px;
+      flex-shrink: 0;
+      transform-origin: top center;
+    }
+
+    /* Background Starfield Canvas */
+    #stars-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Planet Rim Video & Fallback Canvas */
+    .planet-rim-layer {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1672px;
+      height: 717px;
+      pointer-events: none;
+      mix-blend-mode: screen;
+      z-index: 2;
+      overflow: hidden;
+    }
+
+    #rim-video {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1672px;
+      height: 717px;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 0.8s ease-in-out;
+    }
+
+    #rim-video.is-loaded {
+      opacity: 1;
+    }
+
+    #rim-fallback-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transition: opacity 0.8s ease;
+    }
+
+    /* -------------------------------------------------------------
+       NAVIGATION BAR
+    -------------------------------------------------------------- */
+    .nav-bar {
+      position: absolute;
+      top: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1204px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 20;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--violet-light), var(--violet-dark));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 16px var(--violet-glow);
+    }
+
+    .logo-text {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+
+    /* Centered Pill Menu */
+    .nav-menu {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 5px 6px;
+      border-radius: 999px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .nav-link {
+      padding: 7px 18px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      border-radius: 999px;
+      transition: color 0.2s, background-color 0.2s;
+    }
+
+    .nav-link:hover {
+      color: var(--text);
+    }
+
+    .nav-link.active {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    }
+
+    /* Right Action Button */
+    .btn-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 999px;
+      text-decoration: none;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+      border: none;
+      outline: none;
+    }
+
+    .btn-violet {
+      background: linear-gradient(135deg, var(--violet-light) 0%, var(--violet-dark) 100%);
+      color: #ffffff;
+      box-shadow: 0 0 20px rgba(160, 32, 255, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-violet:hover {
+      box-shadow: 0 0 32px rgba(160, 32, 255, 0.7), inset 0 1px 2px rgba(255, 255, 255, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .btn-dark {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text);
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-dark:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    /* -------------------------------------------------------------
+       HERO CONTENT (HEADLINE + LEDE + ACTIONS)
+    -------------------------------------------------------------- */
+    .hero-content {
+      position: absolute;
+      top: 154px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1204px;
+      text-align: center;
+      z-index: 10;
+    }
+
+    .headline-wrap {
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .headline {
+      font-family: var(--font-display);
+      font-size: 80px;
+      line-height: 1.05;
+      font-weight: 800;
+      letter-spacing: -0.035em;
+      color: #f7f7f8;
+    }
+
+    .violet-gradient-text {
+      background: linear-gradient(135deg, #c362ff 0%, #9312ff 50%, #700fff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+      filter: drop-shadow(0 0 24px rgba(147, 18, 255, 0.5));
+    }
+
+    .lede {
+      font-size: 16px;
+      line-height: 1.55;
+      font-weight: 400;
+      color: var(--muted);
+      max-width: 660px;
+      margin: 18px auto 28px auto;
+    }
+
+    .cta-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    /* -------------------------------------------------------------
+       DASHBOARD PANEL (Y = 651, WIDTH = 1204, ROUNDED 14PX)
+    -------------------------------------------------------------- */
+    .dashboard-wrapper {
+      position: absolute;
+      top: 615px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1204px;
+      z-index: 15;
+    }
+
+    /* Dashboard Glow Strip Above Top Edge */
+    .dashboard-glow-strip {
+      position: absolute;
+      top: -38px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1220px;
+      height: 76px;
+      pointer-events: none;
+      mix-blend-mode: screen;
+      z-index: 1;
+      opacity: 0.9;
+    }
+
+    .dashboard-panel {
+      position: relative;
+      width: 1204px;
+      height: 480px;
+      background: rgba(8, 7, 14, 0.88);
+      border-radius: 14px 14px 0 0;
+      border: 1px solid rgba(147, 18, 255, 0.35);
+      border-bottom: none;
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      box-shadow: 
+        0 -2px 25px rgba(147, 18, 255, 0.5),
+        inset 0 1px 1px rgba(255, 255, 255, 0.35),
+        inset 0 20px 40px rgba(147, 18, 255, 0.05);
+      display: grid;
+      grid-template-columns: 220px 1fr 310px;
+      z-index: 2;
+      overflow: hidden;
+    }
+
+    /* Glowing violet laser rim across the top of dashboard */
+    .dashboard-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1.5px;
+      background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(160, 32, 255, 0.6) 15%, 
+        #c96bff 50%, 
+        rgba(160, 32, 255, 0.6) 85%, 
+        transparent 100%
+      );
+      box-shadow: 0 0 12px #a020ff, 0 0 24px #9312ff;
+      z-index: 10;
+    }
+
+    /* -------------------------------------------------------------
+       DASHBOARD: LEFT SIDEBAR
+    -------------------------------------------------------------- */
+    .dash-sidebar {
+      border-right: 1px solid var(--card-border);
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: rgba(12, 10, 18, 0.6);
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4px 18px 4px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 15px;
+      color: #fff;
+    }
+
+    .gear-icon {
+      color: var(--muted);
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .gear-icon:hover { color: #fff; }
+
+    .nav-section {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-item:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .sidebar-item.active {
+      background: linear-gradient(135deg, rgba(160, 32, 255, 0.22), rgba(122, 28, 248, 0.12));
+      border: 1px solid rgba(160, 32, 255, 0.35);
+      color: #ffffff;
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15);
+    }
+
+    .sidebar-divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.05);
+      margin: 12px 4px;
+    }
+
+    /* Promo Card */
+    .pro-promo-card {
+      background: linear-gradient(160deg, rgba(147, 18, 255, 0.2) 0%, rgba(20, 16, 32, 0.8) 100%);
+      border: 1px solid rgba(160, 32, 255, 0.3);
+      padding: 14px;
+      border-radius: 10px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .pro-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pro-desc {
+      font-size: 11px;
+      color: var(--muted);
+      margin: 4px 0 10px 0;
+      line-height: 1.35;
+    }
+
+    .btn-upgrade {
+      width: 100%;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 6px;
+      background: var(--violet);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-upgrade:hover { background: var(--violet-light); }
+
+    /* -------------------------------------------------------------
+       DASHBOARD: CENTER SECTION (TOP BAR + STATS + CHART)
+    -------------------------------------------------------------- */
+    .dash-center {
+      padding: 18px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow: hidden;
+    }
+
+    /* Top Bar */
+    .dash-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .topbar-search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 6px 12px;
+      width: 240px;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .icon-btn {
+      color: var(--muted);
+      cursor: pointer;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+    }
+    .icon-btn:hover { color: #fff; }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      padding: 5px 12px 5px 6px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #a020ff, #5400ff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .wallet-addr {
+      color: var(--muted);
+      font-family: monospace;
+      font-size: 11px;
+    }
+
+    /* 2 Stats Cards */
+    .dash-stats-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 14px 16px;
+      position: relative;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .stat-value-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .stat-number {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+
+    .pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+
+    .pill-green {
+      background: rgba(69, 181, 88, 0.15);
+      color: var(--green);
+      border: 1px solid rgba(69, 181, 88, 0.3);
+    }
+
+    .pill-red {
+      background: rgba(240, 59, 42, 0.15);
+      color: var(--red);
+      border: 1px solid rgba(240, 59, 42, 0.3);
+    }
+
+    /* Chart Card */
+    .chart-card {
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .chart-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .chart-filters {
+      display: flex;
+      gap: 6px;
+    }
+
+    .filter-btn {
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 500;
+      border-radius: 6px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .filter-btn.active {
+      background: rgba(147, 18, 255, 0.2);
+      border-color: rgba(147, 18, 255, 0.4);
+      color: #fff;
+    }
+
+    .svg-chart-container {
+      width: 100%;
+      height: 175px;
+      position: relative;
+    }
+
+    /* -------------------------------------------------------------
+       DASHBOARD: RIGHT SECTION (CALENDAR & SNIPE METRICS)
+    -------------------------------------------------------------- */
+    .dash-right {
+      border-left: 1px solid var(--card-border);
+      padding: 18px 20px;
+      background: rgba(12, 10, 18, 0.6);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .cal-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: #fff;
+    }
+
+    .cal-sub {
+      font-size: 11.5px;
+      color: var(--muted);
+    }
+
+    /* Metric Rows */
+    .metric-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .metric-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+    }
+
+    .metric-name {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .metric-val-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .metric-val {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    /* Connected Apps Card */
+    .connected-apps-box {
+      margin-top: auto;
+      padding: 12px;
+      background: rgba(147, 18, 255, 0.08);
+      border: 1px solid rgba(147, 18, 255, 0.2);
+      border-radius: 8px;
+    }
+
+    .connected-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--violet-light);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+
+    .connected-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .app-pill {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      color: var(--text);
+    }
+
+    /* -------------------------------------------------------------
+       ENTRANCE MOTION ANIMATIONS (WIPE & CASCADE)
+    -------------------------------------------------------------- */
+    .anim-nav {
+      animation: fadeDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .anim-title {
+      animation: wipeUp 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+    }
+
+    .anim-lede {
+      animation: wipeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+    }
+
+    .anim-cta {
+      animation: wipeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both;
+    }
+
+    .anim-dashboard {
+      animation: riseUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.55s both;
+    }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translate(-50%, -15px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
+
+    @keyframes wipeUp {
+      from { opacity: 0; transform: translateY(28px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes riseUp {
+      from { opacity: 0; transform: translate(-50%, 60px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
+
+    /* -------------------------------------------------------------
+       ACCESSIBILITY & REDUCED MOTION
+    -------------------------------------------------------------- */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+      #rim-video {
+        display: none !important;
+      }
+      #rim-fallback-canvas {
+        opacity: 1 !important;
+      }
+    }
+
+    /* -------------------------------------------------------------
+       RESPONSIVE & MOBILE BREAKPOINT (< 900px or portrait)
+    -------------------------------------------------------------- */
+    @media (max-width: 900px), (orientation: portrait) {
+      #stage {
+        width: 100% !important;
+        height: auto !important;
+        transform: none !important;
+        padding-bottom: 60px;
+      }
+
+      .planet-rim-layer {
+        width: 100% !important;
+        height: 380px !important;
+      }
+
+      #rim-video {
+        display: none !important; /* Video is desktop only per spec */
+      }
+
+      #rim-fallback-canvas {
+        opacity: 1 !important;
+      }
+
+      .nav-bar {
+        position: relative;
+        top: 0;
+        left: 0;
+        transform: none;
+        width: 100%;
+        padding: 20px;
+      }
+
+      .nav-menu {
+        display: none; /* Collapses on mobile per spec */
+      }
+
+      .mobile-menu-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+        color: #fff;
+      }
+
+      .hero-content {
+        position: relative;
+        top: 0;
+        left: 0;
+        transform: none;
+        width: 100%;
+        padding: 30px 20px 20px 20px;
+      }
+
+      .headline {
+        font-size: 42px;
+        line-height: 1.1;
+      }
+
+      .lede {
+        font-size: 15px;
+        margin: 14px auto 22px auto;
+      }
+
+      .dashboard-wrapper {
+        position: relative;
+        top: 0;
+        left: 0;
+        transform: none;
+        width: 100%;
+        padding: 0 16px;
+        margin-top: 30px;
+      }
+
+      .dashboard-glow-strip {
+        display: none;
+      }
+
+      .dashboard-panel {
+        width: 100%;
+        height: auto;
+        display: flex;
+        flex-direction: column;
+        border-radius: 14px;
+        border-bottom: 1px solid rgba(147, 18, 255, 0.35);
+      }
+
+      .dash-sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--card-border);
+      }
+
+      .nav-section {
+        flex-direction: row;
+        overflow-x: auto;
+        padding-bottom: 8px;
+      }
+
+      .sidebar-item {
+        white-space: nowrap;
+      }
+
+      .pro-promo-card {
+        display: none;
+      }
+
+      .dash-stats-row {
+        grid-template-columns: 1fr;
+      }
+
+      .dash-right {
+        border-left: none;
+        border-top: 1px solid var(--card-border);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="viewport-container">
+    <!-- Starfield canvas stretches across whole viewport -->
+    <canvas id="stars-canvas"></canvas>
+
+    <!-- Scaled 1672 x 941 Design Stage -->
+    <div id="stage">
+
+      <!-- Violet Planet Rim Layer (Video + Canvas Fallback) -->
+      <div class="planet-rim-layer">
+        <canvas id="rim-fallback-canvas" width="1672" height="717"></canvas>
+        <video 
+          id="rim-video" 
+          src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/e859f229-8ebd-43fb-a5a0-58006ba75327.mp4" 
+          autoplay 
+          muted 
+          loop 
+          playsinline
+          preload="auto"
+        ></video>
+      </div>
+
+      <!-- Navigation Bar -->
+      <header class="nav-bar anim-nav">
+        <a href="#" class="brand-logo">
+          <div class="logo-icon">
+            <!-- Lightning bolt SVG -->
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </div>
+          <span class="logo-text">Zapline</span>
+        </a>
+
+        <nav class="nav-menu">
+          <a href="#" class="nav-link active">Home</a>
+          <a href="#" class="nav-link">Features</a>
+          <a href="#" class="nav-link">Zapline Advantage</a>
+          <a href="#" class="nav-link">Referral</a>
+          <a href="#" class="nav-link">FAQ</a>
+        </nav>
+
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <a href="#" class="btn-pill btn-violet">Get Started</a>
+          <!-- Mobile Menu Toggle Button (hidden on desktop) -->
+          <button class="mobile-menu-btn" style="display: none;" aria-label="Open menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Hero Typography and Calls to Action -->
+      <section class="hero-content">
+        <div class="headline-wrap">
+          <h1 class="headline anim-title">
+            <span class="violet-gradient-text">Zapline</span> Trade Smarter,<br>
+            Faster, Safer.
+          </h1>
+        </div>
+
+        <p class="lede anim-lede">
+          The first fully integrated on-chain trading experience. No dashboards, no delays — Zapline empowers you to trade directly from your favorite DeFi apps and terminals.
+        </p>
+
+        <div class="cta-row anim-cta">
+          <a href="#" class="btn-pill btn-violet" style="padding: 12px 30px; font-size: 15px;">Get Started</a>
+          <a href="#" class="btn-pill btn-dark" style="padding: 12px 28px; font-size: 15px;">Learn More</a>
+        </div>
+      </section>
+
+      <!-- Bottom Rising Dark Glass Dashboard -->
+      <div class="dashboard-wrapper anim-dashboard">
+        <!-- Screen-blended violet atmospheric glow strip -->
+        <img 
+          src="https://d2ol7oe51mr4n9.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/e0e14572-12e1-4c08-b471-a21521844945.png" 
+          alt="" 
+          class="dashboard-glow-strip"
+          onerror="this.style.display='none'"
+        />
+
+        <div class="dashboard-panel">
+          <!-- 1. SIDEBAR -->
+          <aside class="dash-sidebar">
+            <div>
+              <div class="sidebar-brand">
+                <div class="sidebar-logo">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a020ff" stroke-width="2.5">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                  </svg>
+                  <span>Zapline</span>
+                </div>
+                <div class="gear-icon" title="Settings">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Main Navigation Items -->
+              <nav class="nav-section">
+                <a href="#" class="sidebar-item">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  <span>Search</span>
+                </a>
+                <a href="#" class="sidebar-item active">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                  <span>Dashboard</span>
+                </a>
+                <a href="#" class="sidebar-item">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  <span>Snipes</span>
+                </a>
+                <a href="#" class="sidebar-item">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                  <span>Disconnect</span>
+                </a>
+              </nav>
+
+              <div class="sidebar-divider"></div>
+
+              <!-- Secondary Navigation Items -->
+              <nav class="nav-section" style="margin-top: 0;">
+                <a href="#" class="sidebar-item">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                  <span>Wallets</span>
+                </a>
+                <a href="#" class="sidebar-item">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                  <span>Referral</span>
+                </a>
+                <a href="#" class="sidebar-item">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                  <span>Settings</span>
+                </a>
+              </nav>
+            </div>
+
+            <!-- Zapline Pro Promo Card -->
+            <div class="pro-promo-card">
+              <div class="pro-title">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="#a020ff" stroke="#a020ff"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                <span>Zapline Pro</span>
+              </div>
+              <p class="pro-desc">Unlock 0.15s ultra-low latency nodes & MEV protection.</p>
+              <button class="btn-upgrade">Upgrade</button>
+            </div>
+          </aside>
+
+          <!-- 2. CENTER STAGE (STATS + IMPROVED CHART) -->
+          <main class="dash-center">
+            <!-- Topbar Row -->
+            <div class="dash-topbar">
+              <div class="topbar-search">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <span>Search tokens, pools, txs...</span>
+              </div>
+
+              <div class="topbar-right">
+                <div class="icon-btn" title="Notifications">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                </div>
+                <div class="icon-btn" title="Refresh">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                </div>
+
+                <div class="user-pill">
+                  <div class="avatar">AT</div>
+                  <span>Alex T.</span>
+                  <span class="wallet-addr">0x3f4…9c7e</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Two Stats Cards -->
+            <div class="dash-stats-row">
+              <div class="stat-card">
+                <div class="stat-label">Revenue generated (since inception)</div>
+                <div class="stat-value-row">
+                  <span class="stat-number">214,402</span>
+                  <span class="pill-badge pill-green">+12.5%</span>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-label">Active wallets/users</div>
+                <div class="stat-value-row">
+                  <span class="stat-number">6,412</span>
+                  <span class="pill-badge pill-red">−3.1%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Enhanced High-Precision SVG Area Chart -->
+            <div class="chart-card">
+              <div class="chart-header">
+                <div>
+                  <div class="chart-title">Daily dynamics of sales</div>
+                  <div style="font-size: 11px; color: var(--muted); margin-top: 2px;">Aggregated on-chain volume & routing efficiency</div>
+                </div>
+
+                <div class="chart-filters">
+                  <button class="filter-btn">1D</button>
+                  <button class="filter-btn active">1W</button>
+                  <button class="filter-btn">1M</button>
+                  <button class="filter-btn">ALL</button>
+                </div>
+              </div>
+
+              <div class="svg-chart-container" id="chart-container">
+                <svg viewBox="0 0 620 160" width="100%" height="100%" preserveAspectRatio="none">
+                  <defs>
+                    <!-- Glowing Violet Gradient for Area Fill -->
+                    <linearGradient id="areaGlow" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#9312ff" stop-opacity="0.38"/>
+                      <stop offset="50%" stop-color="#7a1cf8" stop-opacity="0.12"/>
+                      <stop offset="100%" stop-color="#7a1cf8" stop-opacity="0.0"/>
+                    </linearGradient>
+
+                    <!-- Neon Line Filter for Glowing Edge -->
+                    <filter id="neonLineGlow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feDropShadow dx="0" dy="0" stdDeviation="3.5" flood-color="#a020ff" flood-opacity="0.9"/>
+                      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#7a1cf8" flood-opacity="0.6"/>
+                    </filter>
+                  </defs>
+
+                  <!-- Subtle Background Gridlines -->
+                  <line x1="0" y1="35" x2="620" y2="35" stroke="rgba(255,255,255,0.04)" stroke-dasharray="3,3" />
+                  <line x1="0" y1="75" x2="620" y2="75" stroke="rgba(255,255,255,0.04)" stroke-dasharray="3,3" />
+                  <line x1="0" y1="115" x2="620" y2="115" stroke="rgba(255,255,255,0.04)" stroke-dasharray="3,3" />
+
+                  <!-- Bottom Volume Histogram Mini Bars -->
+                  <rect x="35" y="132" width="6" height="18" fill="rgba(147, 18, 255, 0.25)" rx="1.5"/>
+                  <rect x="75" y="125" width="6" height="25" fill="rgba(147, 18, 255, 0.35)" rx="1.5"/>
+                  <rect x="115" y="136" width="6" height="14" fill="rgba(147, 18, 255, 0.2)" rx="1.5"/>
+                  <rect x="155" y="120" width="6" height="30" fill="rgba(147, 18, 255, 0.4)" rx="1.5"/>
+                  <rect x="195" y="115" width="6" height="35" fill="rgba(147, 18, 255, 0.45)" rx="1.5"/>
+                  <rect x="235" y="128" width="6" height="22" fill="rgba(147, 18, 255, 0.3)" rx="1.5"/>
+                  <rect x="275" y="105" width="6" height="45" fill="rgba(147, 18, 255, 0.6)" rx="1.5"/>
+                  <rect x="315" y="112" width="6" height="38" fill="rgba(147, 18, 255, 0.5)" rx="1.5"/>
+                  <rect x="355" y="98" width="6" height="52" fill="rgba(160, 32, 255, 0.7)" rx="1.5"/>
+                  <rect x="395" y="118" width="6" height="32" fill="rgba(147, 18, 255, 0.4)" rx="1.5"/>
+                  <rect x="435" y="85" width="6" height="65" fill="rgba(160, 32, 255, 0.85)" rx="1.5"/>
+                  <rect x="475" y="94" width="6" height="56" fill="rgba(160, 32, 255, 0.75)" rx="1.5"/>
+                  <rect x="515" y="70" width="6" height="80" fill="rgba(195, 98, 255, 0.9)" rx="1.5"/>
+                  <rect x="555" y="60" width="6" height="90" fill="rgba(200, 110, 255, 0.95)" rx="1.5"/>
+                  <rect x="595" y="45" width="6" height="105" fill="#a020ff" rx="1.5"/>
+
+                  <!-- Smooth Area Fill under the Curve -->
+                  <path d="M 0,118 
+                           C 45,114 85,92 130,96 
+                           C 175,100 215,80 260,72 
+                           C 305,64 345,78 390,62 
+                           C 435,46 475,55 520,38 
+                           C 560,24 590,20 620,16 
+                           L 620,160 L 0,160 Z" 
+                        fill="url(#areaGlow)"/>
+
+                  <!-- Glowing Neon Stroke Path -->
+                  <path d="M 0,118 
+                           C 45,114 85,92 130,96 
+                           C 175,100 215,80 260,72 
+                           C 305,64 345,78 390,62 
+                           C 435,46 475,55 520,38 
+                           C 560,24 590,20 620,16" 
+                        fill="none" 
+                        stroke="#a020ff" 
+                        stroke-width="2.75" 
+                        filter="url(#neonLineGlow)"
+                        stroke-linecap="round"/>
+
+                  <!-- Sharp Crisp Inner Line Core -->
+                  <path d="M 0,118 
+                           C 45,114 85,92 130,96 
+                           C 175,100 215,80 260,72 
+                           C 305,64 345,78 390,62 
+                           C 435,46 475,55 520,38 
+                           C 560,24 590,20 620,16" 
+                        fill="none" 
+                        stroke="#ffffff" 
+                        stroke-width="1.25" 
+                        stroke-linecap="round"/>
+
+                  <!-- Pulsing Active Peak Data Marker -->
+                  <circle cx="560" cy="24" r="5" fill="#ffffff" filter="drop-shadow(0 0 6px #a020ff)"/>
+                  <circle cx="560" cy="24" r="8" fill="none" stroke="#a020ff" stroke-width="1.5" opacity="0.8">
+                    <animate attributeName="r" values="6;14;6" dur="2.4s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0.8;0;0.8" dur="2.4s" repeatCount="indefinite"/>
+                  </circle>
+
+                  <!-- Secondary Milestone Marker -->
+                  <circle cx="390" cy="62" r="3.5" fill="#ffffff" filter="drop-shadow(0 0 4px #a020ff)"/>
+
+                  <!-- X-Axis Labels -->
+                  <text x="15" y="156" fill="#666" font-size="10" font-family="Inter">Jan 01</text>
+                  <text x="150" y="156" fill="#666" font-size="10" font-family="Inter">Jan 08</text>
+                  <text x="300" y="156" fill="#666" font-size="10" font-family="Inter">Jan 15</text>
+                  <text x="445" y="156" fill="#666" font-size="10" font-family="Inter">Jan 22</text>
+                  <text x="575" y="156" fill="#a020ff" font-weight="600" font-size="10" font-family="Inter">Jan 29</text>
+                </svg>
+              </div>
+            </div>
+          </main>
+
+          <!-- 3. RIGHT CALENDAR & SNIPE METRICS -->
+          <aside class="dash-right">
+            <div class="calendar-header">
+              <div>
+                <div class="cal-title">January 2024</div>
+                <div class="cal-sub">Start date–Now (monthly)</div>
+              </div>
+              <div style="color: var(--muted); cursor: pointer;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
+            </div>
+
+            <!-- Detailed Execution Rows -->
+            <div class="metric-list">
+              <div class="metric-row">
+                <span class="metric-name">Total snipes</span>
+                <div class="metric-val-wrap">
+                  <span class="metric-val">1,284</span>
+                  <span class="pill-badge pill-green">+8.4%</span>
+                </div>
+              </div>
+
+              <div class="metric-row">
+                <span class="metric-name">Avg. execution</span>
+                <div class="metric-val-wrap">
+                  <span class="metric-val" style="color: #c362ff;">0.42s</span>
+                </div>
+              </div>
+
+              <div class="metric-row">
+                <span class="metric-name">Win rate</span>
+                <div class="metric-val-wrap">
+                  <span class="metric-val">68.2%</span>
+                  <span class="pill-badge pill-green">+2.1%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Connected Ecosystem Apps -->
+            <div class="connected-apps-box">
+              <div class="connected-label">Connected apps</div>
+              <div class="connected-pills">
+                <span class="app-pill">Charting</span>
+                <span class="app-pill">Terminals</span>
+                <span class="app-pill" style="border-color: rgba(147, 18, 255, 0.4); color: #c362ff;">DEX Aggregators</span>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- -------------------------------------------------------------
+       VANILLA JAVASCRIPT: STAGE SCALING, PROCEDURAL STARS & FALLBACK
+  -------------------------------------------------------------- -->
+  <script>
+    (function() {
+      const stage = document.getElementById('stage');
+      const starsCanvas = document.getElementById('stars-canvas');
+      const starsCtx = starsCanvas.getContext('2d');
+      const fallbackCanvas = document.getElementById('rim-fallback-canvas');
+      const fallbackCtx = fallbackCanvas.getContext('2d');
+      const rimVideo = document.getElementById('rim-video');
+
+      /* 1. Stage Scale Calculation: s = min(vw/1672, vh/941) */
+      function resizeStage() {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+
+        // On mobile portrait or narrow screens below 900px, switch to fluid stacked mode
+        if (vw <= 900 || vh > vw) {
+          stage.style.transform = 'none';
+          stage.style.width = '100%';
+          stage.style.height = 'auto';
+        } else {
+          const s = Math.min(vw / 1672, vh / 941);
+          stage.style.transform = `scale(${s})`;
+          stage.style.width = '1672px';
+          stage.style.height = '941px';
+        }
+
+        // Resize background starfield canvas to full viewport
+        starsCanvas.width = vw;
+        starsCanvas.height = Math.max(vh, 941);
+        drawStarfield();
+      }
+
+      /* 2. Procedural Starfield Generation */
+      let stars = [];
+      function initStars() {
+        const count = 180;
+        stars = [];
+        for (let i = 0; i < count; i++) {
+          stars.push({
+            x: Math.random(),
+            y: Math.random(),
+            radius: Math.random() * 1.2 + 0.3,
+            alpha: Math.random() * 0.7 + 0.2,
+            violetTint: Math.random() > 0.75
+          });
+        }
+      }
+
+      function drawStarfield() {
+        if (!stars.length) initStars();
+        const w = starsCanvas.width;
+        const h = starsCanvas.height;
+        starsCtx.clearRect(0, 0, w, h);
+
+        for (const star of stars) {
+          starsCtx.beginPath();
+          starsCtx.arc(star.x * w, star.y * h, star.radius, 0, Math.PI * 2);
+          if (star.violetTint) {
+            starsCtx.fillStyle = `rgba(195, 98, 255, ${star.alpha * 0.8})`;
+          } else {
+            starsCtx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
+          }
+          starsCtx.fill();
+        }
+      }
+
+      /* 3. Planet Rim Fallback Canvas Drawing (High Quality Polar Arc) */
+      function drawFallbackRim() {
+        const w = fallbackCanvas.width;
+        const h = fallbackCanvas.height;
+        fallbackCtx.clearRect(0, 0, w, h);
+
+        const centerX = w / 2;
+        const centerY = -h * 0.45;
+        const radius = w * 0.65;
+
+        // Layer 1: Ambient Outer Glow
+        const outerGrad = fallbackCtx.createRadialGradient(
+          centerX, centerY, radius - 80,
+          centerX, centerY, radius + 220
+        );
+        outerGrad.addColorStop(0, 'rgba(147, 18, 255, 0.45)');
+        outerGrad.addColorStop(0.35, 'rgba(122, 28, 248, 0.22)');
+        outerGrad.addColorStop(0.75, 'rgba(84, 0, 255, 0.08)');
+        outerGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        fallbackCtx.fillStyle = outerGrad;
+        fallbackCtx.beginPath();
+        fallbackCtx.arc(centerX, centerY, radius + 220, 0, Math.PI * 2);
+        fallbackCtx.fill();
+
+        // Layer 2: Intensely Hot Magenta/Violet Rim Core
+        const coreGrad = fallbackCtx.createRadialGradient(
+          centerX, centerY, radius - 20,
+          centerX, centerY, radius + 40
+        );
+        coreGrad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+        coreGrad.addColorStop(0.25, 'rgba(225, 90, 255, 0.85)');
+        coreGrad.addColorStop(0.6, 'rgba(147, 18, 255, 0.6)');
+        coreGrad.addColorStop(1, 'rgba(147, 18, 255, 0)');
+
+        fallbackCtx.strokeStyle = coreGrad;
+        fallbackCtx.lineWidth = 14;
+        fallbackCtx.beginPath();
+        fallbackCtx.arc(centerX, centerY, radius, 0.2 * Math.PI, 0.8 * Math.PI);
+        fallbackCtx.stroke();
+      }
+
+      /* 4. Video Ready Listener & Seamless Loop */
+      function setupVideo() {
+        if (!rimVideo) return;
+
+        // When video is ready, fade it in smoothly
+        rimVideo.addEventListener('canplay', function() {
+          rimVideo.classList.add('is-loaded');
+          fallbackCanvas.style.opacity = '0.15';
+        });
+
+        // Ensure smooth looping without jump
+        rimVideo.addEventListener('timeupdate', function() {
+          // If close to end, crossfade check
+          if (rimVideo.currentTime >= rimVideo.duration - 0.1) {
+            rimVideo.currentTime = 0;
+            rimVideo.play();
+          }
+        });
+
+        rimVideo.play().catch(function() {
+          // In case autoplay policy restricts, fallback remains crisp
+          console.log('Video autoplay blocked or pending interaction, displaying fallback canvas');
+        });
+      }
+
+      // Initial Execution
+      window.addEventListener('resize', resizeStage);
+      window.addEventListener('orientationchange', resizeStage);
+      
+      initStars();
+      resizeStage();
+      drawFallbackRim();
+      setupVideo();
+    })();
+  </script>
+</body>
+</html>

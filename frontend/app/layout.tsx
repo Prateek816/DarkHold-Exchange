@@ -1,36 +1,36 @@
-import type { Metadata, Viewport } from "next";
-import "./globals.css";
-import { Providers } from "@/components/shell/Providers";
-import { AppLayout } from "@/components/shell/AppLayout";
+import type { Metadata } from 'next';
+import './globals.css';
+import { ChatbotWidget } from '@/components/chatbot/ChatbotWidget';
+import { ToastRegion } from '@/components/shell/ToastRegion';
+import { PortalTransitionProvider } from '@/components/portal/PortalTransitionProvider';
+import { PortalLoadingScreen } from '@/components/portal/PortalLoadingScreen';
 
 export const metadata: Metadata = {
-  title: {
-    default: "Darkhold Exchange | Anti-Scalping Festival & Merch Order Book",
-    template: "%s · Darkhold Exchange",
+  title: 'Darkhold Exchange — Simulated Festival Market',
+  description: 'A simulated marketplace for festival passes and limited merch. All funds are simulated credits.',
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
   },
-  description:
-    "A simulated dark financial marketplace for festival passes and limited merch with an anti-scalping price ceiling, Dutch auctions, and transparent reserve-match-settle ledger.",
-  applicationName: "Darkhold Exchange",
 };
 
-export const viewport: Viewport = {
-  themeColor: "#04060A",
-  colorScheme: "dark",
-  width: "device-width",
-  initialScale: 1,
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
-      <body className="min-h-screen bg-canvas font-sans text-text antialiased">
-        <Providers>
-          <AppLayout>{children}</AppLayout>
-        </Providers>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Manrope:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+      </head>
+      <body>
+        <PortalTransitionProvider>
+          {children}
+          <PortalLoadingScreen />
+          <ChatbotWidget />
+          <ToastRegion />
+        </PortalTransitionProvider>
       </body>
     </html>
   );

@@ -1,0 +1,825 @@
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   INK & VELLUM — THE DARKHOLD EXCHANGE
+   Aubergine-black canvas, parchment text, ember ward line.
+   Bodoni Moda for words, Geist for UI/numbers, Geist Mono for ids.
+   ============================================================ */
+
+@layer base {
+  :root {
+    /* ---- Type ---- */
+    --font-display: 'Bodoni Moda', 'Iowan Old Style', Georgia, serif;
+    --font-ui: 'Geist', 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'Geist Mono', 'SFMono-Regular', Menlo, monospace;
+
+    /* ---- Canvas ---- */
+    --bg: #0D0A15;
+    --bg-2: #151022;
+    --bg-elevated: #1B142B;
+
+    /* ---- Glass (violet-cast, so surfaces read as lit) ---- */
+    --glass-fill: rgba(255,255,255,0.035);
+    --glass-fill-hover: rgba(255,255,255,0.062);
+    --glass-fill-strong: rgba(255,255,255,0.09);
+    --glass-border: rgba(255,255,255,0.08);
+    --glass-border-strong: rgba(255,255,255,0.16);
+    --glass-border-faint: rgba(255,255,255,0.045);
+    --glass-tint: rgba(124,92,255,0.055);
+
+    /* ---- Text ---- */
+    --text: #EBE3D2;
+    --text-muted: #A39BB5;
+    --text-dim: #6B6480;
+
+    /* ---- Brand: Sigil violet ---- */
+    --brand-300: #C0B0FF;
+    --brand-400: #A18BFF;
+    --brand-500: #7C5CFF;
+    --brand-600: #4F32DE;
+    --brand-glow: rgba(124,92,255,0.40);
+
+    /* ---- Verdigris: buy, positive, live, settled ---- */
+    --verdigris-300: #8DF5D7;
+    --verdigris-400: #3EE6C8;
+    --verdigris-500: #2CC49F;
+    --verdigris-glow: rgba(62,230,200,0.30);
+
+    /* ---- Buy / positive (verdigris aliases) ---- */
+    --buy-text: #3EE6C8;
+    --buy-solid: #2CC49F;
+    --buy-tint: rgba(62,230,200,0.13);
+    --buy-border: rgba(62,230,200,0.34);
+
+    /* ---- Sell / negative ---- */
+    --sell-text: #FF5C7A;
+    --sell-solid: #FF405E;
+    --sell-tint: rgba(255,92,122,0.13);
+    --sell-border: rgba(255,92,122,0.34);
+    --sell-bg: rgba(255,64,94,0.12);
+
+    /* ---- Ward: resale ceiling, ember gold ---- */
+    --ward: #F2A33A;
+    --ward-glow: rgba(242,163,58,0.36);
+    --ward-tint: rgba(242,163,58,0.12);
+    --ward-border: rgba(242,163,58,0.40);
+
+    /* ---- SIM Ice: simulated data only, always with diagonal hatch ---- */
+    --sim: #5AA9FF;
+    --sim-glow: rgba(90,169,255,0.30);
+    --sim-tint: rgba(90,169,255,0.10);
+    --sim-border: rgba(90,169,255,0.34);
+
+    /* ---- Semantic ---- */
+    --warning: #F2A33A;
+    --warning-tint: rgba(242,163,58,0.12);
+    --info: #5AA9FF;
+    --info-tint: rgba(90,169,255,0.10);
+    --lime: #D6F24A;
+    --lime-glow: rgba(214,242,74,0.40);
+    --crimson: #C8322F;
+    --crimson-glow: rgba(200,50,47,0.42);
+
+    /* ---- Radii ---- */
+    --radius-card: 24px;
+    --radius-panel: 16px;
+    --radius-tile: 12px;
+    --radius-pill: 999px;
+    --radius-sm: 8px;
+
+    /* ---- Spacing ---- */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+    --space-12: 48px;
+
+    /* ---- Shadows ---- */
+    --shadow-card: 0 28px 68px -32px rgba(0,0,0,0.92), inset 0 1px 0 rgba(255,255,255,0.09);
+    --shadow-card-hover: 0 40px 84px -36px rgba(0,0,0,0.96), inset 0 1px 0 rgba(255,255,255,0.14);
+    --shadow-glow-brand: 0 0 44px -10px var(--brand-glow);
+    --shadow-glow-verdigris: 0 0 44px -10px var(--verdigris-glow);
+    --shadow-glow-ward: 0 0 44px -10px var(--ward-glow);
+    --shadow-glow-crimson: 0 0 60px -15px var(--crimson-glow);
+
+    /* ---- Motion ---- */
+    --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-dramatic: cubic-bezier(0.76, 0, 0.24, 1);
+    --duration-fast: 150ms;
+    --duration-normal: 250ms;
+    --duration-slow: 400ms;
+
+    color-scheme: dark;
+  }
+
+  * {
+    border-color: var(--glass-border);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    line-height: 1.55;
+    min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'kern' 1, 'liga' 1, 'cv05' 1, 'ss03' 1;
+  }
+
+  /* Display face — Fraunces, optically sized and wonked */
+  h1, h2 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-optical-sizing: auto;
+    font-variation-settings: 'SOFT' 12, 'WONK' 1;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+
+  h1 { line-height: 0.94; }
+  h2 { line-height: 1.0; }
+
+  h3, h4 {
+    font-family: var(--font-ui);
+    letter-spacing: -0.014em;
+    font-weight: 600;
+    text-wrap: balance;
+  }
+
+  p { text-wrap: pretty; }
+
+  code, kbd, samp, pre {
+    font-family: var(--font-mono);
+    font-feature-settings: 'zero' 1, 'ss01' 1;
+  }
+
+  ::selection {
+    background: rgba(122,92,255,0.38);
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--brand-400);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+
+  input, textarea, select, button { font-family: inherit; }
+  input::placeholder, textarea::placeholder { color: var(--text-dim); }
+
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] { -moz-appearance: textfield; appearance: textfield; }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--glass-border);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--glass-border-strong);
+    background-clip: content-box;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--glass-border) transparent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ============================================================
+   FIGURES — the readout face.
+   Every large number in the product is set in IBM Plex Mono so a
+   price reads as an instrument value, not a number in a font.
+   ============================================================ */
+
+.figure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums slashed-zero;
+  font-feature-settings: 'tnum' 1, 'zero' 1, 'ss01' 1;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+
+.figure-lg { font-size: clamp(2.4rem, 3.4vw, 3.4rem); }
+.figure-xl { font-size: clamp(3.2rem, 5.6vw, 5.6rem); }
+.figure-hero { font-size: clamp(4rem, 9vw, 8rem); }
+
+/* ============================================================
+   BACKGROUND — three glows, a grid, grain, and a vignette.
+   ============================================================ */
+
+.obsidian-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.obsidian-bg__layer { position: absolute; inset: 0; }
+
+.obsidian-bg__glow-violet {
+  top: -22%;
+  left: 50%;
+  translate: -50% 0;
+  width: 960px;
+  height: 560px;
+  background: radial-gradient(ellipse at center, rgba(122,92,255,0.34) 0%, transparent 68%);
+  border-radius: 50%;
+  filter: blur(86px);
+  animation: glow-drift-violet 28s ease-in-out infinite alternate;
+}
+
+.obsidian-bg__glow-mint {
+  top: -14%;
+  left: -12%;
+  width: 740px;
+  height: 440px;
+  background: radial-gradient(ellipse at center, rgba(20,203,170,0.20) 0%, transparent 68%);
+  border-radius: 50%;
+  filter: blur(74px);
+  animation: glow-drift-mint 30s ease-in-out infinite alternate-reverse;
+}
+
+/* Third glow — ember, low and to the right. Breaks the two-blob symmetry. */
+.obsidian-bg__glow-ember {
+  bottom: -26%;
+  right: -14%;
+  width: 760px;
+  height: 540px;
+  background: radial-gradient(ellipse at center, rgba(242,176,74,0.11) 0%, transparent 66%);
+  border-radius: 50%;
+  filter: blur(90px);
+  animation: glow-drift-ember 34s ease-in-out infinite alternate;
+}
+
+/* Vignette — the frame falls off so the centre feels lit */
+.obsidian-bg__vignette {
+  background: radial-gradient(ellipse 120% 90% at 50% 22%, transparent 40%, rgba(2,2,6,0.55) 100%);
+}
+
+@keyframes glow-drift-violet {
+  0% { transform: translate(-50%, 0) scale(1); opacity: 0.34; }
+  100% { transform: translate(-52%, 2%) scale(1.06); opacity: 0.29; }
+}
+
+@keyframes glow-drift-mint {
+  0% { transform: translate(0, 0) scale(1); opacity: 0.20; }
+  100% { transform: translate(-3%, 3%) scale(1.08); opacity: 0.16; }
+}
+
+@keyframes glow-drift-ember {
+  0% { transform: translate(0, 0) scale(1); opacity: 0.11; }
+  100% { transform: translate(4%, -3%) scale(1.07); opacity: 0.08; }
+}
+
+.obsidian-bg__grid {
+  background-image:
+    linear-gradient(rgba(160,140,255,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(160,140,255,0.035) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 82% 62% at 50% 28%, black 0%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 82% 62% at 50% 28%, black 0%, transparent 100%);
+}
+
+.obsidian-bg__grain {
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain-shift 8s steps(10) infinite;
+}
+
+@keyframes grain-shift {
+  0% { transform: translate(0, 0); }
+  10% { transform: translate(-2%, 1%); }
+  20% { transform: translate(1%, -3%); }
+  30% { transform: translate(-1%, 2%); }
+  40% { transform: translate(3%, -1%); }
+  50% { transform: translate(-2%, -2%); }
+  60% { transform: translate(1%, 3%); }
+  70% { transform: translate(-3%, 1%); }
+  80% { transform: translate(2%, -1%); }
+  90% { transform: translate(-1%, -3%); }
+  100% { transform: translate(0, 0); }
+}
+
+body[data-glow="mint-violet"] .obsidian-bg__glow-violet { opacity: 0.36; }
+body[data-glow="mint-violet"] .obsidian-bg__glow-mint { opacity: 0.26; }
+body[data-glow="balanced"] .obsidian-bg__glow-violet { opacity: 0.34; }
+body[data-glow="balanced"] .obsidian-bg__glow-mint { opacity: 0.20; }
+body[data-glow="violet"] .obsidian-bg__glow-violet { opacity: 0.42; }
+body[data-glow="violet"] .obsidian-bg__glow-mint { opacity: 0.09; }
+body[data-glow="landing"] .obsidian-bg__glow-violet { opacity: 0.48; }
+body[data-glow="landing"] .obsidian-bg__glow-mint { opacity: 0.30; }
+body[data-glow="landing"] .obsidian-bg__glow-ember { opacity: 0.16; }
+
+@media (prefers-reduced-motion: reduce) {
+  .obsidian-bg__glow-violet,
+  .obsidian-bg__glow-mint,
+  .obsidian-bg__glow-ember {
+    animation: none !important;
+    opacity: 0.24;
+  }
+  .obsidian-bg__grain { animation: none !important; }
+}
+
+/* ============================================================
+   STRUCTURAL LABELS
+   A keyline + small mono name. It identifies a region of the
+   interface, it does not shout.
+   ============================================================ */
+
+.keyline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  line-height: 1.2;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.keyline::before {
+  content: '';
+  width: 14px;
+  height: 1px;
+  background: var(--brand-400);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.keyline--plain::before { display: none; }
+
+/* Field label — mono caps, functional only (table headers, form fields) */
+.data-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  line-height: 1.3;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* Legacy alias kept for markup that still asks for the old eyebrow. */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  line-height: 1.2;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.eyebrow::before {
+  content: '';
+  width: 14px;
+  height: 1px;
+  background: var(--brand-400);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.serial {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.display-italic {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-variation-settings: 'SOFT' 40, 'WONK' 1;
+  font-weight: 400;
+}
+
+.link-line {
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+}
+.link-line::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -2px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s var(--ease-smooth);
+}
+.link-line:hover::after,
+.link-line:focus-visible::after { transform: scaleX(1); }
+
+.nav-underline { position: relative; }
+.nav-underline::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -10px;
+  height: 1px;
+  background: var(--brand-400);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.25s ease;
+}
+.nav-underline:hover::after,
+.nav-underline[data-active='true']::after { transform: scaleX(1); }
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+
+.page-shell {
+  width: 100%;
+  max-width: 1480px;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  position: relative;
+  z-index: 1;
+}
+
+.page-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.page-heading h1 {
+  font-size: clamp(2.6rem, 2rem + 3vw, 4.5rem);
+  font-weight: 500;
+  color: var(--text);
+  line-height: 0.95;
+}
+.page-heading p {
+  font-size: 13px;
+  max-width: 62ch;
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   DATA TABLES
+   ============================================================ */
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.data-table th {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+  background: rgba(255,255,255,0.018);
+  padding: 10px 12px;
+  text-align: left;
+}
+.data-table td {
+  font-size: 12.5px;
+  vertical-align: middle;
+  padding: 10px 12px;
+}
+.data-table tbody tr {
+  transition: background-color var(--duration-fast) ease;
+}
+.data-table tbody tr:hover { background: rgba(255,255,255,0.022); }
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.divider-hairline {
+  height: 1px;
+  background: var(--glass-border);
+  width: 100%;
+}
+
+.divider-double {
+  height: 4px;
+  border-top: 1px solid var(--glass-border-strong);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.glass-highlight-top { box-shadow: inset 0 1px 0 rgba(255,255,255,0.12); }
+
+button, a { -webkit-tap-highlight-color: transparent; }
+button:disabled { cursor: not-allowed; }
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none !important; width: auto; flex-wrap: wrap; }
+}
+
+/* ============================================================
+   TAILWIND UTILITIES
+   ============================================================ */
+
+@layer utilities {
+  /* Colors */
+  .bg-canvas { background-color: var(--bg); }
+  .bg-canvas-2 { background-color: var(--bg-2); }
+  .bg-canvas-elevated { background-color: var(--bg-elevated); }
+  .bg-surface { background-color: var(--bg-2); }
+  .bg-glass { background-color: var(--glass-fill); }
+  .bg-glass-hover:hover { background-color: var(--glass-fill-hover); }
+  .bg-glass-strong { background-color: var(--glass-fill-strong); }
+
+  .border-glass { border-color: var(--glass-border); }
+  .border-glass-strong { border-color: var(--glass-border-strong); }
+  .border-glass-faint { border-color: var(--glass-border-faint); }
+
+  .text-text { color: var(--text); }
+  .text-text-muted { color: var(--text-muted); }
+  .text-text-dim { color: var(--text-dim); }
+
+  .text-brand-300 { color: var(--brand-300); }
+  .text-brand-400 { color: var(--brand-400); }
+  .text-brand-500 { color: var(--brand-500); }
+  .text-brand-600 { color: var(--brand-600); }
+
+  .text-verdigris-300 { color: var(--verdigris-300); }
+  .text-verdigris-400 { color: var(--verdigris-400); }
+  .text-verdigris-500 { color: var(--verdigris-500); }
+
+  .text-buy { color: var(--buy-text); }
+  .text-buy-text { color: var(--buy-text); }
+  .text-sell { color: var(--sell-text); }
+  .text-sell-text { color: var(--sell-text); }
+  .text-ward { color: var(--ward); }
+  .text-warning { color: var(--warning); }
+  .text-info { color: var(--info); }
+  .text-lime { color: var(--lime); }
+  .text-crimson { color: var(--crimson); }
+  .text-sim { color: var(--sim); }
+
+  .bg-buy-tint { background-color: var(--buy-tint); }
+  .bg-sell-tint { background-color: var(--sell-tint); }
+  .bg-ward-tint { background-color: var(--ward-tint); }
+  .bg-sim-tint { background-color: var(--sim-tint); }
+  .bg-warning-tint { background-color: var(--warning-tint); }
+  .bg-info-tint { background-color: var(--info-tint); }
+  .bg-verdigris-tint { background-color: var(--verdigris-glow); }
+
+  .border-buy { border-color: var(--buy-border); }
+  .border-sell { border-color: var(--sell-border); }
+  .border-ward { border-color: var(--ward-border); }
+  .border-sim { border-color: var(--sim-border); }
+  .border-brand-500 { border-color: var(--brand-500); }
+
+  .shadow-card { box-shadow: var(--shadow-card); }
+  .shadow-card-hover:hover { box-shadow: var(--shadow-card-hover); }
+  .shadow-glow-brand { box-shadow: var(--shadow-glow-brand); }
+  .shadow-glow-verdigris { box-shadow: var(--shadow-glow-verdigris); }
+  .shadow-glow-ward { box-shadow: var(--shadow-glow-ward); }
+  .shadow-glow-crimson { box-shadow: var(--shadow-glow-crimson); }
+
+  /* Radii */
+  .rounded-card { border-radius: var(--radius-card); }
+  .rounded-panel { border-radius: var(--radius-panel); }
+  .rounded-tile { border-radius: var(--radius-tile); }
+  .rounded-pill { border-radius: var(--radius-pill); }
+
+  /* Transitions */
+  .transition-smooth { transition: all var(--duration-normal) var(--ease-smooth); }
+  .transition-fast { transition: all var(--duration-fast) var(--ease-smooth); }
+  .transition-spring { transition: all var(--duration-normal) var(--ease-spring); }
+
+  /* ---- Glass card ----
+     The gradient is violet-cast so the surface reads as lit by the
+     brand rather than sitting in unlit grey. */
+  .glass-card {
+    background:
+      linear-gradient(148deg,
+        rgba(168,146,255,0.075) 0%,
+        rgba(255,255,255,0.014) 38%,
+        rgba(255,255,255,0.004) 100%),
+      var(--bg-2);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-card);
+    backdrop-filter: blur(20px) saturate(120%);
+    box-shadow: var(--shadow-card);
+  }
+  .glass-card-hover:hover {
+    border-color: var(--glass-border-strong);
+    box-shadow: var(--shadow-card-hover);
+  }
+
+  /* ---- Glow edge: a soft bloom along the bottom edge, not a hard line ---- */
+  .glow-edge-brand::after,
+  .glow-edge-verdigris::after,
+  .glow-edge-sell::after,
+  .glow-edge-ward::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 12%;
+    right: 12%;
+    height: 26px;
+    pointer-events: none;
+    border-radius: 50%;
+    filter: blur(11px);
+    opacity: 0.5;
+  }
+  .glow-edge-brand::after {
+    background: radial-gradient(ellipse at center, var(--brand-500) 0%, transparent 72%);
+  }
+  .glow-edge-verdigris::after {
+    background: radial-gradient(ellipse at center, var(--verdigris-500) 0%, transparent 72%);
+  }
+  .glow-edge-sell::after {
+    background: radial-gradient(ellipse at center, var(--sell-solid) 0%, transparent 72%);
+  }
+  .glow-edge-ward::after {
+    background: radial-gradient(ellipse at center, var(--ward) 0%, transparent 72%);
+  }
+
+  /* ---- Spotlight hover ---- */
+  .spotlight-hover { position: relative; overflow: hidden; }
+  .spotlight-hover::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(180,160,255,0.09) 0%, transparent 58%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duration-fast) ease;
+  }
+  .spotlight-hover:hover::before { opacity: 1; }
+
+  /* ---- Shine sweep ---- */
+  .shine-sweep { position: relative; overflow: hidden; }
+  .shine-sweep::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.16), transparent);
+    transform: skewX(-15deg);
+    transition: left 0.6s var(--ease-smooth);
+  }
+  .shine-sweep:hover::after { left: 200%; }
+
+  /* ---- Text gradients ---- */
+  .text-gradient-brand {
+    background: linear-gradient(135deg, var(--brand-300), var(--brand-500));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .text-gradient-verdigris {
+    background: linear-gradient(135deg, var(--verdigris-300), var(--verdigris-500));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* ---- SIM hatch ---- */
+  .sim-hatch {
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgba(90,169,255,0.26),
+      rgba(90,169,255,0.26) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+  }
+
+  /* ---- Marquee ---- */
+  .marquee-mask {
+    mask-image: linear-gradient(90deg, transparent, black 4%, black 96%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, black 4%, black 96%, transparent);
+  }
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: dh-marquee 52s linear infinite;
+  }
+  .marquee-track:hover { animation-play-state: paused; }
+  @keyframes dh-marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* ---- Perforation ---- */
+  .perforation {
+    position: relative;
+    border-top: 1px dashed var(--glass-border-strong);
+  }
+  .perforation::before,
+  .perforation::after {
+    content: '';
+    position: absolute;
+    top: -6px;
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 1px solid var(--glass-border);
+  }
+  .perforation::before { left: -7px; }
+  .perforation::after { right: -7px; }
+
+  /* ---- Stamp ---- */
+  .stamp {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid currentColor;
+    padding: 3px 8px 2px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    transform: rotate(-1.5deg);
+    opacity: 0.9;
+  }
+
+  /* ---- Ticket stub ---- */
+  .ticket-stub {
+    position: relative;
+    background:
+      linear-gradient(155deg, rgba(122,92,255,0.10), transparent 42%),
+      var(--bg-2);
+    border: 1px solid var(--glass-border-strong);
+    border-radius: 4px;
+  }
+  .ticket-stub::before {
+    content: '';
+    position: absolute;
+    inset: 5px;
+    border: 1px solid rgba(255,255,255,0.055);
+    pointer-events: none;
+    border-radius: 2px;
+  }
+
+  /* ---- SIM badge ---- */
+  .sim-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sim);
+    border: 1px solid var(--sim-border);
+    background: var(--sim-tint);
+    padding: 2px 6px;
+    border-radius: var(--radius-pill);
+  }
+  .sim-badge::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--sim);
+    box-shadow: 0 0 8px var(--sim-glow);
+  }
+}

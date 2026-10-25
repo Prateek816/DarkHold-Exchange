@@ -58,14 +58,16 @@ export default function DemoConsolePage() {
           return prev + 1;
         } else {
           clearInterval(interval);
-          setRunningRecon(false);
-          setActiveReconStep(null);
-          runReconciliation();
-          pushToast({
-            variant: 'success',
-            title: 'Reconciliation Verified (R1–R8)',
-            body: 'All 8 double-entry invariants passed with 0.00 drift.',
-          });
+          setTimeout(() => {
+            setRunningRecon(false);
+            setActiveReconStep(null);
+            runReconciliation();
+            pushToast({
+              variant: 'success',
+              title: 'Reconciliation Verified (R1–R8)',
+              body: 'All 8 double-entry invariants passed with 0.00 drift.',
+            });
+          }, 0);
           return null;
         }
       });

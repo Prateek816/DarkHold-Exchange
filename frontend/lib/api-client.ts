@@ -203,7 +203,7 @@ export class ApiClient {
       },
       body: JSON.stringify({
         ...params,
-        asset: params.assetId,
+        asset: (params as any).asset || params.assetId,
       }),
     });
     return { data: res.data || res };

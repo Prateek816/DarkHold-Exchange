@@ -6,6 +6,7 @@ import { sseConsumer } from "@/engine/sseConsumer";
 import { engineClient } from "@/engine/engineClient";
 import { candleService } from "./candleService";
 import { BookSnapshot, EngineEvent, TradeExecutedEvent } from "@/engine/types";
+import { ENGINE_TO_DB_MAP, resolveEngineSymbol } from "@/utils/assetMapping";
 
 interface ExtendedWebSocket extends WebSocket {
   isAlive: boolean;
@@ -93,34 +94,60 @@ export class WebSocketGateway {
     // 1. Book frames from engine
     sseConsumer.onBook((snapshot) => {
       this.cachedBooks.set(snapshot.asset, snapshot);
-      this.broadcastToChannel(`book:${snapshot.asset}`, {
-        type: "BookSnapshot",
-        channel: `book:${snapshot.asset}`,
-        data: snapshot,
-        ts: Date.now(),
-      });
+      const engineSym = resolveEngineSymbol(snapshot.asset) || snapshot.asset;
+      const mapped = ENGINE_TO_DB_MAP[engineSym];
+      const channels = new Set<string>([`book:${snapshot.asset}`]);
+      if (mapped?.id) channels.add(`book:${mapped.id}`);
+      if (mapped?.symbol) channels.add(`book:${mapped.symbol}`);
+
+      for (const ch of channels) {
+        this.broadcastToChannel(ch, {
+          type: "BookSnapshot",
+          channel: ch,
+          data: {
+            ...snapshot,
+            asset_id: mapped?.id || snapshot.asset,
+          },
+          ts: Date.now(),
+        });
+      }
     });
 
     // 2. Events from engine (TradeExecuted)
     sseConsumer.onEvent((event: EngineEvent) => {
       if (event.type === "TradeExecuted") {
         const te = event as TradeExecutedEvent;
-        this.broadcastToChannel(`trades:${te.asset}`, {
-          type: "TradeTick",
-          channel: `trades:${te.asset}`,
-          data: {
-            asset: te.asset,
-            trade_id: te.trade_id,
-            price: te.price,
-            qty: te.qty,
-            ts: te.ts,
-            taker_side: te.taker_side,
-            seq: te.seq,
-            buyer_is_simulated: te.buy_user_id.startsWith("sim_"),
-            seller_is_simulated: te.sell_user_id.startsWith("sim_"),
-          },
-          ts: Date.now(),
-        });
+        const engineSym = resolveEngineSymbol(te.asset) || te.asset;
+        const mapped = ENGINE_TO_DB_MAP[engineSym];
+        const dbId = mapped?.id;
+        const dbSym = mapped?.symbol;
+
+        const tradeTickData = {
+          asset: te.asset,
+          asset_id: dbId || te.asset,
+          symbol: dbSym || te.asset,
+          trade_id: te.trade_id,
+          price: te.price,
+          qty: te.qty,
+          ts: te.ts,
+          taker_side: te.taker_side,
+          seq: te.seq,
+          buyer_is_simulated: te.buy_user_id.startsWith("sim_"),
+          seller_is_simulated: te.sell_user_id.startsWith("sim_"),
+        };
+
+        const tradeChannels = new Set<string>([`trades:${te.asset}`]);
+        if (dbId) tradeChannels.add(`trades:${dbId}`);
+        if (dbSym) tradeChannels.add(`trades:${dbSym}`);
+
+        for (const ch of tradeChannels) {
+          this.broadcastToChannel(ch, {
+            type: "TradeTick",
+            channel: ch,
+            data: tradeTickData,
+            ts: Date.now(),
+          });
+        }
 
         // Market stats tick
         this.broadcastToChannel("market", {
@@ -128,6 +155,7 @@ export class WebSocketGateway {
           channel: "market",
           data: {
             asset: te.asset,
+            asset_id: dbId || te.asset,
             last_price: te.price,
             last_ts: te.ts,
             last_seq: te.seq,
@@ -168,15 +196,37 @@ export class WebSocketGateway {
 
     // 3. Candle updates
     candleService.onCandleUpdate((asset, candle) => {
-      this.broadcastToChannel(`candles:${asset}:${candle.interval}`, {
-        type: "CandleUpdate",
-        channel: `candles:${asset}:${candle.interval}`,
-        data: {
-          asset,
-          candle,
-        },
-        ts: Date.now(),
-      });
+      const engineSym = resolveEngineSymbol(asset) || asset;
+      const mapped = ENGINE_TO_DB_MAP[engineSym];
+      const dbId = mapped?.id;
+      const dbSymbol = mapped?.symbol;
+
+      const channels = new Set<string>([
+        `candles:${asset}:${candle.interval}`,
+        `candles:${asset}`,
+      ]);
+      if (dbId) {
+        channels.add(`candles:${dbId}:${candle.interval}`);
+        channels.add(`candles:${dbId}`);
+      }
+      if (dbSymbol) {
+        channels.add(`candles:${dbSymbol}:${candle.interval}`);
+        channels.add(`candles:${dbSymbol}`);
+      }
+
+      for (const ch of channels) {
+        this.broadcastToChannel(ch, {
+          type: "CandleUpdate",
+          channel: ch,
+          data: {
+            asset,
+            asset_id: dbId || asset,
+            symbol: dbSymbol || asset,
+            candle,
+          },
+          ts: Date.now(),
+        });
+      }
     });
   }
 
@@ -257,12 +307,13 @@ export class WebSocketGateway {
 
       // Immediate Snapshot Delivery for book subscriptions
       if (channel.startsWith("book:")) {
-        const asset = channel.replace("book:", "");
-        let snapshot = this.cachedBooks.get(asset);
+        const rawAsset = channel.replace("book:", "");
+        const engineAsset = resolveEngineSymbol(rawAsset) || rawAsset;
+        let snapshot = this.cachedBooks.get(engineAsset) || this.cachedBooks.get(rawAsset);
         if (!snapshot) {
           try {
-            snapshot = await engineClient.getBook(asset, 15);
-            this.cachedBooks.set(asset, snapshot);
+            snapshot = await engineClient.getBook(engineAsset, 15);
+            this.cachedBooks.set(engineAsset, snapshot);
           } catch {}
         }
         if (snapshot) {

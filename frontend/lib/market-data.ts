@@ -102,9 +102,25 @@ class RealMarketDataService implements IMarketDataService {
             this.emit(`book_snapshot:${sym}`, data);
             if (id !== sym) this.emit(`book_snapshot:${id}`, data);
           } else if (type === "TradeTick" && data) {
-            this.emit(`trades:${data.asset}`, [data]);
+            const sym = data.asset;
+            const id = data.asset_id || sym;
+            this.emit(`trades:${sym}`, [data]);
+            this.emit(`trade_tick:${sym}`, data);
+            if (id !== sym) {
+              this.emit(`trades:${id}`, [data]);
+              this.emit(`trade_tick:${id}`, data);
+            }
           } else if (type === "CandleUpdate" && data) {
-            this.emit(`candles:${data.asset}`, data.candle);
+            const sym = data.asset;
+            const id = data.asset_id || sym;
+            this.emit(`candles:${sym}`, data.candle);
+            if (id !== sym) this.emit(`candles:${id}`, data.candle);
+            if (data.candle?.interval) {
+              this.emit(`candle_update:${sym}:${data.candle.interval}`, data.candle);
+              if (id !== sym) {
+                this.emit(`candle_update:${id}:${data.candle.interval}`, data.candle);
+              }
+            }
           } else if (type === "AuctionPriceUpdate" && data) {
             this.emit(`auction:${data.auction_id}`, data);
           }

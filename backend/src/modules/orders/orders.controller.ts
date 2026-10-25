@@ -5,7 +5,7 @@ import { engineClient } from "@/engine/engineClient";
 import { sseConsumer } from "@/engine/sseConsumer";
 import { walletsService } from "@/modules/wallets/wallets.service";
 import { serializeOrder } from "@/utils/serialization";
-import { toEngineSymbol, toDbAssetIdentifier } from "@/utils/assetMapping";
+import { toEngineSymbol, toDbAssetIdentifier, resolveEngineSymbol, ASSET_SPECS } from "@/utils/assetMapping";
 import {
   UnauthenticatedError,
   AppError,
@@ -65,6 +65,18 @@ export class OrdersController {
         throw new AssetNotTradableError();
       }
 
+      // Resolve engine trading symbol strictly before funds or units are touched
+      const engineSymbol = resolveEngineSymbol(asset.symbol) || resolveEngineSymbol(asset.id);
+      if (!engineSymbol) {
+        const errorMsg = `Asset is not configured for trading on the matching engine: ${asset.symbol} (${asset.id})`;
+        throw new AppError(422, "VALIDATION_FAILED", errorMsg, {
+          field: "asset",
+          field_message: errorMsg,
+          asset_id: asset.id,
+          symbol: asset.symbol,
+        });
+      }
+
       // 3. Validate Side, Type, Quantity, Price
       const side = (req.body.side || "").toUpperCase();
       if (side !== "BUY" && side !== "SELL") {
@@ -79,6 +91,9 @@ export class OrdersController {
         throw new ValidationError("quantity", "Quantity must be an integer >= 1");
       }
 
+      const spec = ASSET_SPECS[engineSymbol] || { tick_size: 10, min_qty: 1, max_qty: 10 };
+      const tick = BigInt(spec.tick_size);
+
       const rawPrice = req.body.price ?? req.body.limit_price_minor;
       let price = rawPrice !== undefined ? BigInt(Math.round(Number(rawPrice))) : BigInt(0);
 
@@ -87,8 +102,8 @@ export class OrdersController {
         if (price < BigInt(1)) {
           throw new ValidationError("price", "Price must be >= 1");
         }
-        if (price % BigInt(10) !== BigInt(0)) {
-          throw new ValidationError("price", "Price must be aligned to tick size (10)");
+        if (price % tick !== BigInt(0)) {
+          throw new ValidationError("price", `Price must be aligned to tick size (${spec.tick_size})`);
         }
         if (price > asset.ceilingPrice) {
           throw new PriceAboveCeilingError(
@@ -111,45 +126,49 @@ export class OrdersController {
         }
       }
 
-      // 4. Atomic Escrow Reservation
+      // 4. Atomic Escrow Reservation & Order Creation
       const orderId = uuidv7();
+      const userId = req.user.id;
       let reservedAmount = BigInt(0);
       let reservedUnits = 0;
-
       if (side === "BUY") {
         reservedAmount = BigInt(qty) * price;
-        await walletsService.reserveOrderFunds(req.user.id, orderId, reservedAmount);
       } else {
         reservedUnits = qty;
-        await walletsService.reserveHoldingUnits(req.user.id, asset.id, reservedUnits);
       }
 
-      // 5. Persist order in DB as PENDING_SUBMIT
-      const dbOrder = await prisma.order.create({
-        data: {
-          id: orderId,
-          userId: req.user.id,
-          assetId: asset.id,
-          side: side as any,
-          type: type as any,
-          price,
-          originalQuantity: qty,
-          matchedQuantity: 0,
-          remainingQuantity: qty,
-          reservedAmount,
-          reservedUnits,
-          status: "PENDING_SUBMIT",
-          settlementStatus: "PENDING",
-          idempotencyKey,
-          submitAttempts: 1,
-          submittedAt: new Date(),
-        },
-        include: { asset: true },
+      const dbOrder = await prisma.$transaction(async (tx) => {
+        if (side === "BUY") {
+          await walletsService.reserveOrderFunds(userId, orderId, reservedAmount, tx);
+        } else {
+          await walletsService.reserveHoldingUnits(userId, asset.id, reservedUnits, tx);
+        }
+
+        return tx.order.create({
+          data: {
+            id: orderId,
+            userId,
+            assetId: asset.id,
+            side: side as any,
+            type: type as any,
+            price,
+            originalQuantity: qty,
+            matchedQuantity: 0,
+            remainingQuantity: qty,
+            reservedAmount,
+            reservedUnits,
+            status: "PENDING_SUBMIT",
+            settlementStatus: "PENDING",
+            idempotencyKey,
+            submitAttempts: 1,
+            submittedAt: new Date(),
+          },
+          include: { asset: true },
+        });
       });
 
       // 6. Dispatch to Matching Engine
       try {
-        const engineSymbol = toEngineSymbol(asset.symbol) || toEngineSymbol(asset.id) || asset.symbol;
         const reply = await engineClient.sendCommand({
           type: "SubmitOrder",
           order_id: orderId,
@@ -161,6 +180,7 @@ export class OrdersController {
           qty,
           price: Number(price),
         });
+
 
         if (reply.status === "ACCEPTED") {
           await prisma.order.update({

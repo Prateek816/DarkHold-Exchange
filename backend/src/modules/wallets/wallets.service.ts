@@ -101,6 +101,18 @@ export class WalletsService {
   ) {
     if (amount <= BigInt(0)) return;
     const client = tx || prisma;
+
+    // Guard against duplicate release for the same order
+    const existingRelease = await client.ledgerEntry.findFirst({
+      where: {
+        referenceId: orderId,
+        entryType: "ORDER_RELEASE",
+      },
+    });
+    if (existingRelease) {
+      return client.wallet.findUnique({ where: { userId } });
+    }
+
     const wallet = await this.getOrCreateWallet(userId, client);
 
     const releaseAmount = amount > wallet.reservedBalance ? wallet.reservedBalance : amount;

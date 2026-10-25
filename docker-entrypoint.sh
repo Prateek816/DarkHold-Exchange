@@ -34,8 +34,8 @@ fi
 cd /app/backend
 # the committed migration is out of date vs schema.prisma, so sync the schema directly
 npx prisma db push --skip-generate
-if [ ! -f "$PGDATA/.seeded" ]; then
-  echo "[init] seeding database (first run only)"
+if [ ! -f "$PGDATA/.seeded" ] || ! su postgres -c "psql -U postgres -d $DB_NAME -tAc \"SELECT 1 FROM \\\"User\\\" WHERE id='sim_mm_dfest'\"" 2>/dev/null | grep -q 1; then
+  echo "[init] seeding database..."
   npx tsx prisma/seed.ts
   touch "$PGDATA/.seeded"
 fi
@@ -47,7 +47,18 @@ darkhold-engine & PIDS+=($!)
 
 ( cd /app/frontend && exec npx next start -p 3000 -H 0.0.0.0 ) & PIDS+=($!)
 
-echo "[ready] frontend :3000 | backend :4000 | engine :7000 (internal)"
+if [ "${MATCHING_SIM_ENABLED:-true}" = "true" ]; then
+  (
+    echo "[init] waiting for backend health before launching simulator..."
+    until node -e "http=require('http'); http.get('http://127.0.0.1:4000/health', res => process.exit(res.statusCode===200?0:1)).on('error', ()=>process.exit(1));" 2>/dev/null; do
+      sleep 1
+    done
+    echo "[ready] simulator starting on :7100 (mode: ${SIM_MODE:-continuous})..."
+    cd /app/matching_engine/sim && exec node dist/main.js
+  ) & PIDS+=($!)
+fi
+
+echo "[ready] frontend :3000 | backend :4000 | engine :7000 (internal) | sim :7100"
 
 # if any process dies, bring everything down so Docker can restart the container
 wait -n

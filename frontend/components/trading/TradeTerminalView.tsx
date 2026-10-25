@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import { marketDataService } from "@/lib/market-data";
 import {
@@ -44,6 +44,7 @@ interface TradeTerminalViewProps {
 }
 
 export function TradeTerminalView({ assetId }: TradeTerminalViewProps) {
+  const queryClient = useQueryClient();
   const { connectionState, setConnectionState, addToast } = useUiStore();
   const { setWalletFromServer } = useWalletStore();
 
@@ -126,6 +127,9 @@ export function TradeTerminalView({ assetId }: TradeTerminalViewProps) {
 
       if (event === `trade_tick:${assetId}`) {
         const tick = data as TradeTick;
+        queryClient.setQueryData(["asset", assetId], (prev: Asset | undefined) =>
+          prev ? { ...prev, last_price: tick.price, last_price_timestamp: tick.timestamp } : prev
+        );
         setTrades((prev) => {
           if (prev.some((t) => t.seq === tick.seq)) return prev;
           if (prev.length > 0) {
@@ -224,6 +228,8 @@ export function TradeTerminalView({ assetId }: TradeTerminalViewProps) {
         connectionState={connectionState}
         isAssetHalted={isAssetHalted || asset.is_halted}
         haltedAssetName={asset.name}
+        isAssetUnconfigured={asset.is_configured === false || asset.status === "UNCONFIGURED"}
+        unconfiguredAssetName={asset.name}
       />
 
       {/* Back Link */}

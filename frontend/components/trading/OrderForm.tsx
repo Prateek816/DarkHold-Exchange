@@ -43,6 +43,7 @@ export function OrderForm({
   const [qtyInput, setQtyInput] = useState<string>("1");
   const [formStep, setFormStep] = useState<FormStep>("EDITING");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [requestId, setRequestId] = useState<string | null>(null);
   const [idempotencyKey, setIdempotencyKey] = useState<string>("");
 
   useEffect(() => {
@@ -50,6 +51,7 @@ export function OrderForm({
       setPriceInput((prefilledPrice / 100).toFixed(2));
       setIdempotencyKey("");
       setErrorMessage(null);
+      setRequestId(null);
       setFormStep("EDITING");
     }
   }, [prefilledPrice]);
@@ -60,6 +62,12 @@ export function OrderForm({
   const parsedPriceMinor = Math.round(parseFloat(priceInput || "0") * 100);
   const parsedQty = parseInt(qtyInput || "0", 10);
   const isLocked = formStep === "SUBMITTING" || formStep === "ACCEPTED";
+
+  // Engine configuration status
+  const isConfigured =
+    asset.is_configured !== false &&
+    asset.is_tradable !== false &&
+    asset.status !== "UNCONFIGURED";
 
   // The Ward caps every resale price, on either side of the book.
   const isAboveCeiling = type === "LIMIT" && parsedPriceMinor > asset.ceiling_price;
@@ -75,6 +83,7 @@ export function OrderForm({
   /** Any edit starts a new order attempt, so a previous idempotency key must not be reused. */
   const markTicketEdited = () => {
     setErrorMessage(null);
+    setRequestId(null);
     setFormStep("EDITING");
     setIdempotencyKey("");
   };
@@ -94,10 +103,17 @@ export function OrderForm({
 
   const handleInitialSubmit = () => {
     setErrorMessage(null);
+    setRequestId(null);
     setFormStep("VALIDATING");
 
     if (!asset || !asset.id) {
       setErrorMessage("Valid asset is required.");
+      setFormStep("EDITING");
+      return;
+    }
+
+    if (!isConfigured) {
+      setErrorMessage(`Asset is not configured for trading on the matching engine: ${asset.symbol} (${asset.id})`);
       setFormStep("EDITING");
       return;
     }
@@ -225,18 +241,20 @@ export function OrderForm({
         console.error("[OrderForm] Order submission error:", err);
       }
       const apiErr = err as ApiErrorPayload;
+      const reqId = apiErr.requestId || apiErr.context?.request_id || null;
       const formatted = apiErr.code
-        ? formatErrorMessage(apiErr.code, apiErr.context)
+        ? formatErrorMessage(apiErr.code, apiErr.context, apiErr.message)
         : (apiErr.message || "Failed to place order. Please retry.");
 
       setErrorMessage(formatted);
+      setRequestId(reqId);
       setFormStep("RETRYABLE");
 
       addToast({
         type: "error",
         title: "Order Rejected",
         message: formatted,
-        requestId: apiErr.requestId,
+        requestId: reqId || undefined,
       });
     }
   };
@@ -420,9 +438,26 @@ export function OrderForm({
 
       {/* Error Announcement */}
       {errorMessage && (
-        <div className="p-3 rounded-[14px] bg-sell/15 border border-sell/40 text-[11px] text-text flex items-start gap-2">
-          <AlertCircle className="w-3.5 h-3.5 text-sell shrink-0 mt-0.5" />
-          <span>{errorMessage}</span>
+        <div className="p-3 rounded-[14px] bg-sell/15 border border-sell/40 text-[11px] text-text flex flex-col gap-1">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="w-3.5 h-3.5 text-sell shrink-0 mt-0.5" />
+            <span className="font-medium">{errorMessage}</span>
+          </div>
+          {requestId && (
+            <div className="pl-5 font-mono text-[9px] text-text-dim">
+              Reference: <span className="text-text-muted">{requestId}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Unconfigured Notice */}
+      {!isConfigured && (
+        <div className="p-3 rounded-[14px] bg-warning/10 border border-warning/30 text-[11px] text-warning flex items-start gap-2">
+          <AlertCircle className="w-3.5 h-3.5 text-warning shrink-0 mt-0.5" />
+          <span>
+            This asset ({asset.symbol}) is not configured for matching engine execution. Order submission is currently disabled.
+          </span>
         </div>
       )}
 
@@ -467,11 +502,12 @@ export function OrderForm({
             formStep === "SUBMITTING" ||
             formStep === "ACCEPTED" ||
             asset.is_halted ||
+            !isConfigured ||
             isAboveCeiling
           }
           className={cn(
             "flex h-11 w-full select-none items-center justify-center gap-2 rounded-[12px] text-[11.5px] font-bold uppercase tracking-[0.08em] transition-all duration-200",
-            asset.is_halted
+            asset.is_halted || !isConfigured
               ? "cursor-not-allowed border border-glass-border bg-white/[0.05] text-text-dim"
               : side === "BUY"
               ? "bg-gradient-to-r from-brand-400 to-brand-500 text-canvas shadow-glow-teal hover:-translate-y-px disabled:opacity-50"
@@ -488,6 +524,8 @@ export function OrderForm({
               <Check className="w-3.5 h-3.5" />
               <span>Accepted (202)</span>
             </>
+          ) : !isConfigured ? (
+            <span>Trading Unavailable</span>
           ) : formStep === "RETRYABLE" ? (
             <span>Retry Submission</span>
           ) : asset.is_halted ? (

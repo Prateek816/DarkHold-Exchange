@@ -41,13 +41,41 @@ export const DB_TO_ENGINE_SYMBOL: Record<string, string> = {
   "SIGIL-PIN": "SIGIL-PIN",
 };
 
+export const ASSET_SPECS: Record<
+  string,
+  { tick_size: number; min_qty: number; max_qty: number }
+> = {
+  "DFEST-WKND": { tick_size: 10, min_qty: 1, max_qty: 10 },
+  "MOONRISE-GA": { tick_size: 10, min_qty: 1, max_qty: 10 },
+  "DFEST-HOODIE": { tick_size: 5, min_qty: 1, max_qty: 10 },
+  "SIGIL-PIN": { tick_size: 1, min_qty: 1, max_qty: 10 },
+};
+
+/**
+ * Resolves an identifier strictly to a configured matching engine symbol.
+ * Returns null if the identifier does not map to any known engine symbol.
+ */
+export function resolveEngineSymbol(assetOrSymbolOrId: string): string | null {
+  if (!assetOrSymbolOrId) return null;
+  const upper = assetOrSymbolOrId.toUpperCase();
+  return DB_TO_ENGINE_SYMBOL[upper] || DB_TO_ENGINE_SYMBOL[assetOrSymbolOrId] || null;
+}
+
+/**
+ * Checks whether a given symbol is a known, valid engine trading symbol.
+ */
+export function isConfiguredEngineSymbol(symbol: string): boolean {
+  if (!symbol) return false;
+  const upper = symbol.toUpperCase();
+  return upper in ENGINE_TO_DB_MAP;
+}
+
 /**
  * Resolves any valid asset identifier (ID, DB symbol, or Engine symbol) to the matching engine symbol.
  */
 export function toEngineSymbol(assetOrSymbolOrId: string): string {
   if (!assetOrSymbolOrId) return assetOrSymbolOrId;
-  const upper = assetOrSymbolOrId.toUpperCase();
-  return DB_TO_ENGINE_SYMBOL[upper] || DB_TO_ENGINE_SYMBOL[assetOrSymbolOrId] || assetOrSymbolOrId;
+  return resolveEngineSymbol(assetOrSymbolOrId) || assetOrSymbolOrId;
 }
 
 /**
@@ -58,3 +86,4 @@ export function toDbAssetIdentifier(identifier: string): { symbol: string; id: s
   const upper = identifier.toUpperCase();
   return ENGINE_TO_DB_MAP[upper] || ENGINE_TO_DB_MAP[identifier] || null;
 }
+

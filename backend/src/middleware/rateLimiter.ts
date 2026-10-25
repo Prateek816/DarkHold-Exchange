@@ -6,6 +6,16 @@ export const apiRateLimiter = rateLimit({
   max: env.RATE_LIMIT_MAX_REQUESTS,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    const authHeader = req.headers.authorization;
+    const token =
+      (typeof authHeader === "string" ? authHeader.replace(/^Bearer\s+/i, "") : null) ||
+      (req.cookies?.session_token as string) ||
+      (req.headers["x-auth-token"] as string);
+    if (token) return `token:${token}`;
+    return req.ip || "127.0.0.1";
+  },
+  skip: (req) => req.path === "/health" || req.path === "/healthz",
   handler: (req, res) => {
     const retryAfter = Math.ceil(env.RATE_LIMIT_WINDOW_MS / 1000);
     return res.status(429).json({

@@ -1,4 +1,5 @@
 import { Asset as PrismaAsset, Order as PrismaOrder, Auction as PrismaAuction, Trade as PrismaTrade, Wallet as PrismaWallet, WalletHolding as PrismaWalletHolding } from "@prisma/client";
+import { resolveEngineSymbol, ASSET_SPECS } from "@/utils/assetMapping";
 
 export function toNumber(val: bigint | number | null | undefined): number {
   if (val === null || val === undefined) return 0;
@@ -9,16 +10,19 @@ export function serializeAsset(asset: PrismaAsset, sparkline: number[] = []): an
   const face = toNumber(asset.faceValue);
   const ceiling = toNumber(asset.ceilingPrice);
   const last = asset.lastPrice !== null ? toNumber(asset.lastPrice) : face;
+  const engineSymbol = resolveEngineSymbol(asset.symbol) || resolveEngineSymbol(asset.id);
+  const isConfigured = !!engineSymbol;
+  const isTradable = !asset.isHalted && isConfigured;
   return {
     id: asset.id,
     symbol: asset.symbol,
     asset: asset.symbol,
     name: asset.name,
     category: asset.category,
-    status: asset.isHalted ? "HALTED" : "ACTIVE",
-    tick_size: 10,
-    min_qty: 1,
-    max_qty: 10,
+    status: asset.isHalted ? "HALTED" : (!isConfigured ? "UNCONFIGURED" : "ACTIVE"),
+    tick_size: engineSymbol && ASSET_SPECS[engineSymbol] ? ASSET_SPECS[engineSymbol].tick_size : 10,
+    min_qty: engineSymbol && ASSET_SPECS[engineSymbol] ? ASSET_SPECS[engineSymbol].min_qty : 1,
+    max_qty: engineSymbol && ASSET_SPECS[engineSymbol] ? ASSET_SPECS[engineSymbol].max_qty : 10,
     face_value: face,
     face_value_minor: face,
     ceiling_pct: asset.ceilingPct,
@@ -38,6 +42,9 @@ export function serializeAsset(asset: PrismaAsset, sparkline: number[] = []): an
     is_thin: asset.isThin,
     sim_active: asset.simActive,
     has_active_auction: asset.hasActiveAuction,
+    is_configured: isConfigured,
+    is_tradable: isTradable,
+    engine_symbol: engineSymbol,
     sparkline_1h: sparkline.length > 0 ? sparkline : [face, last],
   };
 }
@@ -45,6 +52,7 @@ export function serializeAsset(asset: PrismaAsset, sparkline: number[] = []): an
 export function serializeOrder(order: PrismaOrder & { asset?: PrismaAsset }): any {
   const sym = order.asset?.symbol || order.assetId;
   const priceNum = toNumber(order.price);
+  const engineSymbol = resolveEngineSymbol(sym) || resolveEngineSymbol(order.assetId) || sym;
   return {
     id: order.id,
     order_id: order.id,
@@ -55,6 +63,7 @@ export function serializeOrder(order: PrismaOrder & { asset?: PrismaAsset }): an
     asset_id: order.assetId,
     symbol: sym,
     asset: sym,
+    engine_symbol: engineSymbol,
     side: order.side,
     type: order.type,
     price: priceNum,
@@ -65,7 +74,18 @@ export function serializeOrder(order: PrismaOrder & { asset?: PrismaAsset }): an
     remaining_qty: order.remainingQuantity,
     status: order.status,
     settlement_status: order.settlementStatus,
-    settlement: order.settlementStatus === "COMPLETED" ? "SETTLED" : "SETTLING",
+    settlement:
+      (order.settlementStatus as string) === "COMPLETED"
+        ? "SETTLED"
+        : (order.settlementStatus as string) === "FAILED"
+          ? "FAILED"
+          : order.status === "REJECTED"
+            ? "REJECTED"
+            : order.status === "CANCELED"
+              ? "CANCELED"
+              : order.matchedQuantity > 0 && (order.settlementStatus as string) !== "COMPLETED"
+                ? "SETTLING"
+                : "PENDING",
     reject_code: (order as any).rejectCode || null,
     cancel_reason: (order as any).cancelReason || null,
     created_at: order.createdAt.toISOString(),
@@ -77,10 +97,12 @@ export function serializeOrder(order: PrismaOrder & { asset?: PrismaAsset }): an
 export function serializeHolding(holding: PrismaWalletHolding & { asset?: PrismaAsset }): any {
   const currentPrice = holding.asset?.lastPrice ? toNumber(holding.asset.lastPrice) : toNumber(holding.avgCost);
   const sym = holding.asset?.symbol || holding.assetId;
+  const engineSymbol = resolveEngineSymbol(sym) || resolveEngineSymbol(holding.assetId) || sym;
   return {
     asset_id: holding.assetId,
     symbol: sym,
     asset: sym,
+    engine_symbol: engineSymbol,
     name: holding.asset?.name || holding.assetId,
     available_units: holding.availableUnits,
     reserved_units: holding.reservedUnits,

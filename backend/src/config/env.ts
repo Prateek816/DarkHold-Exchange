@@ -18,8 +18,8 @@ const envSchema = z.object({
     .optional()
     .transform((val) => val === "true"),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
-  RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(100),
-  AUTH_RATE_LIMIT_MAX_ATTEMPTS: z.coerce.number().default(5),
+  RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(2000),
+  AUTH_RATE_LIMIT_MAX_ATTEMPTS: z.coerce.number().default(600),
   MATCHING_SIM_ENABLED: z
     .string()
     .optional()

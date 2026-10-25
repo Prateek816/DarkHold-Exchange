@@ -42,14 +42,24 @@ export interface ApiErrorPayload {
   requestId: string;
 }
 
-export function formatErrorMessage(code: ErrorCode, context?: ApiErrorContext): string {
+export function formatErrorMessage(
+  code: ErrorCode,
+  context?: ApiErrorContext,
+  fallbackMessage?: string
+): string {
+  if (context?.field_message) {
+    return context.field_message;
+  }
+  if (fallbackMessage && fallbackMessage !== code && fallbackMessage !== "VALIDATION_FAILED") {
+    return fallbackMessage;
+  }
   switch (code) {
     case "VALIDATION_FAILED":
-      return context?.field_message || "Validation failed for the submitted values.";
+      return context?.field_message || fallbackMessage || "Validation failed for the submitted values.";
     case "UNAUTHENTICATED":
-      return context?.field_message || "Session expired or credentials incorrect. Please log in.";
+      return context?.field_message || fallbackMessage || "Session expired or credentials incorrect. Please log in.";
     case "FORBIDDEN":
-      return "You do not have permission to perform this action.";
+      return fallbackMessage || "You do not have permission to perform this action.";
     case "RATE_LIMITED":
       return `Rate limit exceeded. Try again in ${context?.retry_after_seconds ?? 5} seconds.`;
     case "INSUFFICIENT_FUNDS":
@@ -63,7 +73,7 @@ export function formatErrorMessage(code: ErrorCode, context?: ApiErrorContext): 
         context?.pct ?? 110
       }% of face value ${formatCurrency(context?.face ?? 0)}). Lower your price.`;
     case "ASSET_NOT_TRADABLE":
-      return "Trading on this asset has been halted by the exchange.";
+      return context?.field_message || fallbackMessage || "Trading on this asset is not configured or has been halted by the exchange.";
     case "HOLDING_CAP_EXCEEDED":
       return `Limit of ${formatQuantity(context?.cap ?? 0)} units per account for this asset.`;
     case "MAX_OPEN_ORDERS":
@@ -88,6 +98,6 @@ export function formatErrorMessage(code: ErrorCode, context?: ApiErrorContext): 
       return "An operation with this submission key is currently being processed.";
     case "INTERNAL_ERROR":
     default:
-      return `Something went wrong. Reference ${context?.request_id || "REQ-UNKNOWN"}.`;
+      return fallbackMessage || `Something went wrong. Reference ${context?.request_id || "REQ-UNKNOWN"}.`;
   }
 }

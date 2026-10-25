@@ -5,8 +5,9 @@ import { SettlementStatus, OrderStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface TheSealProps {
-  orderStatus: OrderStatus;
-  settlementStatus: SettlementStatus;
+  orderStatus: OrderStatus | string;
+  settlementStatus?: SettlementStatus | string;
+  matchedQty?: number;
   size?: "sm" | "md" | "lg";
   className?: string;
   showLabel?: boolean;
@@ -14,7 +15,7 @@ interface TheSealProps {
 
 /**
  * THE SEAL: Order lifecycle sigil (Reserved -> Matched -> Settled)
- * - 1/3 lit: Reserved (funds/units locked)
+ * - 1/3 lit: Reserved (funds/units locked, waiting for match)
  * - 2/3 lit: Matched, settling ("Matched and final, settlement in progress.")
  * - 3/3 lit: Settled (SettlementCompleted)
  * - Amber/Delayed: Settlement delayed, funds remain reserved.
@@ -22,36 +23,61 @@ interface TheSealProps {
 export function TheSeal({
   orderStatus,
   settlementStatus,
+  matchedQty = 0,
   size = "md",
   className,
   showLabel = false,
 }: TheSealProps) {
-  // Determine state level
-  const isFailed = settlementStatus === "FAILED" || orderStatus === "REJECTED";
-  const isSettled = settlementStatus === "COMPLETED" || orderStatus === "FILLED";
+  // Normalize casing & values
+  const normStatus = (orderStatus || "").toUpperCase().trim();
+  const normSettlement = (settlementStatus || "").toUpperCase().trim();
+  const matched = typeof matchedQty === "number" ? matchedQty : 0;
+
+  const isRejected = normStatus === "REJECTED";
+  const isCanceled = normStatus === "CANCELED";
+  const isFailed = normSettlement === "FAILED";
+  const isSettled = normSettlement === "COMPLETED";
+
+  // MATCHED (SETTLING) is displayed ONLY when backend data confirms a matched quantity > 0 and settlement is in progress
   const isMatched =
-    orderStatus === "PARTIALLY_FILLED" ||
-    (orderStatus === "FILLED" && settlementStatus !== "COMPLETED") ||
-    settlementStatus === "PENDING";
-  const isReserved =
-    orderStatus === "OPEN" || orderStatus === "PENDING_SUBMIT" || isMatched || isSettled;
+    matched > 0 &&
+    !isSettled &&
+    !isFailed &&
+    !isRejected &&
+    !isCanceled;
+
+  const isFilled = normStatus === "FILLED";
+  const isOpen = (normStatus === "OPEN" || normStatus === "PENDING_SUBMIT") && matched === 0;
+  const isReserved = isOpen || isMatched || isSettled || isFilled;
 
   let tooltipText = "Funds reserved in vault.";
-  let statusText = "Reserved";
+  let statusText = "OPEN / WAITING FOR MATCH";
 
-  if (isFailed) {
-    tooltipText = "Settlement delayed, funds remain reserved.";
-    statusText = "Settlement Delayed";
+  if (isRejected) {
+    tooltipText = "Order rejected. Check the order and wallet ledger for reservation release.";
+    statusText = "REJECTED";
+  } else if (isCanceled) {
+    tooltipText = "Order canceled. Reserved funds returned.";
+    statusText = "CANCELED";
+  } else if (isFailed) {
+    tooltipText = "Settlement failed. Check the settlement record and ledger.";
+    statusText = "SETTLEMENT FAILED";
   } else if (isSettled) {
     tooltipText = "Settlement complete. Ledger updated.";
-    statusText = "Settled";
+    statusText = isFilled ? "FILLED" : "SETTLED";
+  } else if (isFilled) {
+    tooltipText = "Order completely filled. Settlement in progress.";
+    statusText = "FILLED";
   } else if (isMatched) {
     tooltipText = "Matched and final, settlement in progress.";
-    statusText = "Matched (Settling)";
-  } else if (orderStatus === "CANCELED") {
-    tooltipText = "Order canceled. Reserved funds returned.";
-    statusText = "Canceled";
+    statusText = "MATCHED (SETTLING)";
+  } else if (isOpen) {
+    tooltipText = "Order resting in book. Waiting for matching.";
+    statusText = "OPEN / WAITING FOR MATCH";
+  } else {
+    statusText = normStatus || "OPEN / WAITING FOR MATCH";
   }
+
 
   const dimension = size === "sm" ? 14 : size === "lg" ? 22 : 18;
 
@@ -73,7 +99,7 @@ export function TheSeal({
           cx="12"
           cy="12"
           r="10"
-          stroke={isFailed ? "#F5B544" : isSettled ? "#22C55E" : "rgba(255,255,255,0.12)"}
+          stroke={isFailed ? "#F5B544" : isRejected ? "#EF4444" : isSettled ? "#22C55E" : "rgba(255,255,255,0.12)"}
           strokeWidth="1.5"
           className="transition-colors duration-300"
         />
@@ -148,6 +174,8 @@ export function TheSeal({
             "text-[11px] font-mono tracking-wider uppercase",
             isFailed
               ? "text-warning"
+              : isRejected
+              ? "text-sell-text"
               : isSettled
               ? "text-buy"
               : isMatched

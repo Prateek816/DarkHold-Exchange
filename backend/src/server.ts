@@ -9,6 +9,7 @@ import { orderResolver } from "./engine/resolver";
 import { matchingEngineService } from "./engine/service";
 import { candleService } from "./market/candleService";
 import { wsGateway } from "./market/wsGateway";
+import { syncEngineAssets } from "./engine/assetSync";
 
 async function startServer() {
   console.log("[Darkhold Exchange Backend] Booting services...");
@@ -56,7 +57,10 @@ async function startServer() {
   await sseConsumer.start();
   console.log(`[Darkhold Exchange] SSE Consumer connected at sequence ${sseConsumer.getLastSeq()}`);
 
-  // 4. Start Settlement Worker and Order Resolver
+  // 4. Register and configure DB assets on matching engine (Section 6.1 Step 5)
+  await syncEngineAssets(sseConsumer.getEngineAssets());
+
+  // 5. Start Settlement Worker and Order Resolver
   settlementWorker.start(50);
   orderResolver.start(2000);
   console.log("[Darkhold Exchange] Settlement worker and order resolver active");

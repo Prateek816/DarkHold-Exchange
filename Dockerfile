@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # ---------------------------------------------------------------
 # Darkhold Exchange - all-in-one image
-# Runs: PostgreSQL + Rust matching engine + Express backend + Next.js frontend
+# Runs: PostgreSQL + Rust matching engine + Express backend + Next.js frontend + Simulator
 # ---------------------------------------------------------------
 
 # ---------- Stage 1: build the Rust matching engine ----------
@@ -22,7 +22,7 @@ WORKDIR /app
 # Engine binary
 COPY --from=engine-builder /src/target/release/darkhold-engine /usr/local/bin/darkhold-engine
 
-# 1) candles package (backend depends on it via file:../matching_engine/packages/candles)
+# 1) candles package (backend and sim depend on it via file:../packages/candles)
 COPY matching_engine/packages/candles/ ./matching_engine/packages/candles/
 RUN cd matching_engine/packages/candles && npm ci && npm run build
 
@@ -34,16 +34,23 @@ RUN cd backend && npm ci
 COPY frontend/package.json frontend/package-lock.json ./frontend/
 RUN cd frontend && npm ci
 
-# 4) rest of the source
+# 4) simulator deps
+COPY matching_engine/sim/package.json matching_engine/sim/package-lock.json ./matching_engine/sim/
+RUN cd matching_engine/sim && npm ci
+
+# 5) rest of the source
 COPY backend/ ./backend/
 COPY frontend/ ./frontend/
 COPY ops/ ./ops/
+COPY matching_engine/contracts/ ./matching_engine/contracts/
+COPY matching_engine/sim/ ./matching_engine/sim/
 
-# 5) prisma client + frontend production build
+# 6) prisma client + frontend build + simulator build
 RUN cd backend && npx prisma generate
 # BACKEND_URL is read at build time by next.config.mjs rewrites (/api/* -> backend)
 ENV BACKEND_URL=http://localhost:4000
 RUN cd frontend && npm run build
+RUN cd matching_engine/sim && npm run build
 
 # ---------- runtime configuration ----------
 ENV NODE_ENV=production \
@@ -54,9 +61,17 @@ ENV NODE_ENV=production \
     SESSION_EXPIRY_HOURS=24 \
     COOKIE_SECURE=false \
     RATE_LIMIT_WINDOW_MS=60000 \
-    RATE_LIMIT_MAX_REQUESTS=100 \
-    AUTH_RATE_LIMIT_MAX_ATTEMPTS=5 \
+    RATE_LIMIT_MAX_REQUESTS=2000 \
+    AUTH_RATE_LIMIT_MAX_ATTEMPTS=600 \
     MATCHING_SIM_ENABLED=true \
+    SIM_MODE=continuous \
+    SIM_CONTROL_PORT=7100 \
+    SIM_CONTROL_TOKEN=change-me-dev-only \
+    SIM_ACCOUNTS_FILE=/app/ops/seed/accounts.json \
+    SIM_CANDLES_FILE=/app/ops/seed/candles.seeded.json \
+    SIM_ASSET_PROFILE_FILE=/app/matching_engine/sim/assets.profile.json \
+    API_BASE_URL=http://localhost:4000 \
+    WS_URL=ws://localhost:4000/ws \
     WS_ENABLED=true \
     ENGINE_URL=http://localhost:7000 \
     ENGINE_TOKEN=dev-token \
@@ -68,6 +83,6 @@ COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 VOLUME ["/var/lib/postgresql/data", "/data/engine"]
-EXPOSE 3000 4000
+EXPOSE 3000 4000 7100
 
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/docker-entrypoint.sh"]

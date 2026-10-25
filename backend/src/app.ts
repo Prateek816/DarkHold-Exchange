@@ -106,6 +106,9 @@ export function createApp(): Express {
   app.get("/api/candles/:assetId", (req, res, next) =>
     assetsController.getCandles(req, res, next)
   );
+  app.get("/candles/:assetId", (req, res, next) =>
+    assetsController.getCandles(req, res, next)
+  );
   app.get("/api/receipts", requireAuth, (req, res, next) =>
     walletsController.getTransactions(req, res, next)
   );

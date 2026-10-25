@@ -136,6 +136,7 @@ export function BottomTabs({
                         <TheSeal
                           orderStatus={order.status}
                           settlementStatus={order.settlement_status}
+                          matchedQty={order.matched_qty}
                           showLabel={true}
                           size="sm"
                         />
@@ -228,6 +229,7 @@ export function BottomTabs({
                       <TheSeal
                         orderStatus={order.status}
                         settlementStatus={order.settlement_status}
+                        matchedQty={order.matched_qty}
                         showLabel={true}
                         size="sm"
                       />

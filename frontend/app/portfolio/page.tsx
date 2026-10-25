@@ -292,6 +292,7 @@ export default function PortfolioPage() {
                           <TheSeal
                             orderStatus={o.status}
                             settlementStatus={o.settlement_status}
+                            matchedQty={o.matched_qty}
                             showLabel={true}
                             size="sm"
                           />
@@ -367,6 +368,7 @@ export default function PortfolioPage() {
                         <TheSeal
                           orderStatus={o.status}
                           settlementStatus={o.settlement_status}
+                          matchedQty={o.matched_qty}
                           showLabel={true}
                           size="sm"
                         />

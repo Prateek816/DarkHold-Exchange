@@ -2,8 +2,19 @@ import { CandleAggregator, Candle, rebuildActive } from "@darkhold/candles";
 import { prisma } from "@/config/db";
 import { sseConsumer } from "@/engine/sseConsumer";
 import { TradeExecutedEvent } from "@/engine/types";
+import { ENGINE_TO_DB_MAP, resolveEngineSymbol } from "@/utils/assetMapping";
+import fs from "fs";
+import path from "path";
 
 export type CandleListener = (asset: string, candle: Candle) => void;
+
+function getCandidateAssetIds(rawAsset: string): string[] {
+  const engineSym = resolveEngineSymbol(rawAsset) || (ENGINE_TO_DB_MAP[rawAsset] ? rawAsset : null);
+  const mapped = engineSym ? ENGINE_TO_DB_MAP[engineSym] : undefined;
+  return Array.from(
+    new Set([rawAsset, engineSym, mapped?.id, mapped?.symbol].filter((x): x is string => Boolean(x)))
+  );
+}
 
 export class CandleService {
   private aggregators: Map<string, CandleAggregator> = new Map();
@@ -27,13 +38,14 @@ export class CandleService {
   }
 
   public getOrCreateAggregator(asset: string): CandleAggregator {
-    let agg = this.aggregators.get(asset);
+    const engineSym = resolveEngineSymbol(asset) || asset;
+    let agg = this.aggregators.get(engineSym);
     if (!agg) {
       agg = new CandleAggregator({
         intervals: ["5s", "1m"],
         origin: "ENGINE",
       });
-      this.aggregators.set(asset, agg);
+      this.aggregators.set(engineSym, agg);
     }
     return agg;
   }
@@ -42,21 +54,99 @@ export class CandleService {
     if (this.isInitialized) return;
     this.isInitialized = true;
 
-    // Listen to live engine trades from SSE consumer
+    // 1. Ensure seeded historical candles are present in DB
+    await this.ensureSeededCandles();
+
+    // 2. Listen to live engine trades from SSE consumer
     sseConsumer.onEvent((event) => {
       if (event.type === "TradeExecuted") {
         this.handleTrade(event as TradeExecutedEvent);
       }
     });
 
-    // 1-second flush timer to close candles whose bucket ended even without trades
+    // 3. 1-second flush timer to close candles whose bucket ended even without trades
     this.flushTimer = setInterval(() => {
       this.flushAll(Date.now());
     }, 1000);
   }
 
+  public async ensureSeededCandles(): Promise<void> {
+    try {
+      const existingSeededCount = await prisma.candleRecord.count({
+        where: { origin: "SEEDED_SIM" },
+      });
+      if (existingSeededCount > 0) return;
+
+      const candidates = [
+        process.env.SIM_CANDLES_FILE,
+        "/app/ops/seed/candles.seeded.json",
+        path.resolve(process.cwd(), "ops/seed/candles.seeded.json"),
+        path.resolve(process.cwd(), "../ops/seed/candles.seeded.json"),
+        path.resolve(process.cwd(), "../../ops/seed/candles.seeded.json"),
+        path.resolve(process.cwd(), "matching_engine/contracts/fixtures/market/candles.seeded.json"),
+        path.resolve(__dirname, "../../../../ops/seed/candles.seeded.json"),
+        path.resolve(__dirname, "../../../ops/seed/candles.seeded.json"),
+        path.resolve(__dirname, "../../../matching_engine/contracts/fixtures/market/candles.seeded.json"),
+      ].filter((p): p is string => Boolean(p) && fs.existsSync(p));
+
+      if (candidates.length === 0) {
+        console.warn("[CandleService] No candles.seeded.json fixture found to seed.");
+        return;
+      }
+
+      const filePath = candidates[0];
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const data = JSON.parse(raw);
+
+      const fixtureEnd = Number(data.end_ts) || 0;
+      const now = Date.now();
+      const shiftMs = fixtureEnd > 0 && now > fixtureEnd ? Math.floor((now - fixtureEnd) / 60000) * 60000 : 0;
+
+      const records: any[] = [];
+      for (const [engineSym, assetData] of Object.entries<any>(data.assets || {})) {
+        const mapped = ENGINE_TO_DB_MAP[engineSym];
+        const dbId = mapped ? mapped.id : engineSym;
+        const targetIds = Array.from(new Set([dbId, engineSym]));
+
+        for (const targetId of targetIds) {
+          for (const interval of ["1m", "5s"]) {
+            const list = assetData.candles?.[interval] || [];
+            for (const c of list) {
+              records.push({
+                assetId: targetId,
+                interval: c.interval,
+                openTime: BigInt(c.openTime) + BigInt(shiftMs),
+                open: BigInt(c.open),
+                high: BigInt(c.high),
+                low: BigInt(c.low),
+                close: BigInt(c.close),
+                volume: BigInt(c.volume),
+                tradeCount: Number(c.tradeCount || 1),
+                origin: "SEEDED_SIM",
+              });
+            }
+          }
+        }
+      }
+
+      if (records.length > 0) {
+        const chunkSize = 1000;
+        for (let i = 0; i < records.length; i += chunkSize) {
+          await prisma.candleRecord.createMany({
+            data: records.slice(i, i + chunkSize),
+            skipDuplicates: true,
+          });
+        }
+        console.log(`[CandleService] Seeded ${records.length} historical candles from ${filePath}`);
+      }
+    } catch (err) {
+      console.error("[CandleService] Error ensuring seeded candles:", err);
+    }
+  }
+
   public handleTrade(trade: TradeExecutedEvent) {
-    const agg = this.getOrCreateAggregator(trade.asset);
+    const engineSym = resolveEngineSymbol(trade.asset) || trade.asset;
+    const agg = this.getOrCreateAggregator(engineSym);
     const result = agg.applyTick({
       seq: trade.seq,
       ts: trade.ts,
@@ -67,6 +157,9 @@ export class CandleService {
     // Broadcast updated candles
     for (const updated of result.updated) {
       this.emitUpdate(trade.asset, updated);
+      if (engineSym !== trade.asset) {
+        this.emitUpdate(engineSym, updated);
+      }
     }
 
     // Persist closed candles
@@ -90,42 +183,42 @@ export class CandleService {
   }
 
   private async persistClosedCandle(assetSymbol: string, candle: Candle) {
-    const asset = await prisma.asset.findFirst({
-      where: {
-        OR: [{ symbol: assetSymbol }, { id: assetSymbol }],
-      },
-    });
-    const assetId = asset ? asset.id : assetSymbol;
+    const engineSym = resolveEngineSymbol(assetSymbol) || assetSymbol;
+    const mapped = ENGINE_TO_DB_MAP[engineSym];
+    const dbAssetId = mapped?.id || assetSymbol;
+    const targetAssetIds = Array.from(new Set([dbAssetId, engineSym]));
 
-    await prisma.candleRecord.upsert({
-      where: {
-        assetId_interval_openTime: {
-          assetId,
+    for (const targetId of targetAssetIds) {
+      await prisma.candleRecord.upsert({
+        where: {
+          assetId_interval_openTime: {
+            assetId: targetId,
+            interval: candle.interval,
+            openTime: BigInt(candle.openTime),
+          },
+        },
+        update: {
+          open: BigInt(candle.open),
+          high: BigInt(candle.high),
+          low: BigInt(candle.low),
+          close: BigInt(candle.close),
+          volume: BigInt(candle.volume),
+          tradeCount: candle.tradeCount,
+        },
+        create: {
+          assetId: targetId,
           interval: candle.interval,
           openTime: BigInt(candle.openTime),
+          open: BigInt(candle.open),
+          high: BigInt(candle.high),
+          low: BigInt(candle.low),
+          close: BigInt(candle.close),
+          volume: BigInt(candle.volume),
+          tradeCount: candle.tradeCount,
+          origin: candle.origin,
         },
-      },
-      update: {
-        open: BigInt(candle.open),
-        high: BigInt(candle.high),
-        low: BigInt(candle.low),
-        close: BigInt(candle.close),
-        volume: BigInt(candle.volume),
-        tradeCount: candle.tradeCount,
-      },
-      create: {
-        assetId,
-        interval: candle.interval,
-        openTime: BigInt(candle.openTime),
-        open: BigInt(candle.open),
-        high: BigInt(candle.high),
-        low: BigInt(candle.low),
-        close: BigInt(candle.close),
-        volume: BigInt(candle.volume),
-        tradeCount: candle.tradeCount,
-        origin: candle.origin,
-      },
-    });
+      });
+    }
   }
 
   /**
@@ -137,71 +230,63 @@ export class CandleService {
     interval: "5s" | "1m" = "1m",
     limit: number = 500
   ): Promise<Candle[]> {
-    const asset = await prisma.asset.findFirst({
-      where: {
-        OR: [{ id: assetIdentifier }, { symbol: assetIdentifier }],
-      },
-    });
-    const assetId = asset ? asset.id : assetIdentifier;
-    const symbol = asset ? asset.symbol : assetIdentifier;
+    await this.ensureSeededCandles();
+    const candidateIds = getCandidateAssetIds(assetIdentifier);
 
     const dbCandles = await prisma.candleRecord.findMany({
       where: {
-        assetId,
+        assetId: { in: candidateIds },
         interval,
       },
       orderBy: { openTime: "asc" },
-      take: limit,
+      take: limit * 2,
     });
 
-    const result: Candle[] = dbCandles.map((c) => ({
-      interval: c.interval as "5s" | "1m",
-      openTime: Number(c.openTime),
-      open: Number(c.open),
-      high: Number(c.high),
-      low: Number(c.low),
-      close: Number(c.close),
-      volume: Number(c.volume),
-      tradeCount: c.tradeCount,
-      origin: c.origin as "ENGINE" | "SEEDED_SIM",
-    }));
+    const candleByOpenTime = new Map<number, Candle>();
+    for (const c of dbCandles) {
+      const openTime = Number(c.openTime);
+      const existing = candleByOpenTime.get(openTime);
+      if (!existing || (existing.origin === "SEEDED_SIM" && c.origin === "ENGINE")) {
+        candleByOpenTime.set(openTime, {
+          interval: c.interval as "5s" | "1m",
+          openTime,
+          open: Number(c.open),
+          high: Number(c.high),
+          low: Number(c.low),
+          close: Number(c.close),
+          volume: Number(c.volume),
+          tradeCount: c.tradeCount,
+          origin: c.origin as "ENGINE" | "SEEDED_SIM",
+        });
+      }
+    }
+
+    let result: Candle[] = Array.from(candleByOpenTime.values()).sort(
+      (a, b) => a.openTime - b.openTime
+    );
 
     // Append active in-memory candle if present
-    const agg = this.aggregators.get(symbol) || this.aggregators.get(assetId);
+    let agg: CandleAggregator | undefined;
+    for (const id of candidateIds) {
+      agg = this.aggregators.get(id);
+      if (agg) break;
+    }
+
     if (agg) {
       const activeList = agg.getActive();
       const activeForInterval = activeList.find((c) => c.interval === interval);
       if (activeForInterval) {
-        // If not already in result, append
-        const exists = result.some((c) => c.openTime === activeForInterval.openTime);
-        if (!exists) {
-          result.push(activeForInterval);
+        const idx = result.findIndex((c) => c.openTime === activeForInterval.openTime);
+        if (idx !== -1) {
+          result[idx] = activeForInterval;
         } else {
-          // Replace last element with active candle
-          const idx = result.findIndex((c) => c.openTime === activeForInterval.openTime);
-          if (idx !== -1) result[idx] = activeForInterval;
+          result.push(activeForInterval);
         }
       }
     }
 
-    // Fallback seed candle if completely empty
-    if (result.length === 0 && asset) {
-      const now = Date.now();
-      const bucketMs = interval === "5s" ? 5000 : 60000;
-      const openTime = Math.floor(now / bucketMs) * bucketMs;
-      const refPrice = Number(asset.lastPrice || asset.faceValue);
-
-      result.push({
-        interval,
-        openTime,
-        open: refPrice,
-        high: refPrice,
-        low: refPrice,
-        close: refPrice,
-        volume: 1,
-        tradeCount: 1,
-        origin: "SEEDED_SIM",
-      });
+    if (result.length > limit) {
+      result = result.slice(result.length - limit);
     }
 
     return result;

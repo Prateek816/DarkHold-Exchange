@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
-import { fakeWs } from "@/mocks/fake-websocket";
+import { marketDataService } from "@/lib/market-data";
 import { useWalletStore } from "@/lib/stores/walletStore";
 import { useUiStore } from "@/lib/stores/uiStore";
 import { OdometerPrice } from "@/components/auctions/OdometerPrice";
@@ -53,18 +53,21 @@ export function AuctionDetailView({ auctionId }: AuctionDetailViewProps) {
 
   useEffect(() => {
     const channel = `auction:${auctionId}`;
-    fakeWs.subscribe(channel);
+    marketDataService.subscribe(channel);
 
-    const removeListener = fakeWs.addListener((event, data) => {
-      if (event === `auction_price_update:${auctionId}`) {
-        if (!isWonRef.current && auction?.status === "ACTIVE") {
-          setLivePrice(data.current_price);
+    const removeListener = marketDataService.addListener((event, data) => {
+      if (event === `auction_price_update:${auctionId}` || event === `auction:${auctionId}`) {
+        if (!isWonRef.current && auction?.status === "ACTIVE" && data) {
+          const nextPrice = data.current_price || data.price;
+          if (typeof nextPrice === "number") {
+            setLivePrice(nextPrice);
+          }
         }
       }
     });
 
     return () => {
-      fakeWs.unsubscribe(channel);
+      marketDataService.unsubscribe(channel);
       removeListener();
     };
   }, [auctionId, auction?.status]);

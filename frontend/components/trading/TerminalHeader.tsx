@@ -56,6 +56,11 @@ export function TerminalHeader({
                   Trading halted
                 </span>
               )}
+              {(asset.is_configured === false || asset.status === "UNCONFIGURED") && (
+                <span className="rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[0.1em] text-warning">
+                  Unconfigured / Untradable
+                </span>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 pt-0.5 font-mono text-[10px] text-text-dim">
               <span className="text-text-muted">{asset.symbol}</span>

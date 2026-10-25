@@ -2,6 +2,7 @@ import { prisma } from "@/config/db";
 import { env } from "@/config/env";
 import { engineClient } from "./engineClient";
 import { walletsService } from "@/modules/wallets/wallets.service";
+import { resolveEngineSymbol } from "@/utils/assetMapping";
 
 export class OrderResolver {
   private isRunning: boolean = false;
@@ -68,18 +69,20 @@ export class OrderResolver {
                 resolvedCount++;
                 continue;
               } else if (outcome.status === "REJECTED") {
-                await prisma.order.update({
-                  where: { id: order.id },
-                  data: {
-                    status: "REJECTED",
-                    rejectCode: outcome.reject_code,
-                  },
+                await prisma.$transaction(async (tx) => {
+                  if (order.side === "BUY") {
+                    await walletsService.releaseOrderFunds(order.userId, order.id, order.reservedAmount, tx);
+                  } else {
+                    await walletsService.releaseHoldingUnits(order.userId, order.assetId, order.reservedUnits, tx);
+                  }
+                  await tx.order.update({
+                    where: { id: order.id },
+                    data: {
+                      status: "REJECTED",
+                      rejectCode: outcome.reject_code,
+                    },
+                  });
                 });
-                if (order.side === "BUY") {
-                  await walletsService.releaseOrderFunds(order.userId, order.id, order.reservedAmount);
-                } else {
-                  await walletsService.releaseHoldingUnits(order.userId, order.assetId, order.reservedUnits);
-                }
                 resolvedCount++;
                 continue;
               }
@@ -89,10 +92,14 @@ export class OrderResolver {
           }
 
           // 2. Resubmit with identical payload and order ID
+          const engineSymbol =
+            resolveEngineSymbol(order.asset.symbol) ||
+            resolveEngineSymbol(order.assetId) ||
+            order.asset.symbol;
           const reply = await engineClient.sendCommand({
             type: "SubmitOrder",
             order_id: order.id,
-            asset: order.asset.symbol,
+            asset: engineSymbol,
             user_id: order.userId,
             side: order.side,
             order_type: order.type,
@@ -112,18 +119,20 @@ export class OrderResolver {
           });
 
           if (reply.status === "REJECTED") {
-            await prisma.order.update({
-              where: { id: order.id },
-              data: {
-                status: "REJECTED",
-                rejectCode: reply.code,
-              },
+            await prisma.$transaction(async (tx) => {
+              if (order.side === "BUY") {
+                await walletsService.releaseOrderFunds(order.userId, order.id, order.reservedAmount, tx);
+              } else {
+                await walletsService.releaseHoldingUnits(order.userId, order.assetId, order.reservedUnits, tx);
+              }
+              await tx.order.update({
+                where: { id: order.id },
+                data: {
+                  status: "REJECTED",
+                  rejectCode: reply.code,
+                },
+              });
             });
-            if (order.side === "BUY") {
-              await walletsService.releaseOrderFunds(order.userId, order.id, order.reservedAmount);
-            } else {
-              await walletsService.releaseHoldingUnits(order.userId, order.assetId, order.reservedUnits);
-            }
           }
 
           resolvedCount++;

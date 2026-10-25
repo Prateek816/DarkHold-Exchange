@@ -14,6 +14,7 @@ import {
   SseHello,
   TradeExecutedEvent,
 } from "./types";
+import { syncEngineAssets } from "./assetSync";
 
 export type EventCallback = (event: EngineEvent) => void;
 export type BookCallback = (snapshot: BookSnapshot) => void;
@@ -33,6 +34,7 @@ export class SseConsumer {
   private onEventCallbacks: Set<EventCallback> = new Set();
   private onBookCallbacks: Set<BookCallback> = new Set();
   private offsetWaiters: Map<number, Array<() => void>> = new Map();
+  private engineAssets: Set<string> = new Set();
 
   constructor(options?: { url?: string; token?: string }) {
     this.url = (options?.url || env.ENGINE_URL).replace(/\/+$/, "");
@@ -55,6 +57,14 @@ export class SseConsumer {
 
   public getEpoch(): string {
     return this.currentEpoch;
+  }
+
+  public getEngineAssets(): Set<string> {
+    return this.engineAssets;
+  }
+
+  public isAssetActive(symbol: string): boolean {
+    return this.engineAssets.has(symbol);
   }
 
   public setUrl(url: string) {
@@ -276,14 +286,25 @@ export class SseConsumer {
     if (eventType === "hello") {
       try {
         const hello = JSON.parse(dataStr) as SseHello;
-        if (!this.currentEpoch) {
+        this.engineAssets = new Set(
+          (hello.assets || []).filter((a) => a.status === "ACTIVE").map((a) => a.asset)
+        );
+        if (!this.currentEpoch || this.currentEpoch !== hello.engine_epoch) {
+          const epochChanged = Boolean(this.currentEpoch && this.currentEpoch !== hello.engine_epoch);
           this.currentEpoch = hello.engine_epoch;
           await prisma.consumerOffset.upsert({
             where: { consumer: "engine-main" },
             update: { engineEpoch: hello.engine_epoch, lastSeq: BigInt(this.lastAppliedSeq) },
             create: { consumer: "engine-main", engineEpoch: hello.engine_epoch, lastSeq: BigInt(this.lastAppliedSeq) },
           });
+
+          if (epochChanged) {
+            this.engineAssets.clear();
+          }
         }
+
+        // Configure missing DB assets on matching engine per Section 6.1 Step 5
+        await syncEngineAssets(this.engineAssets);
       } catch (err) {
         console.error("[SseConsumer] Error parsing hello frame:", err);
       }
@@ -399,12 +420,15 @@ export class SseConsumer {
             });
             const assetId = asset ? asset.id : (mapped?.id || e.asset);
 
+            const buyOrderExists = e.buy_order_id ? await tx.order.findUnique({ where: { id: e.buy_order_id }, select: { id: true } }) : null;
+            const sellOrderExists = e.sell_order_id ? await tx.order.findUnique({ where: { id: e.sell_order_id }, select: { id: true } }) : null;
+
             await tx.trade.create({
               data: {
                 id: e.trade_id,
                 assetId,
-                buyOrderId: e.buy_order_id,
-                sellOrderId: e.sell_order_id,
+                buyOrderId: buyOrderExists ? e.buy_order_id : null,
+                sellOrderId: sellOrderExists ? e.sell_order_id : null,
                 buyerId: e.buy_user_id,
                 sellerId: e.sell_user_id,
                 executionPrice: BigInt(e.price),
@@ -419,6 +443,18 @@ export class SseConsumer {
                 matchedAt: new Date(e.ts),
               },
             });
+
+            // Update live last price and timestamp on the asset
+            const targetAssetId = asset ? asset.id : mapped?.id;
+            if (targetAssetId) {
+              await tx.asset.updateMany({
+                where: { id: targetAssetId },
+                data: {
+                  lastPrice: BigInt(e.price),
+                  lastPriceTimestamp: new Date(e.ts),
+                },
+              });
+            }
 
             // Update matched quantities on both orders
             await tx.order.updateMany({
@@ -495,10 +531,25 @@ export class SseConsumer {
           break;
         }
 
-        case "AssetConfigured":
-        case "AssetHalted":
-        case "AssetResumed":
+        case "AssetConfigured": {
+          const e = event as AssetConfiguredEvent;
+          if (e.status === "ACTIVE") {
+            this.engineAssets.add(e.asset);
+          } else {
+            this.engineAssets.delete(e.asset);
+          }
           break;
+        }
+
+        case "AssetHalted": {
+          this.engineAssets.delete(event.asset);
+          break;
+        }
+
+        case "AssetResumed": {
+          this.engineAssets.add(event.asset);
+          break;
+        }
       }
 
       // Persist offset

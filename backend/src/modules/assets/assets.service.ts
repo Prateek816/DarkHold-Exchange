@@ -2,6 +2,7 @@ import { prisma } from "@/config/db";
 import { serializeAsset } from "@/utils/serialization";
 import { engineClient } from "@/engine/engineClient";
 import { candleService } from "@/market/candleService";
+import { resolveEngineSymbol } from "@/utils/assetMapping";
 
 export class AssetsService {
   public async getAssets() {
@@ -38,7 +39,8 @@ export class AssetsService {
     const clampedDepth = Math.max(1, Math.min(100, depth));
 
     try {
-      const engineBook = await engineClient.getBook(symbol, clampedDepth);
+      const engineSymbol = resolveEngineSymbol(symbol) || resolveEngineSymbol(asset?.id || "") || symbol;
+      const engineBook = await engineClient.getBook(engineSymbol, clampedDepth);
       if (engineBook) {
         return {
           ...engineBook,

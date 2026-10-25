@@ -81,13 +81,13 @@ export function ScenarioTriggers({ className }: { className?: string }) {
         <div>
           <span className="eyebrow flex items-center gap-2">
             <span className="h-px w-4 bg-brand-500/60" />
-            Stress harness
+            Stress harness (Simulated)
           </span>
           <h3 className="pt-1 font-display text-[15px] font-semibold tracking-tight text-text">
-            Market simulator & scenario controls
+            Market simulator & scenario controls (Simulated)
           </h3>
           <p className="pt-0.5 max-w-xl text-[11.5px] leading-relaxed text-text-muted">
-            Manipulate automated order flow, trigger boundary stress tests, and verify resilience.
+            Simulated client-side stress testing harness for testing UI resiliency against chaos scenarios.
           </p>
         </div>
 

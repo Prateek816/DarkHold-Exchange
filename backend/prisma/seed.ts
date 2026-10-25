@@ -1,5 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import fs from "fs";
+import path from "path";
+import { ENGINE_TO_DB_MAP } from "../src/utils/assetMapping";
 
 const prisma = new PrismaClient();
 
@@ -16,6 +19,7 @@ async function main() {
   await prisma.session.deleteMany({});
   await prisma.asset.deleteMany({});
   await prisma.user.deleteMany({});
+  await prisma.candleRecord.deleteMany({});
 
   // 2. Hash default passwords
   const passwordHash = await bcrypt.hash("darkhold2026!", 10);
@@ -64,21 +68,21 @@ async function main() {
     },
   });
 
-  // 5. Seed Assets
+  // 5. Seed Assets aligned with canonical ops/seed/assets.json and matching engine
   const assetsData = [
     {
       id: "DARKHOLD-PASS-2026",
       symbol: "DKH-FEST",
       name: "Darkhold Fest Weekend Pass",
       category: "FESTIVAL_PASS",
-      faceValue: BigInt(25000), // $250.00
-      ceilingPct: 110,
-      ceilingPrice: BigInt(27500), // $275.00 cap
-      lastPrice: BigInt(26850),
+      faceValue: BigInt(10000), // $100.00
+      ceilingPct: 120,
+      ceilingPrice: BigInt(12000), // $120.00 cap
+      lastPrice: BigInt(10460), // $104.60
       lastPriceTimestamp: new Date(Date.now() - 12000),
-      priceChange24hPct: 4.8,
-      bestBid: BigInt(26700),
-      bestAsk: BigInt(26900),
+      priceChange24hPct: 4.6,
+      bestBid: BigInt(10400),
+      bestAsk: BigInt(10480),
       availableAskQty: 48,
       volume24h: 382,
       isHalted: false,
@@ -91,14 +95,14 @@ async function main() {
       symbol: "MNR-GA",
       name: "Moonrise GA Pass",
       category: "FESTIVAL_PASS",
-      faceValue: BigInt(18000), // $180.00
-      ceilingPct: 115,
-      ceilingPrice: BigInt(20700), // $207.00 cap
-      lastPrice: BigInt(19400),
+      faceValue: BigInt(8000), // $80.00
+      ceilingPct: 120,
+      ceilingPrice: BigInt(9600), // $96.00 cap
+      lastPrice: BigInt(8490), // $84.90
       lastPriceTimestamp: new Date(Date.now() - 45000),
       priceChange24hPct: 2.1,
-      bestBid: BigInt(19200),
-      bestAsk: BigInt(19500),
+      bestBid: BigInt(8450),
+      bestAsk: BigInt(8520),
       availableAskQty: 24,
       volume24h: 154,
       isHalted: false,
@@ -111,14 +115,14 @@ async function main() {
       symbol: "DKH-HOOD",
       name: "Darkhold Hoodie Limited",
       category: "LIMITED_MERCH",
-      faceValue: BigInt(12000), // $120.00
-      ceilingPct: 125,
-      ceilingPrice: BigInt(15000), // $150.00 cap
-      lastPrice: BigInt(14200),
+      faceValue: BigInt(3000), // $30.00
+      ceilingPct: 120,
+      ceilingPrice: BigInt(3600), // $36.00 cap
+      lastPrice: BigInt(3135), // $31.35
       lastPriceTimestamp: new Date(Date.now() - 110000),
       priceChange24hPct: -1.4,
-      bestBid: BigInt(13900),
-      bestAsk: BigInt(14300),
+      bestBid: BigInt(3100),
+      bestAsk: BigInt(3150),
       availableAskQty: 12,
       volume24h: 89,
       isHalted: false,
@@ -131,14 +135,14 @@ async function main() {
       symbol: "SGL-PIN",
       name: "Sigil Collector Pin",
       category: "LIMITED_MERCH",
-      faceValue: BigInt(3500), // $35.00
-      ceilingPct: 150,
-      ceilingPrice: BigInt(5250), // $52.50 cap
-      lastPrice: BigInt(4800),
+      faceValue: BigInt(500), // $5.00
+      ceilingPct: 120,
+      ceilingPrice: BigInt(600), // $6.00 cap
+      lastPrice: BigInt(511), // $5.11
       lastPriceTimestamp: new Date(Date.now() - 240000),
-      priceChange24hPct: 8.5,
-      bestBid: BigInt(4500),
-      bestAsk: BigInt(4900),
+      priceChange24hPct: 2.2,
+      bestBid: BigInt(505),
+      bestAsk: BigInt(515),
       availableAskQty: 5,
       volume24h: 18,
       isHalted: false,
@@ -298,8 +302,152 @@ async function main() {
     ],
   });
 
+  // 9. Seed Simulated Bot Accounts from ops/seed/accounts.json
+  const accountsPaths = [
+    path.resolve(__dirname, "../../ops/seed/accounts.json"),
+    path.resolve(process.cwd(), "../ops/seed/accounts.json"),
+    path.resolve(process.cwd(), "ops/seed/accounts.json"),
+    "/app/ops/seed/accounts.json",
+  ];
+  const accountsFile = accountsPaths.find((p) => fs.existsSync(p));
+  if (accountsFile) {
+    console.log(`Seeding bot accounts from ${accountsFile}...`);
+    const accountsData = JSON.parse(fs.readFileSync(accountsFile, "utf-8"));
+    const simPasswordHash = await bcrypt.hash(accountsData.password || "darkhold-sim-dev", 10);
+
+    for (const a of accountsData.accounts) {
+      const email = a.email.toLowerCase();
+      let user = await prisma.user.findUnique({ where: { email } });
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            id: a.key,
+            email,
+            name: a.key,
+            passwordHash: simPasswordHash,
+            role: a.role === "admin" ? "ADMIN" : "TRADER",
+            status: "ACTIVE",
+          },
+        });
+      }
+
+      // Wallet
+      let wallet = await prisma.wallet.findUnique({ where: { userId: user.id } });
+      const starterCredits = BigInt(a.starter_credits || 0);
+      if (!wallet) {
+        wallet = await prisma.wallet.create({
+          data: {
+            userId: user.id,
+            availableBalance: starterCredits,
+            reservedBalance: BigInt(0),
+            totalBalance: starterCredits,
+          },
+        });
+
+        if (starterCredits > BigInt(0)) {
+          await prisma.ledgerEntry.create({
+            data: {
+              walletId: wallet.id,
+              referenceId: `INIT-${a.key}`,
+              entryType: "INITIAL_CREDIT",
+              amount: starterCredits,
+              balanceBefore: BigInt(0),
+              balanceAfter: starterCredits,
+              description: `Initial bot balance for ${a.key}`,
+            },
+          });
+        }
+      }
+
+      // Initial Units
+      if (a.initial_units) {
+        for (const [engineSym, units] of Object.entries(a.initial_units)) {
+          const qty = Number(units);
+          if (qty <= 0) continue;
+          const mapped = ENGINE_TO_DB_MAP[engineSym];
+          const assetId = mapped ? mapped.id : engineSym;
+
+          const existingHolding = await prisma.walletHolding.findFirst({
+            where: { walletId: wallet.id, assetId },
+          });
+
+          if (!existingHolding) {
+            await prisma.walletHolding.create({
+              data: {
+                walletId: wallet.id,
+                assetId,
+                availableUnits: qty,
+                reservedUnits: 0,
+                totalUnits: qty,
+                avgCost: BigInt(10000),
+              },
+            });
+          }
+        }
+      }
+    }
+    console.log(`Seeded ${accountsData.accounts.length} bot accounts!`);
+  }
+
+  // 7. Seed Historical Candles from candles.seeded.json
+  const candlesPath = [
+    "/app/ops/seed/candles.seeded.json",
+    path.join(__dirname, "../../ops/seed/candles.seeded.json"),
+    path.join(process.cwd(), "ops/seed/candles.seeded.json"),
+    path.join(__dirname, "../../../ops/seed/candles.seeded.json"),
+  ].find((p) => fs.existsSync(p));
+
+  if (candlesPath) {
+    console.log(`Seeding historical candles from ${candlesPath}...`);
+    const candlesContent = fs.readFileSync(candlesPath, "utf-8");
+    const candlesData = JSON.parse(candlesContent);
+    const fixtureEnd = Number(candlesData.end_ts) || 0;
+    const now = Date.now();
+    const shiftMs = fixtureEnd > 0 && now > fixtureEnd ? Math.floor((now - fixtureEnd) / 60000) * 60000 : 0;
+    const recordsToInsert: any[] = [];
+
+    for (const [engineSym, assetData] of Object.entries<any>(candlesData.assets || {})) {
+      const mapped = ENGINE_TO_DB_MAP[engineSym];
+      const dbAssetId = mapped ? mapped.id : engineSym;
+      const targetIds = Array.from(new Set([dbAssetId, engineSym]));
+
+      for (const targetId of targetIds) {
+        for (const interval of ["1m", "5s"]) {
+          const list = assetData.candles?.[interval] || [];
+          for (const c of list) {
+            recordsToInsert.push({
+              assetId: targetId,
+              interval: c.interval,
+              openTime: BigInt(c.openTime) + BigInt(shiftMs),
+              open: BigInt(c.open),
+              high: BigInt(c.high),
+              low: BigInt(c.low),
+              close: BigInt(c.close),
+              volume: BigInt(c.volume),
+              tradeCount: Number(c.tradeCount || 1),
+              origin: "SEEDED_SIM",
+            });
+          }
+        }
+      }
+    }
+
+    if (recordsToInsert.length > 0) {
+      const chunkSize = 1000;
+      for (let i = 0; i < recordsToInsert.length; i += chunkSize) {
+        const chunk = recordsToInsert.slice(i, i + chunkSize);
+        await prisma.candleRecord.createMany({
+          data: chunk,
+          skipDuplicates: true,
+        });
+      }
+      console.log(`Seeded ${recordsToInsert.length} historical candle records!`);
+    }
+  }
+
   console.log("Database seeded successfully!");
 }
+
 
 main()
   .catch((e) => {

@@ -627,7 +627,9 @@ describe("DarkHold Matching Engine Integration Suite", () => {
     let testBuyerEmail = `buyer_${Date.now()}@darkhold.io`;
     let testSellerEmail = `seller_${Date.now()}@darkhold.io`;
     let testBuyerToken: string;
+    let testBuyerUserId: string;
     let testSellerToken: string;
+    let testSellerUserId: string;
     let testAssetId: string;
     const testSymbol = "DFEST-WKND";
 
@@ -637,11 +639,13 @@ describe("DarkHold Matching Engine Integration Suite", () => {
         .post("/api/auth/register")
         .send({ email: testBuyerEmail, password: "SecurePassword2026!" });
       testBuyerToken = buyerReg.body.token;
+      testBuyerUserId = buyerReg.body.user.id;
 
       const sellerReg = await request(app)
         .post("/api/auth/register")
         .send({ email: testSellerEmail, password: "SecurePassword2026!" });
       testSellerToken = sellerReg.body.token;
+      testSellerUserId = sellerReg.body.user.id;
 
       // 2. Fetch asset info
       const assetRes = await request(app).get("/assets");
@@ -857,6 +861,75 @@ describe("DarkHold Matching Engine Integration Suite", () => {
       expect(ordersRes.status).toBe(200);
       const orderItems = ordersRes.body.items || ordersRes.body;
       expect(Array.isArray(orderItems)).toBe(true);
+    });
+
+    it("Settlement Worker only marks order COMPLETED when all associated trades are SETTLED", async () => {
+      const orderId = uuidv7();
+      const buyOrder = await prisma.order.create({
+        data: {
+          id: orderId,
+          userId: testBuyerUserId,
+          assetId: testAssetId,
+          side: "BUY",
+          type: "LIMIT",
+          price: BigInt(5000),
+          originalQuantity: 2,
+          matchedQuantity: 2,
+          remainingQuantity: 0,
+          reservedAmount: BigInt(10000),
+          reservedUnits: 0,
+          status: "FILLED",
+          settlementStatus: "PENDING",
+        },
+      });
+
+      // Create two fills for this order
+      const trade1Id = `trd-test-1-${Date.now()}`;
+      const trade2Id = `trd-test-2-${Date.now()}`;
+
+      await prisma.trade.create({
+        data: {
+          id: trade1Id,
+          assetId: testAssetId,
+          buyOrderId: orderId,
+          buyerId: testBuyerUserId,
+          sellerId: testSellerUserId,
+          executionPrice: BigInt(5000),
+          quantity: 1,
+          totalCost: BigInt(5000),
+          isSim: false,
+          state: "PENDING_SETTLEMENT",
+        },
+      });
+
+      await prisma.trade.create({
+        data: {
+          id: trade2Id,
+          assetId: testAssetId,
+          buyOrderId: orderId,
+          buyerId: testBuyerUserId,
+          sellerId: testSellerUserId,
+          executionPrice: BigInt(5000),
+          quantity: 1,
+          totalCost: BigInt(5000),
+          isSim: false,
+          state: "PENDING_SETTLEMENT",
+        },
+      });
+
+      // Settle trade 1 only
+      await settlementWorker.settleSingleTrade(trade1Id);
+
+      // Verify order is still PENDING since trade 2 is not yet settled
+      const intermediateOrder = await prisma.order.findUniqueOrThrow({ where: { id: orderId } });
+      expect(intermediateOrder.settlementStatus).toBe("PENDING");
+
+      // Settle trade 2
+      await settlementWorker.settleSingleTrade(trade2Id);
+
+      // Now all fills are settled, order must be COMPLETED
+      const finalOrder = await prisma.order.findUniqueOrThrow({ where: { id: orderId } });
+      expect(finalOrder.settlementStatus).toBe("COMPLETED");
     });
   });
 });

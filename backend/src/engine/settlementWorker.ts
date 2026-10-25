@@ -115,19 +115,35 @@ export class SettlementWorker {
         },
       });
 
-      // Update order settlement statuses if completely filled
+      // Check and update order settlement statuses only if all associated trades are SETTLED
       if (trade.buyOrder && trade.buyOrder.matchedQuantity >= trade.buyOrder.originalQuantity) {
-        await tx.order.update({
-          where: { id: trade.buyOrder.id },
-          data: { settlementStatus: "COMPLETED" },
+        const unsettledBuyTrades = await tx.trade.count({
+          where: {
+            buyOrderId: trade.buyOrder.id,
+            state: { not: "SETTLED" },
+          },
         });
+        if (unsettledBuyTrades === 0) {
+          await tx.order.update({
+            where: { id: trade.buyOrder.id },
+            data: { settlementStatus: "COMPLETED" },
+          });
+        }
       }
 
       if (trade.sellOrder && trade.sellOrder.matchedQuantity >= trade.sellOrder.originalQuantity) {
-        await tx.order.update({
-          where: { id: trade.sellOrder.id },
-          data: { settlementStatus: "COMPLETED" },
+        const unsettledSellTrades = await tx.trade.count({
+          where: {
+            sellOrderId: trade.sellOrder.id,
+            state: { not: "SETTLED" },
+          },
         });
+        if (unsettledSellTrades === 0) {
+          await tx.order.update({
+            where: { id: trade.sellOrder.id },
+            data: { settlementStatus: "COMPLETED" },
+          });
+        }
       }
     });
   }

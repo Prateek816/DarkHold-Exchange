@@ -31,6 +31,10 @@ export interface Asset {
   sim_active: boolean;
   has_active_auction: boolean;
   sparkline_1h: number[]; // array of minor unit prices
+  is_configured?: boolean;
+  is_tradable?: boolean;
+  engine_symbol?: string | null;
+  status?: string;
 }
 
 export interface BookLevel {

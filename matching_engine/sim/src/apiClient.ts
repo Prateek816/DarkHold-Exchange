@@ -354,7 +354,7 @@ export class ApiClient {
     const body = await this.request(null, 'GET', '/assets');
     const out: ApiAsset[] = [];
     for (const o of unwrapList(body)) {
-      const asset = str(o, ['symbol', 'asset']);
+      const asset = str(o, ['engine_symbol', 'symbol', 'asset']);
       const id = str(o, ['id', 'asset_id'], asset);
       const faceValue = num(o, ['face_value_minor', 'faceValue', 'face_value']);
       let ceiling = tryNum(o, ['ceiling_minor', 'ceiling', 'resale_ceiling', 'ceilingMinor']);
@@ -443,7 +443,7 @@ export class ApiClient {
   async getHoldings(botKey: string): Promise<HoldingData[]> {
     const body = await this.request(botKey, 'GET', '/me/holdings');
     return unwrapList(body).map((o) => ({
-      asset: str(o, ['symbol', 'asset', 'asset_symbol']),
+      asset: str(o, ['engine_symbol', 'symbol', 'asset', 'asset_symbol']),
       available: num(o, ['available_qty', 'available'], 0),
       reserved: num(o, ['reserved_qty', 'reserved'], 0),
     }));
@@ -459,7 +459,7 @@ export class ApiClient {
       const matched = tryNum(o, ['matched_qty', 'filled_qty']) ?? 0;
       out.push({
         orderId: str(o, ['order_id', 'id', 'orderId']),
-        asset: str(o, ['symbol', 'asset', 'asset_symbol']),
+        asset: str(o, ['engine_symbol', 'symbol', 'asset', 'asset_symbol']),
         side: str(o, ['side']).toUpperCase() === 'SELL' ? 'SELL' : 'BUY',
         price: num(o, ['limit_price_minor', 'price', 'limit_price']),
         qty,
@@ -476,7 +476,7 @@ export class ApiClient {
       const side = str(o, ['side'], '').toUpperCase();
       if (side !== 'BUY' && side !== 'SELL') continue;
       out.push({
-        asset: str(o, ['symbol', 'asset', 'asset_symbol']),
+        asset: str(o, ['engine_symbol', 'symbol', 'asset', 'asset_symbol']),
         side,
         price: num(o, ['price_minor', 'price']),
         qty: num(o, ['qty', 'quantity']),
